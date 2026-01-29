@@ -1,103 +1,67 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import {
+  AddIcon,
+  AllIssuesIcon,
+  AnalyticsIcon,
+  BacklogIcon,
+  BoardIcon,
+  CheckIcon,
+  CloseIcon,
+  DoneIcon,
+  FlashLightIcon,
+  InProgressIcon,
+  KeyboardIcon,
+  ListIcon,
+  MoonIcon,
+  NotificationIcon,
+  PlanningIcon,
+  ReviewIcon,
+  SearchIcon,
+  SettingsIcon,
+  TodoIcon,
+} from '@/components/icons'
+import { ShortcutRow } from '@/components/shortcut-row'
+import { TaskCard } from '@/components/task-card'
+import { TaskForm } from '@/components/task-form'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Kbd } from '@/components/ui/kbd'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
-  SidebarProvider,
   Sidebar,
-  SidebarHeader,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
+  SidebarHeader,
   SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
   SidebarTrigger,
-  SidebarFooter,
 } from '@/components/ui/sidebar'
-
-type Priority = 'high' | 'medium' | 'low'
-type Status = 'backlog' | 'planning' | 'todo' | 'in_progress' | 'review' | 'done'
-type Agent = 'jarvis' | 'gemini' | 'copilot' | 'claude' | 'diego'
-
-interface Comment {
-  id: string
-  text: string
-  content?: string  // alias for text (API uses content)
-  author: string
-  createdAt: string
-  isRead?: boolean
-}
-
-interface Project {
-  id: string
-  name: string
-  description: string
-  icon: string
-  color: string
-  lead: string
-}
-
-interface Label {
-  id: string
-  name: string
-  color: string
-  group?: string
-}
-
-type RecurrenceType = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'
-
-interface Task {
-  id: string
-  title: string
-  description: string
-  priority: Priority
-  status: Status
-  assignee: Agent
-  projectId?: string
-  labelIds?: string[]
-  dueDate?: string
-  estimate?: number // in hours
-  parentId?: string // for sub-issues
-  recurrenceType?: RecurrenceType
-  recurrenceInterval?: number
-  timeSpent?: number // minutes
-  createdAt: string
-  updatedAt: string
-  comments?: Comment[]
-}
-
-const columns: { id: Status; title: string; icon: string }[] = [
-  { id: 'backlog', title: 'Backlog', icon: '📋' },
-  { id: 'planning', title: 'Planning', icon: '🎯' },
-  { id: 'todo', title: 'To Do', icon: '📝' },
-  { id: 'in_progress', title: 'In Progress', icon: '🔄' },
-  { id: 'review', title: 'Review', icon: '👀' },
-  { id: 'done', title: 'Done', icon: '✅' },
-]
-
-const agents: { id: Agent; name: string; color: string }[] = [
-  { id: 'jarvis', name: 'Jarvis (Claude)', color: '#00d4ff' },
-  { id: 'gemini', name: 'Gemini', color: '#4285f4' },
-  { id: 'copilot', name: 'Copilot', color: '#6e40c9' },
-  { id: 'claude', name: 'Claude Direct', color: '#cc785c' },
-  { id: 'diego', name: 'Diego', color: '#2ed573' },
-]
-
-const priorityColors: Record<Priority, string> = {
-  high: '#F59E0B',
-  medium: '#5E6AD2',
-  low: '#6B6B6B',
-}
+import { Switch } from '@/components/ui/switch'
+import { AGENTS, COLUMNS, DEFAULT_SETTINGS, STORAGE_KEYS } from '@/lib/constants'
+import type {
+  Agent,
+  Analytics,
+  Label,
+  Notification,
+  Project,
+  Settings,
+  Status,
+  Task,
+} from '@/types'
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -112,25 +76,17 @@ export default function Home() {
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showAnalytics, setShowAnalytics] = useState(false)
-  const [analytics, setAnalytics] = useState<any>(null)
+  const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [showNotifications, setShowNotifications] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showSearch, setShowSearch] = useState(false)
-  const [notifications, setNotifications] = useState<{id: string; type: string; taskId: string; taskTitle: string; message: string; author: string; createdAt: string; isRead: boolean}[]>([])
+  const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [viewMode, setViewMode] = useState<'board' | 'list'>('board')
-  
-  // Settings state (persisted to localStorage)
-  const [settings, setSettings] = useState({
-    defaultAssignee: 'jarvis' as Agent,
-    showCompletedTasks: true,
-    compactView: false,
-    theme: 'dark' as 'dark' | 'light',
-  })
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
 
-  // Load settings from localStorage on mount
   useEffect(() => {
-    const savedSettings = localStorage.getItem('jarvis-tasks-settings')
+    const savedSettings = localStorage.getItem(STORAGE_KEYS.settings)
     if (savedSettings) {
       try {
         setSettings(JSON.parse(savedSettings))
@@ -140,106 +96,91 @@ export default function Home() {
     }
   }, [])
 
-  // Save settings to localStorage when changed
-  const updateSettings = (newSettings: Partial<typeof settings>) => {
+  const updateSettings = (newSettings: Partial<Settings>) => {
     const updated = { ...settings, ...newSettings }
     setSettings(updated)
-    localStorage.setItem('jarvis-tasks-settings', JSON.stringify(updated))
+    localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(updated))
   }
 
-  // Keyboard shortcuts
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    // Don't trigger shortcuts when typing in inputs
-    if (e.target instanceof HTMLInputElement || 
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
-        e.target instanceof HTMLSelectElement) {
-      return
-    }
+        e.target instanceof HTMLSelectElement
+      ) {
+        return
+      }
 
-    // Escape - close modals and search
-    if (e.key === 'Escape') {
-      setShowModal(false)
-      setShowShortcuts(false)
-      setShowSearch(false)
-      setSearchQuery('')
-      setEditingTask(null)
-      return
-    }
+      if (e.key === 'Escape') {
+        setShowModal(false)
+        setShowShortcuts(false)
+        setShowSearch(false)
+        setSearchQuery('')
+        setEditingTask(null)
+        return
+      }
 
-    // / - open search
-    if (e.key === '/' && !e.metaKey && !e.ctrlKey) {
-      e.preventDefault()
-      setShowSearch(true)
-      return
-    }
+      if (e.key === '/' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault()
+        setShowSearch(true)
+        return
+      }
 
-    // ? - show shortcuts help
-    if (e.key === '?' && e.shiftKey) {
-      e.preventDefault()
-      setShowShortcuts(prev => !prev)
-      return
-    }
+      if (e.key === '?' && e.shiftKey) {
+        e.preventDefault()
+        setShowShortcuts((prev) => !prev)
+        return
+      }
 
-    // c - create new task
-    if (e.key === 'c' && !e.metaKey && !e.ctrlKey) {
-      e.preventDefault()
-      setEditingTask({ status: 'todo', assignee: settings.defaultAssignee } as Task)
-      setShowModal(true)
-      return
-    }
+      if (e.key === 'c' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault()
+        setEditingTask({ status: 'todo', assignee: settings.defaultAssignee } as Task)
+        setShowModal(true)
+        return
+      }
 
-    // b - toggle sidebar (handled by shadcn)
-    // 1-4 - switch to status view
-    if (e.key === '1') {
-      e.preventDefault()
-      setActiveView('backlog')
-      setActiveProject(null)
-      setActiveLabel(null)
-    }
-    if (e.key === '2') {
-      e.preventDefault()
-      setActiveView('todo')
-      setActiveProject(null)
-      setActiveLabel(null)
-    }
-    if (e.key === '3') {
-      e.preventDefault()
-      setActiveView('in_progress')
-      setActiveProject(null)
-      setActiveLabel(null)
-    }
-    if (e.key === '4') {
-      e.preventDefault()
-      setActiveView('done')
-      setActiveProject(null)
-      setActiveLabel(null)
-    }
+      if (e.key === '1') {
+        e.preventDefault()
+        setActiveView('backlog')
+        setActiveProject(null)
+        setActiveLabel(null)
+      }
+      if (e.key === '2') {
+        e.preventDefault()
+        setActiveView('todo')
+        setActiveProject(null)
+        setActiveLabel(null)
+      }
+      if (e.key === '3') {
+        e.preventDefault()
+        setActiveView('in_progress')
+        setActiveProject(null)
+        setActiveLabel(null)
+      }
+      if (e.key === '4') {
+        e.preventDefault()
+        setActiveView('done')
+        setActiveProject(null)
+        setActiveLabel(null)
+      }
 
-    // a - show all issues
-    if (e.key === 'a' && !e.metaKey && !e.ctrlKey) {
-      e.preventDefault()
-      setActiveView('all')
-      setActiveProject(null)
-      setActiveLabel(null)
-    }
-  }, [])
+      if (e.key === 'a' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault()
+        setActiveView('all')
+        setActiveProject(null)
+        setActiveLabel(null)
+      }
+    },
+    [settings.defaultAssignee]
+  )
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
 
-  useEffect(() => {
-    fetchTasks()
-    fetchProjects()
-    fetchLabels()
-    fetchNotifications()
-    // Poll for notifications every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000)
-    return () => clearInterval(interval)
-  }, [])
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const res = await fetch('/api/notifications')
       const data = await res.json()
@@ -248,14 +189,53 @@ export default function Home() {
     } catch (e) {
       console.error('Failed to fetch notifications', e)
     }
-  }
+  }, [])
+
+  const fetchTasks = useCallback(async () => {
+    try {
+      const res = await fetch('/api/tasks')
+      const data = await res.json()
+      setTasks(data.tasks || [])
+    } catch (e) {
+      console.error('Failed to fetch tasks', e)
+    }
+  }, [])
+
+  const fetchProjects = useCallback(async () => {
+    try {
+      const res = await fetch('/api/projects')
+      const data = await res.json()
+      setProjects(data.projects || [])
+    } catch (e) {
+      console.error('Failed to fetch projects', e)
+    }
+  }, [])
+
+  const fetchLabels = useCallback(async () => {
+    try {
+      const res = await fetch('/api/labels')
+      const data = await res.json()
+      setLabels(data.labels || [])
+    } catch (e) {
+      console.error('Failed to fetch labels', e)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchTasks()
+    fetchProjects()
+    fetchLabels()
+    fetchNotifications()
+    const interval = setInterval(fetchNotifications, 30000)
+    return () => clearInterval(interval)
+  }, [fetchLabels, fetchNotifications, fetchProjects, fetchTasks])
 
   const markAllNotificationsRead = async () => {
     try {
       await fetch('/api/notifications', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ markAllRead: true })
+        body: JSON.stringify({ markAllRead: true }),
       })
       fetchNotifications()
     } catch (e) {
@@ -270,36 +250,6 @@ export default function Home() {
       setAnalytics(data)
     } catch (e) {
       console.error('Failed to fetch analytics', e)
-    }
-  }
-
-  const fetchTasks = async () => {
-    try {
-      const res = await fetch('/api/tasks')
-      const data = await res.json()
-      setTasks(data.tasks || [])
-    } catch (e) {
-      console.error('Failed to fetch tasks', e)
-    }
-  }
-
-  const fetchProjects = async () => {
-    try {
-      const res = await fetch('/api/projects')
-      const data = await res.json()
-      setProjects(data.projects || [])
-    } catch (e) {
-      console.error('Failed to fetch projects', e)
-    }
-  }
-
-  const fetchLabels = async () => {
-    try {
-      const res = await fetch('/api/labels')
-      const data = await res.json()
-      setLabels(data.labels || [])
-    } catch (e) {
-      console.error('Failed to fetch labels', e)
     }
   }
 
@@ -343,27 +293,27 @@ export default function Home() {
 
   const getFilteredTasks = (statusFilter?: Status) => {
     let filtered = tasks
-    
-    // Search filter
+
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
-      filtered = filtered.filter(t => 
-        t.title.toLowerCase().includes(query) ||
-        t.description?.toLowerCase().includes(query) ||
-        t.id.toLowerCase().includes(query)
+      filtered = filtered.filter(
+        (t) =>
+          t.title.toLowerCase().includes(query) ||
+          t.description?.toLowerCase().includes(query) ||
+          t.id.toLowerCase().includes(query)
       )
     }
-    
+
     if (statusFilter) {
-      filtered = filtered.filter(t => t.status === statusFilter)
+      filtered = filtered.filter((t) => t.status === statusFilter)
     }
     if (activeProject) {
-      filtered = filtered.filter(t => t.projectId === activeProject)
+      filtered = filtered.filter((t) => t.projectId === activeProject)
     }
     if (activeLabel) {
-      filtered = filtered.filter(t => t.labelIds?.includes(activeLabel))
+      filtered = filtered.filter((t) => t.labelIds?.includes(activeLabel))
     }
-    
+
     return filtered
   }
 
@@ -376,26 +326,45 @@ export default function Home() {
     return getFilteredTasks(activeView)
   })()
 
-  const getProjectTaskCount = (projectId: string) => 
-    tasks.filter(t => t.projectId === projectId).length
+  const getProjectTaskCount = (projectId: string) =>
+    tasks.filter((t) => t.projectId === projectId).length
 
   const getLabelTaskCount = (labelId: string) =>
-    tasks.filter(t => t.labelIds?.includes(labelId)).length
+    tasks.filter((t) => t.labelIds?.includes(labelId)).length
 
-  // Group labels by their group property
-  const labelGroups = labels.reduce((acc, label) => {
-    const group = label.group || 'Other'
-    if (!acc[group]) acc[group] = []
-    acc[group].push(label)
-    return acc
-  }, {} as Record<string, Label[]>)
+  const labelGroups = labels.reduce(
+    (acc, label) => {
+      const group = label.group || 'Other'
+      if (!acc[group]) acc[group] = []
+      acc[group].push(label)
+      return acc
+    },
+    {} as Record<string, Label[]>
+  )
+
+  const getStatusIcon = (status: Status) => {
+    switch (status) {
+      case 'backlog':
+        return <BacklogIcon size={14} />
+      case 'planning':
+        return <PlanningIcon size={14} />
+      case 'todo':
+        return <TodoIcon size={14} />
+      case 'in_progress':
+        return <InProgressIcon size={14} />
+      case 'review':
+        return <ReviewIcon size={14} />
+      case 'done':
+        return <DoneIcon size={14} />
+    }
+  }
 
   return (
     <SidebarProvider>
-      <Sidebar className="border-r border-border">
+      <Sidebar variant="inset" collapsible="icon" className="border-r border-border">
         <SidebarHeader className="p-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <span className="text-xl">⚡</span>
+            <FlashLightIcon size={20} className="text-primary" />
             <span className="font-semibold text-foreground">Jarvis Tasks</span>
           </div>
         </SidebarHeader>
@@ -404,11 +373,15 @@ export default function Home() {
             <SidebarGroupLabel>Views</SidebarGroupLabel>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton 
+                <SidebarMenuButton
                   isActive={activeView === 'all' && !activeProject && !activeLabel}
-                  onClick={() => { setActiveView('all'); setActiveProject(null); setActiveLabel(null) }}
+                  onClick={() => {
+                    setActiveView('all')
+                    setActiveProject(null)
+                    setActiveLabel(null)
+                  }}
                 >
-                  <span>📊</span>
+                  <AllIssuesIcon size={14} />
                   <span>All Issues</span>
                   <span className="ml-auto text-xs text-muted-foreground">{tasks.length}</span>
                 </SidebarMenuButton>
@@ -416,24 +389,32 @@ export default function Home() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   isActive={activeView === 'in_progress' && !activeProject && !activeLabel}
-                  onClick={() => { setActiveView('in_progress'); setActiveProject(null); setActiveLabel(null) }}
+                  onClick={() => {
+                    setActiveView('in_progress')
+                    setActiveProject(null)
+                    setActiveLabel(null)
+                  }}
                 >
-                  <span>🔄</span>
+                  <InProgressIcon size={14} />
                   <span>Active</span>
                   <span className="ml-auto text-xs text-muted-foreground">
-                    {tasks.filter(t => t.status === 'in_progress').length}
+                    {tasks.filter((t) => t.status === 'in_progress').length}
                   </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   isActive={activeView === 'backlog' && !activeProject && !activeLabel}
-                  onClick={() => { setActiveView('backlog'); setActiveProject(null); setActiveLabel(null) }}
+                  onClick={() => {
+                    setActiveView('backlog')
+                    setActiveProject(null)
+                    setActiveLabel(null)
+                  }}
                 >
-                  <span>📋</span>
+                  <BacklogIcon size={14} />
                   <span>Backlog</span>
                   <span className="ml-auto text-xs text-muted-foreground">
-                    {tasks.filter(t => t.status === 'backlog').length}
+                    {tasks.filter((t) => t.status === 'backlog').length}
                   </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -443,13 +424,20 @@ export default function Home() {
           <SidebarGroup>
             <SidebarGroupLabel>Projects</SidebarGroupLabel>
             <SidebarMenu>
-              {projects.map(project => (
+              {projects.map((project) => (
                 <SidebarMenuItem key={project.id}>
                   <SidebarMenuButton
                     isActive={activeProject === project.id}
-                    onClick={() => { setActiveProject(project.id); setActiveView('all'); setActiveLabel(null) }}
+                    onClick={() => {
+                      setActiveProject(project.id)
+                      setActiveView('all')
+                      setActiveLabel(null)
+                    }}
                   >
-                    <span>{project.icon}</span>
+                    <span
+                      className="w-3 h-3 rounded-sm"
+                      style={{ backgroundColor: project.color }}
+                    />
                     <span>{project.name}</span>
                     <span className="ml-auto text-xs text-muted-foreground">
                       {getProjectTaskCount(project.id)}
@@ -468,14 +456,18 @@ export default function Home() {
                   <div className="px-2 py-1 text-[10px] text-muted-foreground uppercase tracking-wider">
                     {group}
                   </div>
-                  {groupLabels.map(label => (
+                  {groupLabels.map((label) => (
                     <SidebarMenuItem key={label.id}>
                       <SidebarMenuButton
                         isActive={activeLabel === label.id}
-                        onClick={() => { setActiveLabel(label.id); setActiveView('all'); setActiveProject(null) }}
+                        onClick={() => {
+                          setActiveLabel(label.id)
+                          setActiveView('all')
+                          setActiveProject(null)
+                        }}
                       >
-                        <span 
-                          className="w-2 h-2 rounded-full" 
+                        <span
+                          className="w-2 h-2 rounded-full"
                           style={{ backgroundColor: label.color }}
                         />
                         <span>{label.name}</span>
@@ -493,16 +485,20 @@ export default function Home() {
           <SidebarGroup>
             <SidebarGroupLabel>Status</SidebarGroupLabel>
             <SidebarMenu>
-              {columns.map(col => (
+              {COLUMNS.map((col) => (
                 <SidebarMenuItem key={col.id}>
                   <SidebarMenuButton
                     isActive={activeView === col.id && !activeProject && !activeLabel}
-                    onClick={() => { setActiveView(col.id); setActiveProject(null); setActiveLabel(null) }}
+                    onClick={() => {
+                      setActiveView(col.id)
+                      setActiveProject(null)
+                      setActiveLabel(null)
+                    }}
                   >
-                    <span>{col.icon}</span>
+                    {getStatusIcon(col.id)}
                     <span>{col.title}</span>
                     <span className="ml-auto text-xs text-muted-foreground">
-                      {tasks.filter(t => t.status === col.id).length}
+                      {tasks.filter((t) => t.status === col.id).length}
                     </span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -512,67 +508,69 @@ export default function Home() {
         </SidebarContent>
         <SidebarFooter className="p-3 border-t border-border">
           <button
-            onClick={() => { fetchAnalytics(); setShowAnalytics(true) }}
+            onClick={() => {
+              fetchAnalytics()
+              setShowAnalytics(true)
+            }}
             className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
           >
-            <span>📊</span>
+            <AnalyticsIcon size={14} />
             <span>Analytics</span>
           </button>
           <button
             onClick={() => setShowSettings(true)}
             className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
           >
-            <span>⚙️</span>
+            <SettingsIcon size={14} />
             <span>Settings</span>
           </button>
-          <div className="text-xs text-muted-foreground text-center mt-2">
-            Built with ⚡ by Jarvis
+          <div className="text-xs text-muted-foreground text-center mt-2 flex items-center justify-center gap-1">
+            Built with <FlashLightIcon size={10} /> by Jarvis
           </div>
         </SidebarFooter>
       </Sidebar>
 
       <SidebarInset className="flex flex-col">
-        {/* Header */}
         <header className="flex items-center justify-between p-2 md:p-4 border-b border-border bg-background">
           <div className="flex items-center gap-2 md:gap-4">
             <SidebarTrigger />
             <h1 className="text-base md:text-lg font-semibold truncate max-w-[150px] md:max-w-none">
               {activeLabel
-                ? labels.find(l => l.id === activeLabel)?.name || 'Label'
-                : activeProject 
-                  ? projects.find(p => p.id === activeProject)?.name || 'Project'
-                  : activeView === 'all' 
-                    ? 'All Issues' 
-                    : columns.find(c => c.id === activeView)?.title || 'Tasks'}
+                ? labels.find((l) => l.id === activeLabel)?.name || 'Label'
+                : activeProject
+                  ? projects.find((p) => p.id === activeProject)?.name || 'Project'
+                  : activeView === 'all'
+                    ? 'All Issues'
+                    : COLUMNS.find((c) => c.id === activeView)?.title || 'Tasks'}
             </h1>
             {activeProject && (
-              <span className="text-sm text-muted-foreground">
-                {projects.find(p => p.id === activeProject)?.icon}
-              </span>
+              <span
+                className="w-3 h-3 rounded-sm"
+                style={{ backgroundColor: projects.find((p) => p.id === activeProject)?.color }}
+              />
             )}
             {activeLabel && (
-              <span 
+              <span
                 className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: labels.find(l => l.id === activeLabel)?.color }}
+                style={{ backgroundColor: labels.find((l) => l.id === activeLabel)?.color }}
               />
             )}
           </div>
           <div className="flex items-center gap-2 md:gap-4">
-            {/* Search */}
             <div className="relative hidden md:block">
               {showSearch ? (
                 <div className="flex items-center gap-2">
-                  <input
+                  <Input
                     type="text"
                     value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search tasks..."
-                    className="w-48 px-3 py-1 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-48"
                     autoFocus
                     onBlur={() => {
                       if (!searchQuery) setShowSearch(false)
                     }}
-                    onKeyDown={e => {
+                    onKeyDown={(e) => {
                       if (e.key === 'Escape') {
                         setShowSearch(false)
                         setSearchQuery('')
@@ -581,10 +579,13 @@ export default function Home() {
                   />
                   {searchQuery && (
                     <button
-                      onClick={() => { setSearchQuery(''); setShowSearch(false) }}
+                      onClick={() => {
+                        setSearchQuery('')
+                        setShowSearch(false)
+                      }}
                       className="text-muted-foreground hover:text-foreground"
                     >
-                      ✕
+                      <CloseIcon size={14} />
                     </button>
                   )}
                 </div>
@@ -594,33 +595,32 @@ export default function Home() {
                   className="flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                   title="Search (press /)"
                 >
-                  🔍 <kbd className="px-1 py-0.5 rounded bg-muted font-mono text-[10px]">/</kbd>
+                  <SearchIcon size={14} /> <Kbd>/</Kbd>
                 </button>
               )}
             </div>
-            {/* View Toggle - Hidden on mobile */}
             <div className="hidden md:flex items-center bg-muted rounded-md p-0.5">
               <button
                 onClick={() => setViewMode('board')}
-                className={`px-2 py-1 rounded text-xs transition-colors ${
-                  viewMode === 'board' 
-                    ? 'bg-background text-foreground shadow-sm' 
+                className={`px-2 py-1 rounded text-xs transition-colors flex items-center gap-1 ${
+                  viewMode === 'board'
+                    ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
                 title="Board view"
               >
-                📋 Board
+                <BoardIcon size={14} /> Board
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`px-2 py-1 rounded text-xs transition-colors ${
-                  viewMode === 'list' 
-                    ? 'bg-background text-foreground shadow-sm' 
+                className={`px-2 py-1 rounded text-xs transition-colors flex items-center gap-1 ${
+                  viewMode === 'list'
+                    ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
                 title="List view"
               >
-                📝 List
+                <ListIcon size={14} /> List
               </button>
             </div>
             <button
@@ -628,15 +628,14 @@ export default function Home() {
               className="hidden md:block text-xs text-muted-foreground hover:text-foreground transition-colors"
               title="Keyboard shortcuts"
             >
-              <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">?</kbd>
+              <Kbd>?</Kbd>
             </button>
-            {/* Notifications Bell */}
             <button
               onClick={() => setShowNotifications(true)}
               className="relative p-1.5 rounded hover:bg-muted transition-colors"
               title="Notifications"
             >
-              <span>🔔</span>
+              <NotificationIcon size={16} />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-primary text-[10px] font-medium flex items-center justify-center text-primary-foreground">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -647,38 +646,40 @@ export default function Home() {
               <span className="w-2 h-2 rounded-full bg-green-500"></span>
               <span>System Online</span>
             </div>
-            <span className="hidden md:inline text-sm text-muted-foreground">{filteredTasks.length} tasks</span>
+            <span className="hidden md:inline text-sm text-muted-foreground">
+              {filteredTasks.length} tasks
+            </span>
             <span className="md:hidden text-xs text-muted-foreground">{filteredTasks.length}</span>
-            <Button 
+            <Button
               size="sm"
-              onClick={() => { 
-                setEditingTask({ 
+              onClick={() => {
+                setEditingTask({
                   status: 'todo',
                   assignee: settings.defaultAssignee,
                   projectId: activeProject || undefined,
-                  labelIds: activeLabel ? [activeLabel] : undefined
+                  labelIds: activeLabel ? [activeLabel] : undefined,
                 } as Task)
-                setShowModal(true) 
+                setShowModal(true)
               }}
             >
-              + New Task
+              <AddIcon size={14} className="mr-1" />
+              New Task
             </Button>
           </div>
         </header>
 
-        {/* Board View (Kanban) */}
         {viewMode === 'board' && !activeProject && !activeLabel && activeView === 'all' ? (
           <div className="flex flex-col md:flex-row gap-4 p-4 overflow-x-auto flex-1">
-            {columns.map(column => (
-              <div 
-                key={column.id} 
+            {COLUMNS.map((column) => (
+              <div
+                key={column.id}
                 className="flex-1 min-w-full md:min-w-[280px] flex flex-col gap-3 p-3 rounded-lg bg-muted/30"
                 onDragOver={handleDragOver}
                 onDrop={() => handleDrop(column.id)}
               >
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-2">
-                    <span>{column.icon}</span>
+                    {getStatusIcon(column.id)}
                     <span className="font-medium text-sm">{column.title}</span>
                   </div>
                   <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
@@ -687,42 +688,44 @@ export default function Home() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  {getTasksByStatus(column.id).map(task => (
+                  {getTasksByStatus(column.id).map((task) => (
                     <TaskCard
                       key={task.id}
                       task={task}
-                      project={projects.find(p => p.id === task.projectId)}
-                      labels={labels.filter(l => task.labelIds?.includes(l.id))}
+                      project={projects.find((p) => p.id === task.projectId)}
+                      labels={labels.filter((l) => task.labelIds?.includes(l.id))}
                       onDragStart={() => handleDragStart(task)}
-                      onClick={() => { setEditingTask(task); setShowModal(true) }}
+                      onClick={() => {
+                        setEditingTask(task)
+                        setShowModal(true)
+                      }}
                       compact={settings.compactView}
                     />
                   ))}
                 </div>
 
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   className="w-full border border-dashed border-border text-muted-foreground hover:text-foreground"
-                  onClick={() => { 
-                    setEditingTask({ 
+                  onClick={() => {
+                    setEditingTask({
                       status: column.id,
                       assignee: settings.defaultAssignee,
                       projectId: activeProject || undefined,
-                      labelIds: activeLabel ? [activeLabel] : undefined
+                      labelIds: activeLabel ? [activeLabel] : undefined,
                     } as Task)
-                    setShowModal(true) 
+                    setShowModal(true)
                   }}
                 >
-                  + Add Task
+                  <AddIcon size={14} className="mr-1" />
+                  Add Task
                 </Button>
               </div>
             ))}
           </div>
         ) : (
-          /* List View */
           <div className="flex flex-col p-4">
-            {/* List Header */}
             <div className="flex items-center gap-4 px-3 py-2 text-xs text-muted-foreground font-medium border-b border-border mb-2">
               <div className="w-8"></div>
               <div className="flex-1">Title</div>
@@ -731,31 +734,30 @@ export default function Home() {
               <div className="w-28">Assignee</div>
               <div className="w-24 text-right">Updated</div>
             </div>
-            {/* List Items */}
             <div className="flex flex-col gap-1">
-              {filteredTasks.map(task => (
+              {filteredTasks.map((task) => (
                 <TaskCard
                   key={task.id}
                   task={task}
-                  project={projects.find(p => p.id === task.projectId)}
-                  labels={labels.filter(l => task.labelIds?.includes(l.id))}
+                  project={projects.find((p) => p.id === task.projectId)}
+                  labels={labels.filter((l) => task.labelIds?.includes(l.id))}
                   onDragStart={() => handleDragStart(task)}
-                  onClick={() => { setEditingTask(task); setShowModal(true) }}
+                  onClick={() => {
+                    setEditingTask(task)
+                    setShowModal(true)
+                  }}
                   variant="list"
                   compact={settings.compactView}
                 />
               ))}
             </div>
             {filteredTasks.length === 0 && (
-              <div className="text-center text-muted-foreground py-8">
-                No tasks in this view
-              </div>
+              <div className="text-center text-muted-foreground py-8">No tasks in this view</div>
             )}
           </div>
         )}
       </SidebarInset>
 
-      {/* Task Dialog */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -767,16 +769,21 @@ export default function Home() {
             labels={labels}
             onSave={saveTask}
             onDelete={editingTask?.id ? () => deleteTask(editingTask.id) : undefined}
-            onClose={() => { setShowModal(false); setEditingTask(null) }}
+            onClose={() => {
+              setShowModal(false)
+              setEditingTask(null)
+            }}
           />
         </DialogContent>
       </Dialog>
 
-      {/* Keyboard Shortcuts Help */}
       <Dialog open={showShortcuts} onOpenChange={setShowShortcuts}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>⌨️ Keyboard Shortcuts</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyboardIcon size={18} />
+              Keyboard Shortcuts
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -799,105 +806,114 @@ export default function Home() {
               </div>
             </div>
             <div className="pt-2 text-xs text-muted-foreground text-center border-t border-border">
-              Press <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">?</kbd> anytime to toggle this help
+              Press <Kbd>?</Kbd> anytime to toggle this help
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Analytics Dialog */}
       <Dialog open={showAnalytics} onOpenChange={setShowAnalytics}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>📊 Analytics Dashboard</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <AnalyticsIcon size={18} />
+              Analytics Dashboard
+            </DialogTitle>
           </DialogHeader>
           {analytics && (
             <div className="space-y-6">
-              {/* Overview Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="p-4 rounded-lg bg-muted/50 border border-border">
                   <div className="text-2xl font-bold">{analytics.overview.total}</div>
                   <div className="text-xs text-muted-foreground">Total Tasks</div>
                 </div>
                 <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-                  <div className="text-2xl font-bold text-green-500">{analytics.overview.completionRate}%</div>
+                  <div className="text-2xl font-bold text-green-500">
+                    {analytics.overview.completionRate}%
+                  </div>
                   <div className="text-xs text-muted-foreground">Completion Rate</div>
                 </div>
                 <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                  <div className="text-2xl font-bold text-blue-500">{analytics.overview.recentlyCompleted}</div>
+                  <div className="text-2xl font-bold text-blue-500">
+                    {analytics.overview.recentlyCompleted}
+                  </div>
                   <div className="text-xs text-muted-foreground">Completed (7 days)</div>
                 </div>
                 <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
-                  <div className="text-2xl font-bold text-red-500">{analytics.overview.overdue}</div>
+                  <div className="text-2xl font-bold text-red-500">
+                    {analytics.overview.overdue}
+                  </div>
                   <div className="text-xs text-muted-foreground">Overdue</div>
                 </div>
               </div>
 
-              {/* Status Breakdown */}
               <div>
                 <h3 className="text-sm font-medium mb-3">Status Breakdown</h3>
                 <div className="space-y-2">
-                  {[
-                    { key: 'backlog', label: '📋 Backlog', color: 'bg-gray-500' },
-                    { key: 'planning', label: '🎯 Planning', color: 'bg-purple-500' },
-                    { key: 'todo', label: '📝 To Do', color: 'bg-yellow-500' },
-                    { key: 'in_progress', label: '🔄 In Progress', color: 'bg-blue-500' },
-                    { key: 'review', label: '👀 Review', color: 'bg-orange-500' },
-                    { key: 'done', label: '✅ Done', color: 'bg-green-500' },
-                  ].map(status => {
-                    const count = analytics.status[status.key]
-                    const percentage = analytics.overview.total > 0 
-                      ? Math.round((count / analytics.overview.total) * 100) 
-                      : 0
+                  {COLUMNS.map((column) => {
+                    const count = analytics.status[column.id] || 0
+                    const percentage =
+                      analytics.overview.total > 0
+                        ? Math.round((count / analytics.overview.total) * 100)
+                        : 0
                     return (
-                      <div key={status.key} className="flex items-center gap-3">
-                        <span className="text-sm w-32">{status.label}</span>
+                      <div key={column.id} className="flex items-center gap-3">
+                        <span className="text-sm w-32 flex items-center gap-2">
+                          {getStatusIcon(column.id)}
+                          {column.title}
+                        </span>
                         <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full ${status.color} transition-all`}
+                          <div
+                            className="h-full bg-primary transition-all"
                             style={{ width: `${percentage}%` }}
                           />
                         </div>
-                        <span className="text-sm text-muted-foreground w-12 text-right">{count}</span>
+                        <span className="text-sm text-muted-foreground w-12 text-right">
+                          {count}
+                        </span>
                       </div>
                     )
                   })}
                 </div>
               </div>
 
-              {/* Priority Breakdown */}
               <div>
                 <h3 className="text-sm font-medium mb-3">Priority Breakdown</h3>
                 <div className="flex gap-4">
                   <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-red-500"></span>
+                    <span className="w-3 h-3 rounded-full bg-orange-500"></span>
                     <span className="text-sm">High: {analytics.priority.high}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-yellow-500"></span>
+                    <span className="w-3 h-3 rounded-full bg-indigo-500"></span>
                     <span className="text-sm">Medium: {analytics.priority.medium}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                    <span className="w-3 h-3 rounded-full bg-gray-500"></span>
                     <span className="text-sm">Low: {analytics.priority.low}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Projects */}
               {analytics.projects.length > 0 && (
                 <div>
                   <h3 className="text-sm font-medium mb-3">By Project</h3>
                   <div className="space-y-2">
-                    {analytics.projects.map((project: any) => (
-                      <div key={project.id} className="flex items-center justify-between p-2 rounded bg-muted/30">
+                    {analytics.projects.map((project) => (
+                      <div
+                        key={project.id}
+                        className="flex items-center justify-between p-2 rounded bg-muted/30"
+                      >
                         <div className="flex items-center gap-2">
-                          <span>{project.icon}</span>
-                          <span className="text-sm">{project.name}</span>
+                          <span>{project.name}</span>
                         </div>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                          <span>✅ {project.done}</span>
-                          <span>🔄 {project.inProgress}</span>
+                          <span className="flex items-center gap-1">
+                            <CheckIcon size={12} /> {project.done}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <InProgressIcon size={12} /> {project.inProgress}
+                          </span>
                           <span>Total: {project.total}</span>
                         </div>
                       </div>
@@ -906,16 +922,15 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Top Labels */}
               {analytics.labels.length > 0 && (
                 <div>
                   <h3 className="text-sm font-medium mb-3">Top Labels</h3>
                   <div className="flex flex-wrap gap-2">
-                    {analytics.labels.slice(0, 8).map((label: any) => (
-                      <span 
+                    {analytics.labels.slice(0, 8).map((label) => (
+                      <span
                         key={label.id}
                         className="px-2 py-1 rounded text-xs"
-                        style={{ backgroundColor: label.color + '30', color: label.color }}
+                        style={{ backgroundColor: `${label.color}30`, color: label.color }}
                       >
                         {label.name}: {label.count}
                       </span>
@@ -928,12 +943,14 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
-      {/* Notifications Dialog */}
       <Dialog open={showNotifications} onOpenChange={setShowNotifications}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
-              <span>🔔 Notifications</span>
+              <span className="flex items-center gap-2">
+                <NotificationIcon size={18} />
+                Notifications
+              </span>
               {unreadCount > 0 && (
                 <button
                   onClick={markAllNotificationsRead}
@@ -947,22 +964,21 @@ export default function Home() {
           <div className="max-h-[400px] overflow-y-auto space-y-2">
             {notifications.length === 0 ? (
               <div className="text-center text-muted-foreground py-8">
-                <div className="text-2xl mb-2">🔔</div>
+                <NotificationIcon size={24} className="mx-auto mb-2" />
                 <div>No notifications</div>
                 <div className="text-xs mt-1">Comments and updates will appear here</div>
               </div>
             ) : (
-              notifications.map(notif => (
+              notifications.map((notif) => (
                 <div
                   key={notif.id}
                   className={`p-3 rounded-lg text-sm cursor-pointer transition-colors ${
-                    notif.isRead 
-                      ? 'bg-muted/50 hover:bg-muted' 
+                    notif.isRead
+                      ? 'bg-muted/50 hover:bg-muted'
                       : 'bg-primary/10 border border-primary/20 hover:bg-primary/20'
                   }`}
                   onClick={() => {
-                    // Find and open the task
-                    const task = tasks.find(t => t.id === notif.taskId)
+                    const task = tasks.find((t) => t.id === notif.taskId)
                     if (task) {
                       setEditingTask(task)
                       setShowModal(true)
@@ -971,7 +987,11 @@ export default function Home() {
                   }}
                 >
                   <div className="flex items-center justify-between text-xs mb-1">
-                    <span className={notif.isRead ? 'text-muted-foreground' : 'text-primary font-medium'}>
+                    <span
+                      className={
+                        notif.isRead ? 'text-muted-foreground' : 'text-primary font-medium'
+                      }
+                    >
                       {notif.author} commented
                     </span>
                     <span className="text-muted-foreground">
@@ -987,24 +1007,32 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
-      {/* Settings Dialog */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>⚙️ Settings</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <SettingsIcon size={18} />
+              Settings
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-6">
             <div className="space-y-2">
               <label className="text-sm font-medium">Default Assignee</label>
-              <select 
-                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
+              <Select
                 value={settings.defaultAssignee}
-                onChange={e => updateSettings({ defaultAssignee: e.target.value as Agent })}
+                onValueChange={(v) => updateSettings({ defaultAssignee: v as Agent })}
               >
-                {agents.map(agent => (
-                  <option key={agent.id} value={agent.id}>{agent.name}</option>
-                ))}
-              </select>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {AGENTS.map((agent) => (
+                    <SelectItem key={agent.id} value={agent.id}>
+                      {agent.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <p className="text-xs text-muted-foreground">
                 New tasks will be assigned to this agent by default
               </p>
@@ -1017,18 +1045,10 @@ export default function Home() {
                   Display tasks marked as done in the board view
                 </p>
               </div>
-              <button
-                onClick={() => updateSettings({ showCompletedTasks: !settings.showCompletedTasks })}
-                className={`w-11 h-6 rounded-full transition-colors ${
-                  settings.showCompletedTasks ? 'bg-primary' : 'bg-muted'
-                }`}
-              >
-                <span 
-                  className={`block w-5 h-5 rounded-full bg-white transition-transform ${
-                    settings.showCompletedTasks ? 'translate-x-5' : 'translate-x-0.5'
-                  }`}
-                />
-              </button>
+              <Switch
+                checked={settings.showCompletedTasks}
+                onCheckedChange={(checked) => updateSettings({ showCompletedTasks: checked })}
+              />
             </div>
 
             <div className="flex items-center justify-between">
@@ -1038,18 +1058,10 @@ export default function Home() {
                   Show smaller task cards with less detail
                 </p>
               </div>
-              <button
-                onClick={() => updateSettings({ compactView: !settings.compactView })}
-                className={`w-11 h-6 rounded-full transition-colors ${
-                  settings.compactView ? 'bg-primary' : 'bg-muted'
-                }`}
-              >
-                <span 
-                  className={`block w-5 h-5 rounded-full bg-white transition-transform ${
-                    settings.compactView ? 'translate-x-5' : 'translate-x-0.5'
-                  }`}
-                />
-              </button>
+              <Switch
+                checked={settings.compactView}
+                onCheckedChange={(checked) => updateSettings({ compactView: checked })}
+              />
             </div>
 
             <div className="pt-4 border-t border-border">
@@ -1060,8 +1072,8 @@ export default function Home() {
                     Dark theme optimized for reduced eye strain
                   </p>
                 </div>
-                <span className="px-2 py-1 rounded bg-muted text-xs">
-                  🌙 Dark
+                <span className="px-2 py-1 rounded bg-muted text-xs flex items-center gap-1">
+                  <MoonIcon size={12} /> Dark
                 </span>
               </div>
             </div>
@@ -1073,502 +1085,5 @@ export default function Home() {
         </DialogContent>
       </Dialog>
     </SidebarProvider>
-  )
-}
-
-function ShortcutRow({ keys, description }: { keys: string[]; description: string }) {
-  return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-muted-foreground">{description}</span>
-      <div className="flex gap-1">
-        {keys.map((key, i) => (
-          <kbd 
-            key={i}
-            className="px-2 py-0.5 rounded bg-muted text-xs font-mono"
-          >
-            {key}
-          </kbd>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function TaskCard({ 
-  task, 
-  project,
-  labels,
-  onDragStart, 
-  onClick,
-  variant = 'card',
-  compact = false
-}: { 
-  task: Task
-  project?: Project
-  labels: Label[]
-  onDragStart: () => void
-  onClick: () => void
-  variant?: 'card' | 'list'
-  compact?: boolean
-}) {
-  const agent = agents.find(a => a.id === task.assignee)
-  const statusInfo = columns.find(c => c.id === task.status)
-  
-  if (variant === 'list') {
-    return (
-      <div 
-        className="flex items-center gap-4 px-3 py-2 rounded-md cursor-pointer hover:bg-accent/50 transition-colors"
-        draggable
-        onDragStart={onDragStart}
-        onClick={onClick}
-      >
-        {/* Priority Indicator */}
-        <div 
-          className="w-2 h-2 rounded-full flex-shrink-0" 
-          style={{ backgroundColor: priorityColors[task.priority] }}
-        />
-        
-        {/* Title & Labels */}
-        <div className="flex-1 min-w-0 flex items-center gap-2">
-          <span className="font-medium text-sm truncate">{task.title}</span>
-          {labels.slice(0, 2).map(label => (
-            <span 
-              key={label.id}
-              className="px-1.5 py-0.5 rounded text-[10px] flex-shrink-0"
-              style={{ backgroundColor: label.color + '30', color: label.color }}
-            >
-              {label.name}
-            </span>
-          ))}
-          {labels.length > 2 && (
-            <span className="text-[10px] text-muted-foreground">+{labels.length - 2}</span>
-          )}
-        </div>
-        
-        {/* Status */}
-        <div className="w-24 text-xs text-muted-foreground flex-shrink-0">
-          {statusInfo?.icon} {statusInfo?.title}
-        </div>
-        
-        {/* Project */}
-        <div className="w-32 flex-shrink-0">
-          {project ? (
-            <span 
-              className="px-2 py-0.5 rounded text-xs"
-              style={{ backgroundColor: project.color + '20', color: project.color }}
-            >
-              {project.icon} {project.name}
-            </span>
-          ) : (
-            <span className="text-xs text-muted-foreground">-</span>
-          )}
-        </div>
-        
-        {/* Assignee */}
-        <div className="w-28 text-xs text-muted-foreground truncate flex-shrink-0">
-          {agent?.name || task.assignee}
-        </div>
-        
-        {/* Date */}
-        <div className="w-24 text-xs text-muted-foreground text-right flex-shrink-0">
-          {new Date(task.updatedAt).toLocaleDateString()}
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <Card 
-      className="cursor-pointer hover:bg-accent/50 hover:border-primary/50 transition-all"
-      draggable
-      onDragStart={onDragStart}
-      onClick={onClick}
-    >
-      <CardContent className="p-3 relative">
-        <div 
-          className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg" 
-          style={{ backgroundColor: priorityColors[task.priority] }}
-        />
-        <div className="pl-2">
-          <div className="flex flex-wrap gap-1 mb-1.5">
-            {project && (
-              <span 
-                className="px-1.5 py-0.5 rounded text-[10px]"
-                style={{ backgroundColor: project.color + '20', color: project.color }}
-              >
-                {project.icon} {project.name}
-              </span>
-            )}
-            {labels.map(label => (
-              <span 
-                key={label.id}
-                className="px-1.5 py-0.5 rounded text-[10px]"
-                style={{ backgroundColor: label.color + '30', color: label.color }}
-              >
-                {label.name}
-              </span>
-            ))}
-          </div>
-          <div className="font-medium text-sm mb-1">{task.title}</div>
-          {task.description && (
-            <div className="text-xs text-muted-foreground line-clamp-2 mb-2">
-              {task.description}
-            </div>
-          )}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
-            <span className="px-2 py-0.5 rounded bg-muted">
-              {agent?.name || task.assignee}
-            </span>
-            {task.dueDate && (
-              <span className={`px-2 py-0.5 rounded ${
-                new Date(task.dueDate) < new Date() ? 'bg-red-500/20 text-red-400' : 'bg-muted'
-              }`}>
-                📅 {new Date(task.dueDate).toLocaleDateString()}
-              </span>
-            )}
-            {task.estimate && (
-              <span className="px-2 py-0.5 rounded bg-muted">
-                ⏱️ {task.estimate}h
-              </span>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-function TaskForm({ 
-  task, 
-  projects,
-  labels,
-  onSave, 
-  onDelete,
-  onClose 
-}: { 
-  task: Task | null
-  projects: Project[]
-  labels: Label[]
-  onSave: (task: Partial<Task>) => void
-  onDelete?: () => void
-  onClose: () => void 
-}) {
-  const [title, setTitle] = useState(task?.title || '')
-  const [description, setDescription] = useState(task?.description || '')
-  const [priority, setPriority] = useState<Priority>(task?.priority || 'medium')
-  const [assignee, setAssignee] = useState<Agent>(task?.assignee || 'jarvis')
-  const [status, setStatus] = useState<Status>(task?.status || 'todo')
-  const [projectId, setProjectId] = useState<string>(task?.projectId || '')
-  const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>(task?.labelIds || [])
-  const [dueDate, setDueDate] = useState<string>(task?.dueDate || '')
-  const [estimate, setEstimate] = useState<string>(task?.estimate?.toString() || '')
-  const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>(task?.recurrenceType || 'none')
-  const [timeSpent, setTimeSpent] = useState<string>(task?.timeSpent?.toString() || '0')
-  const [comments, setComments] = useState<Comment[]>(task?.comments || [])
-  const [newComment, setNewComment] = useState('')
-
-  const toggleLabel = (labelId: string) => {
-    setSelectedLabelIds(prev => 
-      prev.includes(labelId) 
-        ? prev.filter(id => id !== labelId)
-        : [...prev, labelId]
-    )
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSave({
-      id: task?.id,
-      title,
-      description,
-      priority,
-      assignee,
-      status,
-      projectId: projectId || undefined,
-      labelIds: selectedLabelIds.length > 0 ? selectedLabelIds : undefined,
-      dueDate: dueDate || undefined,
-      estimate: estimate ? parseFloat(estimate) : undefined,
-      recurrenceType: recurrenceType !== 'none' ? recurrenceType : undefined,
-      timeSpent: timeSpent ? parseInt(timeSpent) : undefined,
-      comments,
-    })
-  }
-
-  const handleAddComment = async () => {
-    if (!newComment.trim() || !task?.id) return
-
-    const comment: Comment = {
-      id: Date.now().toString(),
-      text: newComment,
-      author: 'diego',
-      createdAt: new Date().toISOString()
-    }
-
-    await fetch(`/api/tasks/${task.id}/comments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(comment)
-    })
-
-    setComments([...comments, comment])
-    setNewComment('')
-  }
-
-  // Group labels by their group property
-  const labelGroups = labels.reduce((acc, label) => {
-    const group = label.group || 'Other'
-    if (!acc[group]) acc[group] = []
-    acc[group].push(label)
-    return acc
-  }, {} as Record<string, Label[]>)
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Title</label>
-        <Input
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-          placeholder="Task title..."
-          required
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Description</label>
-        <textarea
-          className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm resize-y"
-          value={description}
-          onChange={e => setDescription(e.target.value)}
-          placeholder="Task description..."
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Project</label>
-          <select 
-            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
-            value={projectId} 
-            onChange={e => setProjectId(e.target.value)}
-          >
-            <option value="">No Project</option>
-            {projects.map(project => (
-              <option key={project.id} value={project.id}>
-                {project.icon} {project.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Priority</label>
-          <select 
-            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
-            value={priority} 
-            onChange={e => setPriority(e.target.value as Priority)}
-          >
-            <option value="high">🔴 High</option>
-            <option value="medium">🟡 Medium</option>
-            <option value="low">🟢 Low</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Labels</label>
-        <div className="flex flex-wrap gap-2 p-2 border border-input rounded-md bg-background min-h-[40px]">
-          {Object.entries(labelGroups).map(([group, groupLabels]) => (
-            <div key={group} className="flex flex-wrap gap-1">
-              {groupLabels.map(label => (
-                <button
-                  key={label.id}
-                  type="button"
-                  onClick={() => toggleLabel(label.id)}
-                  className={`px-2 py-1 rounded text-xs transition-all ${
-                    selectedLabelIds.includes(label.id)
-                      ? 'ring-2 ring-offset-1 ring-offset-background'
-                      : 'opacity-60 hover:opacity-100'
-                  }`}
-                  style={{ 
-                    backgroundColor: label.color + '30', 
-                    color: label.color
-                  }}
-                >
-                  {label.name}
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Assignee</label>
-          <select 
-            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
-            value={assignee} 
-            onChange={e => setAssignee(e.target.value as Agent)}
-          >
-            {agents.map(agent => (
-              <option key={agent.id} value={agent.id}>{agent.name}</option>
-            ))}
-          </select>
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Status</label>
-          <select 
-            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
-            value={status} 
-            onChange={e => setStatus(e.target.value as Status)}
-          >
-            {columns.map(col => (
-              <option key={col.id} value={col.id}>{col.icon} {col.title}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">📅 Due Date</label>
-          <input
-            type="date"
-            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
-            value={dueDate}
-            onChange={e => setDueDate(e.target.value)}
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <label className="text-sm font-medium">⏱️ Estimate (hours)</label>
-          <input
-            type="number"
-            min="0"
-            step="0.5"
-            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
-            value={estimate}
-            onChange={e => setEstimate(e.target.value)}
-            placeholder="e.g. 2"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-sm font-medium">🔄 Recurrence</label>
-        <select 
-          className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
-          value={recurrenceType} 
-          onChange={e => setRecurrenceType(e.target.value as RecurrenceType)}
-        >
-          <option value="none">No recurrence</option>
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-          <option value="yearly">Yearly</option>
-        </select>
-        {recurrenceType !== 'none' && (
-          <p className="text-xs text-muted-foreground">
-            Task will auto-recreate when marked as done
-          </p>
-        )}
-      </div>
-      
-      {task?.id && (
-        <div className="space-y-2 pt-4 border-t border-border">
-          <label className="text-sm font-medium">⏱️ Time Spent</label>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min="0"
-              className="w-20 px-3 py-2 rounded-md border border-input bg-background text-sm"
-              value={timeSpent}
-              onChange={e => setTimeSpent(e.target.value)}
-            />
-            <span className="text-sm text-muted-foreground">minutes</span>
-            <span className="text-xs text-muted-foreground ml-auto">
-              ({Math.floor(parseInt(timeSpent || '0') / 60)}h {parseInt(timeSpent || '0') % 60}m)
-            </span>
-          </div>
-        </div>
-      )}
-
-      {task?.id && (
-        <div className="space-y-3 pt-4 border-t border-border">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium">💬 Comments</h3>
-            <span className="text-xs text-muted-foreground">{comments.length} comment{comments.length !== 1 ? 's' : ''}</span>
-          </div>
-          <div className="max-h-[200px] overflow-y-auto space-y-2">
-            {comments.map(comment => {
-              const isJarvis = comment.author === 'jarvis' || comment.author === 'Jarvis'
-              const commentText = comment.text || comment.content || ''
-              return (
-                <div 
-                  key={comment.id} 
-                  className={`p-3 rounded-lg text-sm ${
-                    isJarvis 
-                      ? 'bg-primary/10 border border-primary/20' 
-                      : 'bg-muted'
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-xs mb-2">
-                    <div className="flex items-center gap-2">
-                      {isJarvis && <span>⚡</span>}
-                      <span className={isJarvis ? 'text-primary font-medium' : 'text-muted-foreground'}>
-                        {comment.author}
-                      </span>
-                    </div>
-                    <span className="text-muted-foreground">
-                      {new Date(comment.createdAt).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="whitespace-pre-wrap">{commentText}</div>
-                </div>
-              )
-            })}
-            {comments.length === 0 && (
-              <div className="text-center text-muted-foreground text-sm py-6 bg-muted/30 rounded-lg">
-                <div className="mb-1">💬</div>
-                <div>No comments yet</div>
-                <div className="text-xs mt-1">Add a comment or Jarvis will respond here</div>
-              </div>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Input
-              value={newComment}
-              onChange={e => setNewComment(e.target.value)}
-              placeholder="Add a comment..."
-              onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), handleAddComment())}
-            />
-            <Button 
-              type="button" 
-              size="sm"
-              onClick={handleAddComment}
-              disabled={!newComment.trim()}
-            >
-              Send
-            </Button>
-          </div>
-        </div>
-      )}
-      
-      <div className="flex gap-2 pt-4">
-        <Button type="submit" className="flex-1">
-          {task?.id ? 'Update' : 'Create'}
-        </Button>
-        {onDelete && (
-          <Button type="button" variant="destructive" onClick={onDelete}>
-            Delete
-          </Button>
-        )}
-        <Button type="button" variant="outline" onClick={onClose}>
-          Cancel
-        </Button>
-      </div>
-    </form>
   )
 }

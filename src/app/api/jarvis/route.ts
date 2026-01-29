@@ -1,24 +1,34 @@
-import { NextRequest, NextResponse } from 'next/server'
+import fs from 'node:fs'
+import path from 'node:path'
+import { type NextRequest, NextResponse } from 'next/server'
 import * as db from '@/db/queries'
-import fs from 'fs'
-import path from 'path'
 
-// Jarvis-specific API for task management
-// Provides simplified endpoints for common Jarvis operations
+interface JarvisNotification {
+  id: string
+  type: string
+  taskId: string
+  taskTitle: string
+  message: string
+  author: string
+  createdAt: string
+  isRead: boolean
+}
 
 const notificationsPath = path.join(process.cwd(), 'data', 'notifications.json')
 
-function getNotifications(): any[] {
+function getNotifications(): JarvisNotification[] {
   try {
     if (fs.existsSync(notificationsPath)) {
       const data = fs.readFileSync(notificationsPath, 'utf-8')
       return JSON.parse(data || '[]')
     }
-  } catch (e) {}
+  } catch {
+    return []
+  }
   return []
 }
 
-function saveNotifications(notifications: any[]) {
+function saveNotifications(notifications: JarvisNotification[]) {
   fs.writeFileSync(notificationsPath, JSON.stringify(notifications, null, 2))
 }
 
@@ -26,29 +36,27 @@ function saveNotifications(notifications: any[]) {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const action = searchParams.get('action')
-  
+
   try {
     // Get unread notifications
     const notifications = getNotifications()
-    const unreadNotifications = notifications.filter(n => !n.isRead)
-    
+    const unreadNotifications = notifications.filter((n) => !n.isRead)
+
     // Get tasks assigned to Jarvis
     const allTasks = db.getAllTasks()
-    const jarvisTasks = allTasks.filter(t => 
-      t.assignee === 'jarvis' || t.assignee === 'Jarvis'
-    )
-    
+    const jarvisTasks = allTasks.filter((t) => t.assignee === 'jarvis' || t.assignee === 'Jarvis')
+
     // Get tasks by status
-    const inProgress = jarvisTasks.filter(t => t.status === 'in_progress')
-    const todo = jarvisTasks.filter(t => t.status === 'todo')
-    const backlog = jarvisTasks.filter(t => t.status === 'backlog')
-    const done = jarvisTasks.filter(t => t.status === 'done')
-    
+    const inProgress = jarvisTasks.filter((t) => t.status === 'in_progress')
+    const todo = jarvisTasks.filter((t) => t.status === 'todo')
+    const backlog = jarvisTasks.filter((t) => t.status === 'backlog')
+    const done = jarvisTasks.filter((t) => t.status === 'done')
+
     // Format response based on action
     if (action === 'pending') {
       // Get tasks needing attention (notifications or in_progress)
       return NextResponse.json({
-        notifications: unreadNotifications.map(n => ({
+        notifications: unreadNotifications.map((n) => ({
           id: n.id,
           type: n.type,
           taskId: n.taskId,
@@ -57,7 +65,7 @@ export async function GET(request: NextRequest) {
           author: n.author,
           createdAt: n.createdAt,
         })),
-        inProgress: inProgress.map(t => ({
+        inProgress: inProgress.map((t) => ({
           id: t.id,
           title: t.title,
           status: t.status,
@@ -66,7 +74,7 @@ export async function GET(request: NextRequest) {
         needsAttention: unreadNotifications.length + inProgress.length,
       })
     }
-    
+
     if (action === 'stats') {
       return NextResponse.json({
         total: jarvisTasks.length,
@@ -77,7 +85,7 @@ export async function GET(request: NextRequest) {
         unreadNotifications: unreadNotifications.length,
       })
     }
-    
+
     // Default: return full dashboard
     return NextResponse.json({
       stats: {
@@ -92,13 +100,13 @@ export async function GET(request: NextRequest) {
         items: unreadNotifications.slice(0, 5),
       },
       tasks: {
-        inProgress: inProgress.slice(0, 5).map(t => ({
+        inProgress: inProgress.slice(0, 5).map((t) => ({
           id: t.id,
           title: t.title,
           priority: t.priority,
           projectId: t.projectId,
         })),
-        todo: todo.slice(0, 5).map(t => ({
+        todo: todo.slice(0, 5).map((t) => ({
           id: t.id,
           title: t.title,
           priority: t.priority,
@@ -117,7 +125,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { action } = body
-    
+
     switch (action) {
       case 'create_task': {
         // Quick task creation with Jarvis defaults
@@ -136,7 +144,7 @@ export async function POST(request: NextRequest) {
         })
         return NextResponse.json({ success: true, task })
       }
-      
+
       case 'update_status': {
         // Quick status update
         const task = db.updateTask(body.taskId, { status: body.status })
@@ -145,7 +153,7 @@ export async function POST(request: NextRequest) {
         }
         return NextResponse.json({ success: true, task })
       }
-      
+
       case 'add_comment': {
         // Add a comment as Jarvis
         const comment = db.createComment({
@@ -156,15 +164,17 @@ export async function POST(request: NextRequest) {
         })
         return NextResponse.json({ success: true, comment })
       }
-      
+
       case 'mark_notifications_read': {
         // Mark all notifications as read
         const notifications = getNotifications()
-        notifications.forEach(n => n.isRead = true)
+        for (const n of notifications) {
+          n.isRead = true
+        }
         saveNotifications(notifications)
         return NextResponse.json({ success: true })
       }
-      
+
       case 'start_task': {
         // Move task to in_progress
         const task = db.updateTask(body.taskId, { status: 'in_progress' })
@@ -180,7 +190,7 @@ export async function POST(request: NextRequest) {
         })
         return NextResponse.json({ success: true, task })
       }
-      
+
       case 'complete_task': {
         // Move task to done
         const task = db.updateTask(body.taskId, { status: 'done' })
@@ -196,16 +206,16 @@ export async function POST(request: NextRequest) {
         })
         return NextResponse.json({ success: true, task })
       }
-      
+
       case 'respond_to_notification': {
         // Respond to a notification by adding a comment
         const notifications = getNotifications()
-        const notification = notifications.find(n => n.id === body.notificationId)
-        
+        const notification = notifications.find((n) => n.id === body.notificationId)
+
         if (!notification) {
           return NextResponse.json({ error: 'Notification not found' }, { status: 404 })
         }
-        
+
         // Add response comment
         const comment = db.createComment({
           id: `comment-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -213,14 +223,14 @@ export async function POST(request: NextRequest) {
           author: 'jarvis',
           content: body.response,
         })
-        
+
         // Mark notification as read
         notification.isRead = true
         saveNotifications(notifications)
-        
+
         return NextResponse.json({ success: true, comment, notification })
       }
-      
+
       default:
         return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
     }
