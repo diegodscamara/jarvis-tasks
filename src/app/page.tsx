@@ -7,6 +7,7 @@ import {
   AnalyticsIcon,
   BacklogIcon,
   BoardIcon,
+  CalendarIcon,
   CheckIcon,
   CloseIcon,
   DoneIcon,
@@ -22,6 +23,7 @@ import {
   SettingsIcon,
   TodoIcon,
 } from '@/components/icons'
+import { CalendarView } from '@/components/calendar-view'
 import { CommandPalette } from '@/components/command-palette'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { ShortcutRow } from '@/components/shortcut-row'
@@ -93,7 +95,7 @@ export default function Home() {
   const [showSearch, setShowSearch] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
-  const [viewMode, setViewMode] = useState<'board' | 'list'>('board')
+  const [viewMode, setViewMode] = useState<'board' | 'list' | 'calendar'>('board')
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
 
   useEffect(() => {
@@ -721,6 +723,15 @@ export default function Home() {
               >
                 <ListIcon size={14} /> List
               </Toggle>
+              <Toggle
+                size="sm"
+                pressed={viewMode === 'calendar'}
+                onPressedChange={() => setViewMode('calendar')}
+                title="Calendar view"
+                className="data-[state=on]:bg-background data-[state=on]:shadow-sm"
+              >
+                <CalendarIcon size={14} /> Calendar
+              </Toggle>
             </div>
             <Button
               variant="ghost"
@@ -772,7 +783,26 @@ export default function Home() {
           </div>
         </header>
 
-        {viewMode === 'board' && !activeProject && !activeLabel && activeView === 'all' ? (
+        {viewMode === 'calendar' ? (
+          <CalendarView
+            tasks={tasks}
+            projects={projects}
+            onTaskClick={(task) => {
+              setEditingTask(task)
+              setShowModal(true)
+            }}
+            onDateClick={(date) => {
+              setEditingTask({
+                status: 'todo',
+                assignee: settings.defaultAssignee,
+                projectId: activeProject || undefined,
+                labelIds: activeLabel ? [activeLabel] : undefined,
+                dueDate: date.toISOString().split('T')[0],
+              } as Task)
+              setShowModal(true)
+            }}
+          />
+        ) : viewMode === 'board' && !activeProject && !activeLabel && activeView === 'all' ? (
           <div className="flex flex-col md:flex-row gap-4 p-4 overflow-x-auto flex-1">
             {COLUMNS.map((column) => (
               <div
