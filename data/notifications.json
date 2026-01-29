@@ -78,5 +78,15 @@
     "author": "Jarvis",
     "createdAt": "2026-01-29T23:18:46.616Z",
     "isRead": false
+  },
+  {
+    "id": "notif-1769728914283-u34zlc8qmg",
+    "type": "comment",
+    "taskId": "task-1769728716119-ugcsqywi2hk",
+    "taskTitle": "🔍 Global Command Palette",
+    "message": "## ✅ Implementation Complete\n\n### Summary\nAdded Cmd+K command palette for quick navigation.\n\n### Features\n- Open with Cmd+K / Ctrl+K\n- Search tasks by title\n- Browse projects and labels\n- Quick actions (create task, sign in)\n- Keyboard navigation\n\n### Files Changed\n- src/components/command-palette.tsx (new)\n- src/app/page.tsx (integration)\n\n@Diego - Command Palette complete! 🎉",
+    "author": "Jarvis",
+    "createdAt": "2026-01-29T23:21:54.283Z",
+    "isRead": false
   }
 ]
