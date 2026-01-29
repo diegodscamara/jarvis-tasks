@@ -12,7 +12,20 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: 'Jarvis Tasks',
-  description: 'Task manager for Jarvis AI agent',
+  description: 'AI-powered task management with Linear-style interface',
+  manifest: '/manifest.json',
+  themeColor: '#0a0a0a',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Jarvis Tasks',
+  },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
