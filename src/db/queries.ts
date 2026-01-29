@@ -32,6 +32,8 @@ export interface Task {
   due_date: string | null
   estimate: number | null
   parent_id: string | null
+  recurrence_type: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | null
+  recurrence_interval: number | null
   created_at: string
   updated_at: string
 }
@@ -166,6 +168,7 @@ export interface TaskWithRelations extends Task {
   comments?: Comment[]
   projectId?: string | null
   parentId?: string | null
+  recurrenceType?: string | null
 }
 
 export function getAllTasks(): TaskWithRelations[] {
@@ -183,6 +186,7 @@ export function getAllTasks(): TaskWithRelations[] {
       ...task,
       projectId: task.project_id,
       parentId: task.parent_id,
+      recurrenceType: task.recurrence_type,
       labelIds,
       comments: comments.length > 0 ? comments : undefined,
     }
@@ -208,6 +212,7 @@ export function getTaskById(id: string): TaskWithRelations | undefined {
     ...task,
     projectId: task.project_id,
     parentId: task.parent_id,
+    recurrenceType: task.recurrence_type,
     labelIds,
     comments: comments.length > 0 ? comments : undefined,
   }
@@ -225,13 +230,14 @@ export function createTask(task: {
   dueDate?: string
   estimate?: number
   parentId?: string
+  recurrenceType?: string
 }): TaskWithRelations {
   const db = getDb()
   const now = new Date().toISOString()
   
   db.prepare(`
-    INSERT INTO tasks (id, title, description, priority, status, assignee, project_id, due_date, estimate, parent_id, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO tasks (id, title, description, priority, status, assignee, project_id, due_date, estimate, parent_id, recurrence_type, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     task.id,
     task.title,
@@ -243,6 +249,7 @@ export function createTask(task: {
     task.dueDate || null,
     task.estimate || null,
     task.parentId || null,
+    task.recurrenceType || null,
     now,
     now
   )

@@ -54,6 +54,8 @@ interface Label {
   group?: string
 }
 
+type RecurrenceType = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'
+
 interface Task {
   id: string
   title: string
@@ -66,6 +68,8 @@ interface Task {
   dueDate?: string
   estimate?: number // in hours
   parentId?: string // for sub-issues
+  recurrenceType?: RecurrenceType
+  recurrenceInterval?: number
   createdAt: string
   updatedAt: string
   comments?: Comment[]
@@ -1253,6 +1257,7 @@ function TaskForm({
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>(task?.labelIds || [])
   const [dueDate, setDueDate] = useState<string>(task?.dueDate || '')
   const [estimate, setEstimate] = useState<string>(task?.estimate?.toString() || '')
+  const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>(task?.recurrenceType || 'none')
   const [comments, setComments] = useState<Comment[]>(task?.comments || [])
   const [newComment, setNewComment] = useState('')
 
@@ -1277,6 +1282,7 @@ function TaskForm({
       labelIds: selectedLabelIds.length > 0 ? selectedLabelIds : undefined,
       dueDate: dueDate || undefined,
       estimate: estimate ? parseFloat(estimate) : undefined,
+      recurrenceType: recurrenceType !== 'none' ? recurrenceType : undefined,
       comments,
     })
   }
@@ -1441,6 +1447,26 @@ function TaskForm({
             placeholder="e.g. 2"
           />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">🔄 Recurrence</label>
+        <select 
+          className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
+          value={recurrenceType} 
+          onChange={e => setRecurrenceType(e.target.value as RecurrenceType)}
+        >
+          <option value="none">No recurrence</option>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+        {recurrenceType !== 'none' && (
+          <p className="text-xs text-muted-foreground">
+            Task will auto-recreate when marked as done
+          </p>
+        )}
       </div>
       
       {task?.id && (

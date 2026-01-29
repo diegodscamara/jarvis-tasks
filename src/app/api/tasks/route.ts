@@ -14,6 +14,7 @@ export async function GET() {
       assignee: task.assignee,
       projectId: task.projectId,
       parentId: task.parentId,
+      recurrenceType: task.recurrenceType,
       labelIds: task.labelIds,
       dueDate: task.due_date,
       estimate: task.estimate,
@@ -50,6 +51,7 @@ export async function POST(request: NextRequest) {
       dueDate: body.dueDate,
       estimate: body.estimate,
       parentId: body.parentId,
+      recurrenceType: body.recurrenceType,
     })
     
     return NextResponse.json({
