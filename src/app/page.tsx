@@ -45,6 +45,13 @@ interface Project {
   lead: string
 }
 
+interface Label {
+  id: string
+  name: string
+  color: string
+  group?: string
+}
+
 interface Task {
   id: string
   title: string
@@ -53,6 +60,7 @@ interface Task {
   status: Status
   assignee: Agent
   projectId?: string
+  labelIds?: string[]
   createdAt: string
   updatedAt: string
   comments?: Comment[]
@@ -82,15 +90,18 @@ const priorityColors: Record<Priority, string> = {
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [projects, setProjects] = useState<Project[]>([])
+  const [labels, setLabels] = useState<Label[]>([])
   const [showModal, setShowModal] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [draggedTask, setDraggedTask] = useState<Task | null>(null)
   const [activeView, setActiveView] = useState<'all' | Status>('all')
   const [activeProject, setActiveProject] = useState<string | null>(null)
+  const [activeLabel, setActiveLabel] = useState<string | null>(null)
 
   useEffect(() => {
     fetchTasks()
     fetchProjects()
+    fetchLabels()
   }, [])
 
   const fetchTasks = async () => {
@@ -110,6 +121,16 @@ export default function Home() {
       setProjects(data.projects || [])
     } catch (e) {
       console.error('Failed to fetch projects', e)
+    }
+  }
+
+  const fetchLabels = async () => {
+    try {
+      const res = await fetch('/api/labels')
+      const data = await res.json()
+      setLabels(data.labels || [])
+    } catch (e) {
+      console.error('Failed to fetch labels', e)
     }
   }
 
@@ -151,24 +172,44 @@ export default function Home() {
     setDraggedTask(null)
   }
 
-  const getTasksByStatus = (status: Status) => {
-    let filtered = tasks.filter(t => t.status === status)
+  const getFilteredTasks = (statusFilter?: Status) => {
+    let filtered = tasks
+    
+    if (statusFilter) {
+      filtered = filtered.filter(t => t.status === statusFilter)
+    }
     if (activeProject) {
       filtered = filtered.filter(t => t.projectId === activeProject)
     }
+    if (activeLabel) {
+      filtered = filtered.filter(t => t.labelIds?.includes(activeLabel))
+    }
+    
     return filtered
   }
 
+  const getTasksByStatus = (status: Status) => getFilteredTasks(status)
+
   const filteredTasks = (() => {
-    let filtered = activeView === 'all' ? tasks : tasks.filter(t => t.status === activeView)
-    if (activeProject) {
-      filtered = filtered.filter(t => t.projectId === activeProject)
+    if (activeView === 'all') {
+      return getFilteredTasks()
     }
-    return filtered
+    return getFilteredTasks(activeView)
   })()
 
   const getProjectTaskCount = (projectId: string) => 
     tasks.filter(t => t.projectId === projectId).length
+
+  const getLabelTaskCount = (labelId: string) =>
+    tasks.filter(t => t.labelIds?.includes(labelId)).length
+
+  // Group labels by their group property
+  const labelGroups = labels.reduce((acc, label) => {
+    const group = label.group || 'Other'
+    if (!acc[group]) acc[group] = []
+    acc[group].push(label)
+    return acc
+  }, {} as Record<string, Label[]>)
 
   return (
     <SidebarProvider>
@@ -179,14 +220,14 @@ export default function Home() {
             <span className="font-semibold text-foreground">Jarvis Tasks</span>
           </div>
         </SidebarHeader>
-        <SidebarContent>
+        <SidebarContent className="overflow-y-auto">
           <SidebarGroup>
             <SidebarGroupLabel>Views</SidebarGroupLabel>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton 
-                  isActive={activeView === 'all' && !activeProject}
-                  onClick={() => { setActiveView('all'); setActiveProject(null) }}
+                  isActive={activeView === 'all' && !activeProject && !activeLabel}
+                  onClick={() => { setActiveView('all'); setActiveProject(null); setActiveLabel(null) }}
                 >
                   <span>📊</span>
                   <span>All Issues</span>
@@ -195,8 +236,8 @@ export default function Home() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  isActive={activeView === 'in_progress' && !activeProject}
-                  onClick={() => { setActiveView('in_progress'); setActiveProject(null) }}
+                  isActive={activeView === 'in_progress' && !activeProject && !activeLabel}
+                  onClick={() => { setActiveView('in_progress'); setActiveProject(null); setActiveLabel(null) }}
                 >
                   <span>🔄</span>
                   <span>Active</span>
@@ -207,8 +248,8 @@ export default function Home() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  isActive={activeView === 'backlog' && !activeProject}
-                  onClick={() => { setActiveView('backlog'); setActiveProject(null) }}
+                  isActive={activeView === 'backlog' && !activeProject && !activeLabel}
+                  onClick={() => { setActiveView('backlog'); setActiveProject(null); setActiveLabel(null) }}
                 >
                   <span>📋</span>
                   <span>Backlog</span>
@@ -227,7 +268,7 @@ export default function Home() {
                 <SidebarMenuItem key={project.id}>
                   <SidebarMenuButton
                     isActive={activeProject === project.id}
-                    onClick={() => { setActiveProject(project.id); setActiveView('all') }}
+                    onClick={() => { setActiveProject(project.id); setActiveView('all'); setActiveLabel(null) }}
                   >
                     <span>{project.icon}</span>
                     <span>{project.name}</span>
@@ -241,13 +282,43 @@ export default function Home() {
           </SidebarGroup>
 
           <SidebarGroup>
+            <SidebarGroupLabel>Labels</SidebarGroupLabel>
+            <SidebarMenu>
+              {Object.entries(labelGroups).map(([group, groupLabels]) => (
+                <div key={group}>
+                  <div className="px-2 py-1 text-[10px] text-muted-foreground uppercase tracking-wider">
+                    {group}
+                  </div>
+                  {groupLabels.map(label => (
+                    <SidebarMenuItem key={label.id}>
+                      <SidebarMenuButton
+                        isActive={activeLabel === label.id}
+                        onClick={() => { setActiveLabel(label.id); setActiveView('all'); setActiveProject(null) }}
+                      >
+                        <span 
+                          className="w-2 h-2 rounded-full" 
+                          style={{ backgroundColor: label.color }}
+                        />
+                        <span>{label.name}</span>
+                        <span className="ml-auto text-xs text-muted-foreground">
+                          {getLabelTaskCount(label.id)}
+                        </span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </div>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+
+          <SidebarGroup>
             <SidebarGroupLabel>Status</SidebarGroupLabel>
             <SidebarMenu>
               {columns.map(col => (
                 <SidebarMenuItem key={col.id}>
                   <SidebarMenuButton
-                    isActive={activeView === col.id && !activeProject}
-                    onClick={() => { setActiveView(col.id); setActiveProject(null) }}
+                    isActive={activeView === col.id && !activeProject && !activeLabel}
+                    onClick={() => { setActiveView(col.id); setActiveProject(null); setActiveLabel(null) }}
                   >
                     <span>{col.icon}</span>
                     <span>{col.title}</span>
@@ -273,16 +344,24 @@ export default function Home() {
           <div className="flex items-center gap-4">
             <SidebarTrigger />
             <h1 className="text-lg font-semibold">
-              {activeProject 
-                ? projects.find(p => p.id === activeProject)?.name || 'Project'
-                : activeView === 'all' 
-                  ? 'All Issues' 
-                  : columns.find(c => c.id === activeView)?.title || 'Tasks'}
+              {activeLabel
+                ? labels.find(l => l.id === activeLabel)?.name || 'Label'
+                : activeProject 
+                  ? projects.find(p => p.id === activeProject)?.name || 'Project'
+                  : activeView === 'all' 
+                    ? 'All Issues' 
+                    : columns.find(c => c.id === activeView)?.title || 'Tasks'}
             </h1>
             {activeProject && (
               <span className="text-sm text-muted-foreground">
                 {projects.find(p => p.id === activeProject)?.icon}
               </span>
+            )}
+            {activeLabel && (
+              <span 
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: labels.find(l => l.id === activeLabel)?.color }}
+              />
             )}
           </div>
           <div className="flex items-center gap-4">
@@ -296,7 +375,8 @@ export default function Home() {
               onClick={() => { 
                 setEditingTask({ 
                   status: 'todo',
-                  projectId: activeProject || undefined
+                  projectId: activeProject || undefined,
+                  labelIds: activeLabel ? [activeLabel] : undefined
                 } as Task)
                 setShowModal(true) 
               }}
@@ -307,7 +387,7 @@ export default function Home() {
         </header>
 
         {/* Board View */}
-        {!activeProject && activeView === 'all' ? (
+        {!activeProject && !activeLabel && activeView === 'all' ? (
           <div className="flex gap-4 p-4 overflow-x-auto flex-1">
             {columns.map(column => (
               <div 
@@ -332,6 +412,7 @@ export default function Home() {
                       key={task.id}
                       task={task}
                       project={projects.find(p => p.id === task.projectId)}
+                      labels={labels.filter(l => task.labelIds?.includes(l.id))}
                       onDragStart={() => handleDragStart(task)}
                       onClick={() => { setEditingTask(task); setShowModal(true) }}
                     />
@@ -343,7 +424,11 @@ export default function Home() {
                   size="sm"
                   className="w-full border border-dashed border-border text-muted-foreground hover:text-foreground"
                   onClick={() => { 
-                    setEditingTask({ status: column.id, projectId: activeProject || undefined } as Task)
+                    setEditingTask({ 
+                      status: column.id, 
+                      projectId: activeProject || undefined,
+                      labelIds: activeLabel ? [activeLabel] : undefined
+                    } as Task)
                     setShowModal(true) 
                   }}
                 >
@@ -353,13 +438,14 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          /* List View for filtered status or project */
+          /* List View for filtered status, project, or label */
           <div className="flex flex-col gap-2 p-4">
             {filteredTasks.map(task => (
               <TaskCard
                 key={task.id}
                 task={task}
                 project={projects.find(p => p.id === task.projectId)}
+                labels={labels.filter(l => task.labelIds?.includes(l.id))}
                 onDragStart={() => handleDragStart(task)}
                 onClick={() => { setEditingTask(task); setShowModal(true) }}
                 variant="list"
@@ -376,13 +462,14 @@ export default function Home() {
 
       {/* Task Dialog */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingTask?.id ? 'Edit Task' : 'New Task'}</DialogTitle>
           </DialogHeader>
           <TaskForm
             task={editingTask}
             projects={projects}
+            labels={labels}
             onSave={saveTask}
             onDelete={editingTask?.id ? () => deleteTask(editingTask.id) : undefined}
             onClose={() => { setShowModal(false); setEditingTask(null) }}
@@ -396,12 +483,14 @@ export default function Home() {
 function TaskCard({ 
   task, 
   project,
+  labels,
   onDragStart, 
   onClick,
   variant = 'card'
 }: { 
   task: Task
   project?: Project
+  labels: Label[]
   onDragStart: () => void
   onClick: () => void
   variant?: 'card' | 'list'
@@ -422,7 +511,18 @@ function TaskCard({
             style={{ backgroundColor: priorityColors[task.priority] }}
           />
           <div className="flex-1 min-w-0">
-            <div className="font-medium text-sm truncate">{task.title}</div>
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="font-medium text-sm truncate">{task.title}</span>
+              {labels.map(label => (
+                <span 
+                  key={label.id}
+                  className="px-1.5 py-0.5 rounded text-[10px]"
+                  style={{ backgroundColor: label.color + '30', color: label.color }}
+                >
+                  {label.name}
+                </span>
+              ))}
+            </div>
             {task.description && (
               <div className="text-xs text-muted-foreground truncate">{task.description}</div>
             )}
@@ -457,14 +557,25 @@ function TaskCard({
           style={{ backgroundColor: priorityColors[task.priority] }}
         />
         <div className="pl-2">
-          {project && (
-            <div 
-              className="inline-block px-1.5 py-0.5 rounded text-[10px] mb-1.5"
-              style={{ backgroundColor: project.color + '20', color: project.color }}
-            >
-              {project.icon} {project.name}
-            </div>
-          )}
+          <div className="flex flex-wrap gap-1 mb-1.5">
+            {project && (
+              <span 
+                className="px-1.5 py-0.5 rounded text-[10px]"
+                style={{ backgroundColor: project.color + '20', color: project.color }}
+              >
+                {project.icon} {project.name}
+              </span>
+            )}
+            {labels.map(label => (
+              <span 
+                key={label.id}
+                className="px-1.5 py-0.5 rounded text-[10px]"
+                style={{ backgroundColor: label.color + '30', color: label.color }}
+              >
+                {label.name}
+              </span>
+            ))}
+          </div>
           <div className="font-medium text-sm mb-1">{task.title}</div>
           {task.description && (
             <div className="text-xs text-muted-foreground line-clamp-2 mb-2">
@@ -486,12 +597,14 @@ function TaskCard({
 function TaskForm({ 
   task, 
   projects,
+  labels,
   onSave, 
   onDelete,
   onClose 
 }: { 
   task: Task | null
   projects: Project[]
+  labels: Label[]
   onSave: (task: Partial<Task>) => void
   onDelete?: () => void
   onClose: () => void 
@@ -502,8 +615,17 @@ function TaskForm({
   const [assignee, setAssignee] = useState<Agent>(task?.assignee || 'jarvis')
   const [status, setStatus] = useState<Status>(task?.status || 'todo')
   const [projectId, setProjectId] = useState<string>(task?.projectId || '')
+  const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>(task?.labelIds || [])
   const [comments, setComments] = useState<Comment[]>(task?.comments || [])
   const [newComment, setNewComment] = useState('')
+
+  const toggleLabel = (labelId: string) => {
+    setSelectedLabelIds(prev => 
+      prev.includes(labelId) 
+        ? prev.filter(id => id !== labelId)
+        : [...prev, labelId]
+    )
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -515,6 +637,7 @@ function TaskForm({
       assignee,
       status,
       projectId: projectId || undefined,
+      labelIds: selectedLabelIds.length > 0 ? selectedLabelIds : undefined,
       comments,
     })
   }
@@ -539,6 +662,14 @@ function TaskForm({
     setNewComment('')
   }
 
+  // Group labels by their group property
+  const labelGroups = labels.reduce((acc, label) => {
+    const group = label.group || 'Other'
+    if (!acc[group]) acc[group] = []
+    acc[group].push(label)
+    return acc
+  }, {} as Record<string, Label[]>)
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
@@ -561,23 +692,23 @@ function TaskForm({
         />
       </div>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Project</label>
-        <select 
-          className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
-          value={projectId} 
-          onChange={e => setProjectId(e.target.value)}
-        >
-          <option value="">No Project</option>
-          {projects.map(project => (
-            <option key={project.id} value={project.id}>
-              {project.icon} {project.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      
       <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Project</label>
+          <select 
+            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
+            value={projectId} 
+            onChange={e => setProjectId(e.target.value)}
+          >
+            <option value="">No Project</option>
+            {projects.map(project => (
+              <option key={project.id} value={project.id}>
+                {project.icon} {project.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        
         <div className="space-y-2">
           <label className="text-sm font-medium">Priority</label>
           <select 
@@ -590,7 +721,37 @@ function TaskForm({
             <option value="low">🟢 Low</option>
           </select>
         </div>
-        
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Labels</label>
+        <div className="flex flex-wrap gap-2 p-2 border border-input rounded-md bg-background min-h-[40px]">
+          {Object.entries(labelGroups).map(([group, groupLabels]) => (
+            <div key={group} className="flex flex-wrap gap-1">
+              {groupLabels.map(label => (
+                <button
+                  key={label.id}
+                  type="button"
+                  onClick={() => toggleLabel(label.id)}
+                  className={`px-2 py-1 rounded text-xs transition-all ${
+                    selectedLabelIds.includes(label.id)
+                      ? 'ring-2 ring-offset-1 ring-offset-background'
+                      : 'opacity-60 hover:opacity-100'
+                  }`}
+                  style={{ 
+                    backgroundColor: label.color + '30', 
+                    color: label.color
+                  }}
+                >
+                  {label.name}
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <label className="text-sm font-medium">Assignee</label>
           <select 
@@ -603,19 +764,19 @@ function TaskForm({
             ))}
           </select>
         </div>
-      </div>
-      
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Status</label>
-        <select 
-          className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
-          value={status} 
-          onChange={e => setStatus(e.target.value as Status)}
-        >
-          {columns.map(col => (
-            <option key={col.id} value={col.id}>{col.icon} {col.title}</option>
-          ))}
-        </select>
+        
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Status</label>
+          <select 
+            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
+            value={status} 
+            onChange={e => setStatus(e.target.value as Status)}
+          >
+            {columns.map(col => (
+              <option key={col.id} value={col.id}>{col.icon} {col.title}</option>
+            ))}
+          </select>
+        </div>
       </div>
       
       {task?.id && (
