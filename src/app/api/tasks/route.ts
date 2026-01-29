@@ -15,6 +15,7 @@ export async function GET() {
       projectId: task.projectId,
       parentId: task.parentId,
       recurrenceType: task.recurrenceType,
+      timeSpent: task.timeSpent,
       labelIds: task.labelIds,
       dueDate: task.due_date,
       estimate: task.estimate,
@@ -95,6 +96,7 @@ export async function PUT(request: NextRequest) {
       labelIds: updates.labelIds,
       dueDate: updates.dueDate,
       estimate: updates.estimate,
+      timeSpent: updates.timeSpent,
     })
     
     if (!task) {

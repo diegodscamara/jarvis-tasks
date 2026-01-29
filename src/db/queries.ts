@@ -34,6 +34,7 @@ export interface Task {
   parent_id: string | null
   recurrence_type: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | null
   recurrence_interval: number | null
+  time_spent: number | null
   created_at: string
   updated_at: string
 }
@@ -169,6 +170,7 @@ export interface TaskWithRelations extends Task {
   projectId?: string | null
   parentId?: string | null
   recurrenceType?: string | null
+  timeSpent?: number | null
 }
 
 export function getAllTasks(): TaskWithRelations[] {
@@ -187,6 +189,7 @@ export function getAllTasks(): TaskWithRelations[] {
       projectId: task.project_id,
       parentId: task.parent_id,
       recurrenceType: task.recurrence_type,
+      timeSpent: task.time_spent,
       labelIds,
       comments: comments.length > 0 ? comments : undefined,
     }
@@ -213,6 +216,7 @@ export function getTaskById(id: string): TaskWithRelations | undefined {
     projectId: task.project_id,
     parentId: task.parent_id,
     recurrenceType: task.recurrence_type,
+    timeSpent: task.time_spent,
     labelIds,
     comments: comments.length > 0 ? comments : undefined,
   }
@@ -277,6 +281,7 @@ export function updateTask(id: string, updates: Partial<{
   dueDate: string | null
   estimate: number | null
   parentId: string | null
+  timeSpent: number | null
 }>): TaskWithRelations | undefined {
   const db = getDb()
   const existing = getTaskById(id)
@@ -295,6 +300,7 @@ export function updateTask(id: string, updates: Partial<{
       due_date = ?,
       estimate = ?,
       parent_id = ?,
+      time_spent = ?,
       updated_at = ?
     WHERE id = ?
   `).run(
@@ -307,6 +313,7 @@ export function updateTask(id: string, updates: Partial<{
     updates.dueDate !== undefined ? updates.dueDate : existing.due_date,
     updates.estimate !== undefined ? updates.estimate : existing.estimate,
     updates.parentId !== undefined ? updates.parentId : existing.parent_id,
+    updates.timeSpent !== undefined ? updates.timeSpent : existing.time_spent,
     now,
     id
   )

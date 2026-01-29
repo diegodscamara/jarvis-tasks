@@ -70,6 +70,7 @@ interface Task {
   parentId?: string // for sub-issues
   recurrenceType?: RecurrenceType
   recurrenceInterval?: number
+  timeSpent?: number // minutes
   createdAt: string
   updatedAt: string
   comments?: Comment[]
@@ -1258,6 +1259,7 @@ function TaskForm({
   const [dueDate, setDueDate] = useState<string>(task?.dueDate || '')
   const [estimate, setEstimate] = useState<string>(task?.estimate?.toString() || '')
   const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>(task?.recurrenceType || 'none')
+  const [timeSpent, setTimeSpent] = useState<string>(task?.timeSpent?.toString() || '0')
   const [comments, setComments] = useState<Comment[]>(task?.comments || [])
   const [newComment, setNewComment] = useState('')
 
@@ -1283,6 +1285,7 @@ function TaskForm({
       dueDate: dueDate || undefined,
       estimate: estimate ? parseFloat(estimate) : undefined,
       recurrenceType: recurrenceType !== 'none' ? recurrenceType : undefined,
+      timeSpent: timeSpent ? parseInt(timeSpent) : undefined,
       comments,
     })
   }
@@ -1469,6 +1472,25 @@ function TaskForm({
         )}
       </div>
       
+      {task?.id && (
+        <div className="space-y-2 pt-4 border-t border-border">
+          <label className="text-sm font-medium">⏱️ Time Spent</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min="0"
+              className="w-20 px-3 py-2 rounded-md border border-input bg-background text-sm"
+              value={timeSpent}
+              onChange={e => setTimeSpent(e.target.value)}
+            />
+            <span className="text-sm text-muted-foreground">minutes</span>
+            <span className="text-xs text-muted-foreground ml-auto">
+              ({Math.floor(parseInt(timeSpent || '0') / 60)}h {parseInt(timeSpent || '0') % 60}m)
+            </span>
+          </div>
+        </div>
+      )}
+
       {task?.id && (
         <div className="space-y-3 pt-4 border-t border-border">
           <div className="flex items-center justify-between">
