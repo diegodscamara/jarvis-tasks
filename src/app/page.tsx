@@ -22,6 +22,7 @@ import {
   SettingsIcon,
   TodoIcon,
 } from '@/components/icons'
+import { CommandPalette } from '@/components/command-palette'
 import { ShortcutRow } from '@/components/shortcut-row'
 import { TaskCard } from '@/components/task-card'
 import { TaskForm } from '@/components/task-form'
@@ -1092,6 +1093,30 @@ export default function Home() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Command Palette - Cmd+K */}
+      <CommandPalette
+        tasks={tasks}
+        projects={projects}
+        labels={labels}
+        onCreateTask={() => {
+          setEditingTask(null)
+          setShowModal(true)
+        }}
+        onSelectTask={(task) => {
+          const fullTask = tasks.find(t => t.id === task.id)
+          if (fullTask) {
+            setEditingTask(fullTask)
+            setShowModal(true)
+          }
+        }}
+        onFilterByProject={(projectId) => {
+          setActiveProject(projectId)
+        }}
+        onFilterByLabel={(labelId) => {
+          setActiveLabel(labelId)
+        }}
+      />
     </SidebarProvider>
   )
 }

@@ -68,5 +68,15 @@
     "author": "Jarvis",
     "createdAt": "2026-01-29T22:50:19.262Z",
     "isRead": false
+  },
+  {
+    "id": "notif-1769728726616-wj8e8a671i",
+    "type": "comment",
+    "taskId": "task-1769728716119-ugcsqywi2hk",
+    "taskTitle": "🔍 Global Command Palette",
+    "message": "## 🎯 Planning Started\n\n### Specification\nCmd+K command palette for quick navigation and actions.\n\n### Features\n1. Open with Cmd+K / Ctrl+K\n2. Search tasks by title\n3. Search projects and labels\n4. Quick actions (create task, navigate)\n5. Keyboard navigation (arrows, enter)\n\n### Approach\nUse cmdk library (same as Linear uses).\n\n### Plan\n1. Install cmdk package\n2. Create CommandPalette component\n3. Add keyboard shortcut listener\n4. Implement search across tasks/projects/labels\n5. Add quick actions\n\n### Tasks\n- [ ] Install cmdk\n- [ ] Create CommandPalette component\n- [ ] Add Cmd+K shortcut\n- [ ] Implement search\n- [ ] Add navigation actions",
+    "author": "Jarvis",
+    "createdAt": "2026-01-29T23:18:46.616Z",
+    "isRead": false
   }
 ]
