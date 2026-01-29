@@ -104,7 +104,7 @@
       "title": "🎨 Linear Theme System",
       "description": "Research and implement Linear's design system:\n- Dark theme as primary (like Linear)\n- Color tokens: primary (#5E6AD2), background (#0D0D0D), surface (#1A1A1A), text (#ECECEC)\n- Typography: Inter font, proper weights\n- Border radius: 6px (Linear's standard)\n- Shadows and depth system\n- Status colors matching Linear\n\nResources:\n- Inspect Linear's app CSS\n- Their UI is consistent across web/desktop",
       "priority": "high",
-      "status": "todo",
+      "status": "done",
       "assignee": "jarvis",
       "project": "jarvis-tasks",
       "labels": [
@@ -119,7 +119,7 @@
       "title": "📐 Sidebar Navigation Layout",
       "description": "Implement Linear-style sidebar:\n- Collapsible sidebar (toggle with cmd+b)\n- Workspace section at top\n- Projects section with icons\n- Views section (All issues, Active, Backlog)\n- Team/Assignee filters\n- Settings at bottom\n- Keyboard shortcuts (g then i for issues, etc.)",
       "priority": "high",
-      "status": "todo",
+      "status": "done",
       "assignee": "jarvis",
       "project": "jarvis-tasks",
       "labels": [
@@ -134,7 +134,7 @@
       "title": "📁 Projects System",
       "description": "Add project management:\n- Create/edit/delete projects\n- Project icons and colors\n- Default projects: AdPilot Pro, Luxor, Jarvis\n- Project-based filtering\n- Project settings page\n- Lead/members assignment",
       "priority": "high",
-      "status": "todo",
+      "status": "in_progress",
       "assignee": "jarvis",
       "project": "jarvis-tasks",
       "labels": [

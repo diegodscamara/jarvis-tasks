@@ -1,0 +1,40 @@
+{
+  "projects": [
+    {
+      "id": "proj-adpilot",
+      "name": "AdPilot Pro",
+      "description": "Amazon PPC automation platform",
+      "icon": "🚀",
+      "color": "#5E6AD2",
+      "lead": "diego",
+      "createdAt": "2026-01-29T00:00:00.000Z"
+    },
+    {
+      "id": "proj-luxor",
+      "name": "Luxor",
+      "description": "Bitcoin mining company projects",
+      "icon": "⛏️",
+      "color": "#F59E0B",
+      "lead": "diego",
+      "createdAt": "2026-01-29T00:00:00.000Z"
+    },
+    {
+      "id": "proj-jarvis",
+      "name": "Jarvis",
+      "description": "AI assistant development",
+      "icon": "⚡",
+      "color": "#4EA8DE",
+      "lead": "jarvis",
+      "createdAt": "2026-01-29T00:00:00.000Z"
+    },
+    {
+      "id": "proj-personal",
+      "name": "Personal",
+      "description": "Personal tasks and projects",
+      "icon": "🏠",
+      "color": "#4CB782",
+      "lead": "diego",
+      "createdAt": "2026-01-29T00:00:00.000Z"
+    }
+  ]
+}

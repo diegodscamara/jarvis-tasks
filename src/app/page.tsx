@@ -22,6 +22,7 @@ import {
   SidebarMenuButton,
   SidebarInset,
   SidebarTrigger,
+  SidebarFooter,
 } from '@/components/ui/sidebar'
 
 type Priority = 'high' | 'medium' | 'low'
@@ -35,6 +36,15 @@ interface Comment {
   createdAt: string
 }
 
+interface Project {
+  id: string
+  name: string
+  description: string
+  icon: string
+  color: string
+  lead: string
+}
+
 interface Task {
   id: string
   title: string
@@ -42,6 +52,7 @@ interface Task {
   priority: Priority
   status: Status
   assignee: Agent
+  projectId?: string
   createdAt: string
   updatedAt: string
   comments?: Comment[]
@@ -70,13 +81,16 @@ const priorityColors: Record<Priority, string> = {
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([])
+  const [projects, setProjects] = useState<Project[]>([])
   const [showModal, setShowModal] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [draggedTask, setDraggedTask] = useState<Task | null>(null)
   const [activeView, setActiveView] = useState<'all' | Status>('all')
+  const [activeProject, setActiveProject] = useState<string | null>(null)
 
   useEffect(() => {
     fetchTasks()
+    fetchProjects()
   }, [])
 
   const fetchTasks = async () => {
@@ -86,6 +100,16 @@ export default function Home() {
       setTasks(data.tasks || [])
     } catch (e) {
       console.error('Failed to fetch tasks', e)
+    }
+  }
+
+  const fetchProjects = async () => {
+    try {
+      const res = await fetch('/api/projects')
+      const data = await res.json()
+      setProjects(data.projects || [])
+    } catch (e) {
+      console.error('Failed to fetch projects', e)
     }
   }
 
@@ -127,12 +151,24 @@ export default function Home() {
     setDraggedTask(null)
   }
 
-  const getTasksByStatus = (status: Status) => 
-    tasks.filter(t => t.status === status)
+  const getTasksByStatus = (status: Status) => {
+    let filtered = tasks.filter(t => t.status === status)
+    if (activeProject) {
+      filtered = filtered.filter(t => t.projectId === activeProject)
+    }
+    return filtered
+  }
 
-  const filteredTasks = activeView === 'all' 
-    ? tasks 
-    : tasks.filter(t => t.status === activeView)
+  const filteredTasks = (() => {
+    let filtered = activeView === 'all' ? tasks : tasks.filter(t => t.status === activeView)
+    if (activeProject) {
+      filtered = filtered.filter(t => t.projectId === activeProject)
+    }
+    return filtered
+  })()
+
+  const getProjectTaskCount = (projectId: string) => 
+    tasks.filter(t => t.projectId === projectId).length
 
   return (
     <SidebarProvider>
@@ -149,8 +185,8 @@ export default function Home() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton 
-                  isActive={activeView === 'all'}
-                  onClick={() => setActiveView('all')}
+                  isActive={activeView === 'all' && !activeProject}
+                  onClick={() => { setActiveView('all'); setActiveProject(null) }}
                 >
                   <span>📊</span>
                   <span>All Issues</span>
@@ -159,43 +195,64 @@ export default function Home() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  isActive={activeView === 'in_progress'}
-                  onClick={() => setActiveView('in_progress')}
+                  isActive={activeView === 'in_progress' && !activeProject}
+                  onClick={() => { setActiveView('in_progress'); setActiveProject(null) }}
                 >
                   <span>🔄</span>
                   <span>Active</span>
                   <span className="ml-auto text-xs text-muted-foreground">
-                    {getTasksByStatus('in_progress').length}
+                    {tasks.filter(t => t.status === 'in_progress').length}
                   </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  isActive={activeView === 'backlog'}
-                  onClick={() => setActiveView('backlog')}
+                  isActive={activeView === 'backlog' && !activeProject}
+                  onClick={() => { setActiveView('backlog'); setActiveProject(null) }}
                 >
                   <span>📋</span>
                   <span>Backlog</span>
                   <span className="ml-auto text-xs text-muted-foreground">
-                    {getTasksByStatus('backlog').length}
+                    {tasks.filter(t => t.status === 'backlog').length}
                   </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
+
+          <SidebarGroup>
+            <SidebarGroupLabel>Projects</SidebarGroupLabel>
+            <SidebarMenu>
+              {projects.map(project => (
+                <SidebarMenuItem key={project.id}>
+                  <SidebarMenuButton
+                    isActive={activeProject === project.id}
+                    onClick={() => { setActiveProject(project.id); setActiveView('all') }}
+                  >
+                    <span>{project.icon}</span>
+                    <span>{project.name}</span>
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      {getProjectTaskCount(project.id)}
+                    </span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+
           <SidebarGroup>
             <SidebarGroupLabel>Status</SidebarGroupLabel>
             <SidebarMenu>
               {columns.map(col => (
                 <SidebarMenuItem key={col.id}>
                   <SidebarMenuButton
-                    isActive={activeView === col.id}
-                    onClick={() => setActiveView(col.id)}
+                    isActive={activeView === col.id && !activeProject}
+                    onClick={() => { setActiveView(col.id); setActiveProject(null) }}
                   >
                     <span>{col.icon}</span>
                     <span>{col.title}</span>
                     <span className="ml-auto text-xs text-muted-foreground">
-                      {getTasksByStatus(col.id).length}
+                      {tasks.filter(t => t.status === col.id).length}
                     </span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -203,6 +260,11 @@ export default function Home() {
             </SidebarMenu>
           </SidebarGroup>
         </SidebarContent>
+        <SidebarFooter className="p-3 border-t border-border">
+          <div className="text-xs text-muted-foreground text-center">
+            Built with ⚡ by Jarvis
+          </div>
+        </SidebarFooter>
       </Sidebar>
 
       <SidebarInset className="flex flex-col">
@@ -211,19 +273,31 @@ export default function Home() {
           <div className="flex items-center gap-4">
             <SidebarTrigger />
             <h1 className="text-lg font-semibold">
-              {activeView === 'all' ? 'All Issues' : columns.find(c => c.id === activeView)?.title || 'Tasks'}
+              {activeProject 
+                ? projects.find(p => p.id === activeProject)?.name || 'Project'
+                : activeView === 'all' 
+                  ? 'All Issues' 
+                  : columns.find(c => c.id === activeView)?.title || 'Tasks'}
             </h1>
+            {activeProject && (
+              <span className="text-sm text-muted-foreground">
+                {projects.find(p => p.id === activeProject)?.icon}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span className="w-2 h-2 rounded-full bg-green-500"></span>
               <span>System Online</span>
             </div>
-            <span className="text-sm text-muted-foreground">{tasks.length} tasks</span>
+            <span className="text-sm text-muted-foreground">{filteredTasks.length} tasks</span>
             <Button 
               size="sm"
               onClick={() => { 
-                setEditingTask({ status: 'todo' } as Task)
+                setEditingTask({ 
+                  status: 'todo',
+                  projectId: activeProject || undefined
+                } as Task)
                 setShowModal(true) 
               }}
             >
@@ -233,7 +307,7 @@ export default function Home() {
         </header>
 
         {/* Board View */}
-        {activeView === 'all' ? (
+        {!activeProject && activeView === 'all' ? (
           <div className="flex gap-4 p-4 overflow-x-auto flex-1">
             {columns.map(column => (
               <div 
@@ -257,6 +331,7 @@ export default function Home() {
                     <TaskCard
                       key={task.id}
                       task={task}
+                      project={projects.find(p => p.id === task.projectId)}
                       onDragStart={() => handleDragStart(task)}
                       onClick={() => { setEditingTask(task); setShowModal(true) }}
                     />
@@ -268,7 +343,7 @@ export default function Home() {
                   size="sm"
                   className="w-full border border-dashed border-border text-muted-foreground hover:text-foreground"
                   onClick={() => { 
-                    setEditingTask({ status: column.id } as Task)
+                    setEditingTask({ status: column.id, projectId: activeProject || undefined } as Task)
                     setShowModal(true) 
                   }}
                 >
@@ -278,12 +353,13 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          /* List View for filtered status */
+          /* List View for filtered status or project */
           <div className="flex flex-col gap-2 p-4">
             {filteredTasks.map(task => (
               <TaskCard
                 key={task.id}
                 task={task}
+                project={projects.find(p => p.id === task.projectId)}
                 onDragStart={() => handleDragStart(task)}
                 onClick={() => { setEditingTask(task); setShowModal(true) }}
                 variant="list"
@@ -306,6 +382,7 @@ export default function Home() {
           </DialogHeader>
           <TaskForm
             task={editingTask}
+            projects={projects}
             onSave={saveTask}
             onDelete={editingTask?.id ? () => deleteTask(editingTask.id) : undefined}
             onClose={() => { setShowModal(false); setEditingTask(null) }}
@@ -318,11 +395,13 @@ export default function Home() {
 
 function TaskCard({ 
   task, 
+  project,
   onDragStart, 
   onClick,
   variant = 'card'
 }: { 
   task: Task
+  project?: Project
   onDragStart: () => void
   onClick: () => void
   variant?: 'card' | 'list'
@@ -349,6 +428,14 @@ function TaskCard({
             )}
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            {project && (
+              <span 
+                className="px-2 py-0.5 rounded"
+                style={{ backgroundColor: project.color + '20', color: project.color }}
+              >
+                {project.icon} {project.name}
+              </span>
+            )}
             <span className="px-2 py-0.5 rounded bg-muted">{agent?.name || task.assignee}</span>
             <span>{new Date(task.updatedAt).toLocaleDateString()}</span>
           </div>
@@ -370,6 +457,14 @@ function TaskCard({
           style={{ backgroundColor: priorityColors[task.priority] }}
         />
         <div className="pl-2">
+          {project && (
+            <div 
+              className="inline-block px-1.5 py-0.5 rounded text-[10px] mb-1.5"
+              style={{ backgroundColor: project.color + '20', color: project.color }}
+            >
+              {project.icon} {project.name}
+            </div>
+          )}
           <div className="font-medium text-sm mb-1">{task.title}</div>
           {task.description && (
             <div className="text-xs text-muted-foreground line-clamp-2 mb-2">
@@ -390,11 +485,13 @@ function TaskCard({
 
 function TaskForm({ 
   task, 
+  projects,
   onSave, 
   onDelete,
   onClose 
 }: { 
   task: Task | null
+  projects: Project[]
   onSave: (task: Partial<Task>) => void
   onDelete?: () => void
   onClose: () => void 
@@ -404,6 +501,7 @@ function TaskForm({
   const [priority, setPriority] = useState<Priority>(task?.priority || 'medium')
   const [assignee, setAssignee] = useState<Agent>(task?.assignee || 'jarvis')
   const [status, setStatus] = useState<Status>(task?.status || 'todo')
+  const [projectId, setProjectId] = useState<string>(task?.projectId || '')
   const [comments, setComments] = useState<Comment[]>(task?.comments || [])
   const [newComment, setNewComment] = useState('')
 
@@ -416,6 +514,7 @@ function TaskForm({
       priority,
       assignee,
       status,
+      projectId: projectId || undefined,
       comments,
     })
   }
@@ -460,6 +559,22 @@ function TaskForm({
           onChange={e => setDescription(e.target.value)}
           placeholder="Task description..."
         />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Project</label>
+        <select 
+          className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
+          value={projectId} 
+          onChange={e => setProjectId(e.target.value)}
+        >
+          <option value="">No Project</option>
+          {projects.map(project => (
+            <option key={project.id} value={project.id}>
+              {project.icon} {project.name}
+            </option>
+          ))}
+        </select>
       </div>
       
       <div className="grid grid-cols-2 gap-4">
