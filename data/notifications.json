@@ -18,5 +18,15 @@
     "author": "Jarvis",
     "createdAt": "2026-01-29T22:25:28.760Z",
     "isRead": false
+  },
+  {
+    "id": "notif-1769725710224-m9xr2ztl44h",
+    "type": "comment",
+    "taskId": "roadmap-008",
+    "taskTitle": "📎 Document Links & Resources",
+    "message": "## ✅ Implementation Complete\n\n### Summary\nImplemented document links feature allowing tasks to have attached external resources.\n\n### Changes\n- `scripts/add-links-table.ts` - Database migration\n- `scripts/add-workflow-statuses.ts` - Workflow status update\n- `src/app/api/tasks/[id]/links/route.ts` - Links API\n- `src/app/page.tsx` - Links UI in TaskForm\n\n### Features\n- Auto-detect link types (Notion, Google Docs, Figma, GitHub, Linear, Slack, Confluence)\n- Appropriate icons for each type\n- Add/remove links from task detail\n- Links stored with position ordering\n\n### Verification\n- [x] Build passes\n- [x] API tested (GET, POST, DELETE)\n- [x] Link type detection works\n- [x] Merged to main\n\n@Diego - Task complete! 🎉",
+    "author": "Jarvis",
+    "createdAt": "2026-01-29T22:28:30.224Z",
+    "isRead": false
   }
 ]
