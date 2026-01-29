@@ -105,6 +105,8 @@ export default function Home() {
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showSearch, setShowSearch] = useState(false)
   const [notifications, setNotifications] = useState<{id: string; type: string; taskId: string; taskTitle: string; message: string; author: string; createdAt: string; isRead: boolean}[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [viewMode, setViewMode] = useState<'board' | 'list'>('board')
@@ -145,11 +147,20 @@ export default function Home() {
       return
     }
 
-    // Escape - close modals
+    // Escape - close modals and search
     if (e.key === 'Escape') {
       setShowModal(false)
       setShowShortcuts(false)
+      setShowSearch(false)
+      setSearchQuery('')
       setEditingTask(null)
+      return
+    }
+
+    // / - open search
+    if (e.key === '/' && !e.metaKey && !e.ctrlKey) {
+      e.preventDefault()
+      setShowSearch(true)
       return
     }
 
@@ -313,6 +324,16 @@ export default function Home() {
 
   const getFilteredTasks = (statusFilter?: Status) => {
     let filtered = tasks
+    
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(t => 
+        t.title.toLowerCase().includes(query) ||
+        t.description?.toLowerCase().includes(query) ||
+        t.id.toLowerCase().includes(query)
+      )
+    }
     
     if (statusFilter) {
       filtered = filtered.filter(t => t.status === statusFilter)
@@ -511,6 +532,46 @@ export default function Home() {
             )}
           </div>
           <div className="flex items-center gap-4">
+            {/* Search */}
+            <div className="relative">
+              {showSearch ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="Search tasks..."
+                    className="w-48 px-3 py-1 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                    autoFocus
+                    onBlur={() => {
+                      if (!searchQuery) setShowSearch(false)
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Escape') {
+                        setShowSearch(false)
+                        setSearchQuery('')
+                      }
+                    }}
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => { setSearchQuery(''); setShowSearch(false) }}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowSearch(true)}
+                  className="flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  title="Search (press /)"
+                >
+                  🔍 <kbd className="px-1 py-0.5 rounded bg-muted font-mono text-[10px]">/</kbd>
+                </button>
+              )}
+            </div>
             {/* View Toggle */}
             <div className="flex items-center bg-muted rounded-md p-0.5">
               <button
@@ -706,6 +767,7 @@ export default function Home() {
               <div className="space-y-1">
                 <ShortcutRow keys={['c']} description="Create new task" />
                 <ShortcutRow keys={['Esc']} description="Close dialog" />
+                <ShortcutRow keys={['/']} description="Search tasks" />
                 <ShortcutRow keys={['?']} description="Show this help" />
               </div>
             </div>
