@@ -61,6 +61,8 @@ interface Task {
   assignee: Agent
   projectId?: string
   labelIds?: string[]
+  dueDate?: string
+  estimate?: number // in hours
   createdAt: string
   updatedAt: string
   comments?: Comment[]
@@ -895,11 +897,22 @@ function TaskCard({
               {task.description}
             </div>
           )}
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
             <span className="px-2 py-0.5 rounded bg-muted">
               {agent?.name || task.assignee}
             </span>
-            <span>{new Date(task.updatedAt).toLocaleDateString()}</span>
+            {task.dueDate && (
+              <span className={`px-2 py-0.5 rounded ${
+                new Date(task.dueDate) < new Date() ? 'bg-red-500/20 text-red-400' : 'bg-muted'
+              }`}>
+                📅 {new Date(task.dueDate).toLocaleDateString()}
+              </span>
+            )}
+            {task.estimate && (
+              <span className="px-2 py-0.5 rounded bg-muted">
+                ⏱️ {task.estimate}h
+              </span>
+            )}
           </div>
         </div>
       </CardContent>
@@ -929,6 +942,8 @@ function TaskForm({
   const [status, setStatus] = useState<Status>(task?.status || 'todo')
   const [projectId, setProjectId] = useState<string>(task?.projectId || '')
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>(task?.labelIds || [])
+  const [dueDate, setDueDate] = useState<string>(task?.dueDate || '')
+  const [estimate, setEstimate] = useState<string>(task?.estimate?.toString() || '')
   const [comments, setComments] = useState<Comment[]>(task?.comments || [])
   const [newComment, setNewComment] = useState('')
 
@@ -951,6 +966,8 @@ function TaskForm({
       status,
       projectId: projectId || undefined,
       labelIds: selectedLabelIds.length > 0 ? selectedLabelIds : undefined,
+      dueDate: dueDate || undefined,
+      estimate: estimate ? parseFloat(estimate) : undefined,
       comments,
     })
   }
@@ -1089,6 +1106,31 @@ function TaskForm({
               <option key={col.id} value={col.id}>{col.icon} {col.title}</option>
             ))}
           </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">📅 Due Date</label>
+          <input
+            type="date"
+            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
+            value={dueDate}
+            onChange={e => setDueDate(e.target.value)}
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <label className="text-sm font-medium">⏱️ Estimate (hours)</label>
+          <input
+            type="number"
+            min="0"
+            step="0.5"
+            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
+            value={estimate}
+            onChange={e => setEstimate(e.target.value)}
+            placeholder="e.g. 2"
+          />
         </div>
       </div>
       

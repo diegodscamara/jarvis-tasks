@@ -164,7 +164,7 @@
       "title": "📊 Task Properties Extension",
       "description": "Add Linear-style task properties:\n- Estimates (points or time)\n- Due dates with calendar picker\n- Priority (Urgent/High/Medium/Low/No priority)\n- Status workflow (Backlog → Todo → In Progress → In Review → Done → Cancelled)\n- Cycle/Sprint assignment\n- Parent task (for sub-issues)",
       "priority": "high",
-      "status": "todo",
+      "status": "in_progress",
       "assignee": "jarvis",
       "project": "jarvis-tasks",
       "labels": [
