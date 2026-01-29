@@ -31,6 +31,7 @@ export interface Task {
   project_id: string | null
   due_date: string | null
   estimate: number | null
+  parent_id: string | null
   created_at: string
   updated_at: string
 }
@@ -164,6 +165,7 @@ export interface TaskWithRelations extends Task {
   labelIds?: string[]
   comments?: Comment[]
   projectId?: string | null
+  parentId?: string | null
 }
 
 export function getAllTasks(): TaskWithRelations[] {
@@ -180,6 +182,7 @@ export function getAllTasks(): TaskWithRelations[] {
     return {
       ...task,
       projectId: task.project_id,
+      parentId: task.parent_id,
       labelIds,
       comments: comments.length > 0 ? comments : undefined,
     }
@@ -204,6 +207,7 @@ export function getTaskById(id: string): TaskWithRelations | undefined {
   return {
     ...task,
     projectId: task.project_id,
+    parentId: task.parent_id,
     labelIds,
     comments: comments.length > 0 ? comments : undefined,
   }
@@ -220,13 +224,14 @@ export function createTask(task: {
   labelIds?: string[]
   dueDate?: string
   estimate?: number
+  parentId?: string
 }): TaskWithRelations {
   const db = getDb()
   const now = new Date().toISOString()
   
   db.prepare(`
-    INSERT INTO tasks (id, title, description, priority, status, assignee, project_id, due_date, estimate, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO tasks (id, title, description, priority, status, assignee, project_id, due_date, estimate, parent_id, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     task.id,
     task.title,
@@ -237,6 +242,7 @@ export function createTask(task: {
     task.projectId || null,
     task.dueDate || null,
     task.estimate || null,
+    task.parentId || null,
     now,
     now
   )
@@ -263,6 +269,7 @@ export function updateTask(id: string, updates: Partial<{
   labelIds: string[]
   dueDate: string | null
   estimate: number | null
+  parentId: string | null
 }>): TaskWithRelations | undefined {
   const db = getDb()
   const existing = getTaskById(id)
@@ -280,6 +287,7 @@ export function updateTask(id: string, updates: Partial<{
       project_id = ?,
       due_date = ?,
       estimate = ?,
+      parent_id = ?,
       updated_at = ?
     WHERE id = ?
   `).run(
@@ -291,6 +299,7 @@ export function updateTask(id: string, updates: Partial<{
     updates.projectId !== undefined ? updates.projectId : existing.project_id,
     updates.dueDate !== undefined ? updates.dueDate : existing.due_date,
     updates.estimate !== undefined ? updates.estimate : existing.estimate,
+    updates.parentId !== undefined ? updates.parentId : existing.parent_id,
     now,
     id
   )

@@ -13,6 +13,7 @@ export async function GET() {
       status: task.status,
       assignee: task.assignee,
       projectId: task.projectId,
+      parentId: task.parentId,
       labelIds: task.labelIds,
       dueDate: task.due_date,
       estimate: task.estimate,
@@ -48,6 +49,7 @@ export async function POST(request: NextRequest) {
       labelIds: body.labelIds,
       dueDate: body.dueDate,
       estimate: body.estimate,
+      parentId: body.parentId,
     })
     
     return NextResponse.json({
@@ -58,6 +60,7 @@ export async function POST(request: NextRequest) {
       status: task.status,
       assignee: task.assignee,
       projectId: task.projectId,
+      parentId: task.parentId,
       labelIds: task.labelIds,
       dueDate: task.due_date,
       estimate: task.estimate,
@@ -85,6 +88,7 @@ export async function PUT(request: NextRequest) {
       priority: updates.priority,
       status: updates.status,
       assignee: updates.assignee,
+      parentId: updates.parentId,
       projectId: updates.projectId,
       labelIds: updates.labelIds,
       dueDate: updates.dueDate,

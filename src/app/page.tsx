@@ -65,6 +65,7 @@ interface Task {
   labelIds?: string[]
   dueDate?: string
   estimate?: number // in hours
+  parentId?: string // for sub-issues
   createdAt: string
   updatedAt: string
   comments?: Comment[]
