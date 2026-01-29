@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -97,6 +97,80 @@ export default function Home() {
   const [activeView, setActiveView] = useState<'all' | Status>('all')
   const [activeProject, setActiveProject] = useState<string | null>(null)
   const [activeLabel, setActiveLabel] = useState<string | null>(null)
+  const [showShortcuts, setShowShortcuts] = useState(false)
+
+  // Keyboard shortcuts
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Don't trigger shortcuts when typing in inputs
+    if (e.target instanceof HTMLInputElement || 
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement) {
+      return
+    }
+
+    // Escape - close modals
+    if (e.key === 'Escape') {
+      setShowModal(false)
+      setShowShortcuts(false)
+      setEditingTask(null)
+      return
+    }
+
+    // ? - show shortcuts help
+    if (e.key === '?' && e.shiftKey) {
+      e.preventDefault()
+      setShowShortcuts(prev => !prev)
+      return
+    }
+
+    // c - create new task
+    if (e.key === 'c' && !e.metaKey && !e.ctrlKey) {
+      e.preventDefault()
+      setEditingTask({ status: 'todo' } as Task)
+      setShowModal(true)
+      return
+    }
+
+    // b - toggle sidebar (handled by shadcn)
+    // 1-4 - switch to status view
+    if (e.key === '1') {
+      e.preventDefault()
+      setActiveView('backlog')
+      setActiveProject(null)
+      setActiveLabel(null)
+    }
+    if (e.key === '2') {
+      e.preventDefault()
+      setActiveView('todo')
+      setActiveProject(null)
+      setActiveLabel(null)
+    }
+    if (e.key === '3') {
+      e.preventDefault()
+      setActiveView('in_progress')
+      setActiveProject(null)
+      setActiveLabel(null)
+    }
+    if (e.key === '4') {
+      e.preventDefault()
+      setActiveView('done')
+      setActiveProject(null)
+      setActiveLabel(null)
+    }
+
+    // a - show all issues
+    if (e.key === 'a' && !e.metaKey && !e.ctrlKey) {
+      e.preventDefault()
+      setActiveView('all')
+      setActiveProject(null)
+      setActiveLabel(null)
+    }
+  }, [])
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleKeyDown])
 
   useEffect(() => {
     fetchTasks()
@@ -365,6 +439,13 @@ export default function Home() {
             )}
           </div>
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => setShowShortcuts(true)}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              title="Keyboard shortcuts"
+            >
+              <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">?</kbd>
+            </button>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span className="w-2 h-2 rounded-full bg-green-500"></span>
               <span>System Online</span>
@@ -476,7 +557,57 @@ export default function Home() {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Keyboard Shortcuts Help */}
+      <Dialog open={showShortcuts} onOpenChange={setShowShortcuts}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>⌨️ Keyboard Shortcuts</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">Navigation</h3>
+              <div className="space-y-1">
+                <ShortcutRow keys={['a']} description="All Issues" />
+                <ShortcutRow keys={['1']} description="Backlog" />
+                <ShortcutRow keys={['2']} description="To Do" />
+                <ShortcutRow keys={['3']} description="In Progress" />
+                <ShortcutRow keys={['4']} description="Done" />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">Actions</h3>
+              <div className="space-y-1">
+                <ShortcutRow keys={['c']} description="Create new task" />
+                <ShortcutRow keys={['Esc']} description="Close dialog" />
+                <ShortcutRow keys={['?']} description="Show this help" />
+              </div>
+            </div>
+            <div className="pt-2 text-xs text-muted-foreground text-center border-t border-border">
+              Press <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">?</kbd> anytime to toggle this help
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </SidebarProvider>
+  )
+}
+
+function ShortcutRow({ keys, description }: { keys: string[]; description: string }) {
+  return (
+    <div className="flex items-center justify-between text-sm">
+      <span className="text-muted-foreground">{description}</span>
+      <div className="flex gap-1">
+        {keys.map((key, i) => (
+          <kbd 
+            key={i}
+            className="px-2 py-0.5 rounded bg-muted text-xs font-mono"
+          >
+            {key}
+          </kbd>
+        ))}
+      </div>
+    </div>
   )
 }
 

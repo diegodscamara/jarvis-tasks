@@ -149,7 +149,7 @@
       "title": "🏷️ Labels & Tags System",
       "description": "Implement labeling like Linear:\n- Create/edit/delete labels\n- Label colors and icons\n- Multi-label support per task\n- Label groups (e.g., Type: bug/feature/improvement)\n- Quick label toggle from task card\n- Filter by labels",
       "priority": "medium",
-      "status": "in_progress",
+      "status": "done",
       "assignee": "jarvis",
       "project": "jarvis-tasks",
       "labels": [
@@ -285,7 +285,7 @@
       "title": "⌨️ Keyboard Shortcuts",
       "description": "Implement Linear-style keyboard navigation:\n- c = create new task\n- g then i = go to issues\n- g then p = go to projects\n- j/k = navigate up/down\n- enter = open task\n- esc = close modal\n- cmd+k = command palette\n- / = search\n- 1-4 = set priority\n- s = change status\n- a = assign\n- l = add label",
       "priority": "low",
-      "status": "backlog",
+      "status": "in_progress",
       "assignee": "jarvis",
       "project": "jarvis-tasks",
       "labels": [
