@@ -104,6 +104,8 @@ export default function Home() {
   const [activeLabel, setActiveLabel] = useState<string | null>(null)
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showAnalytics, setShowAnalytics] = useState(false)
+  const [analytics, setAnalytics] = useState<any>(null)
   const [showNotifications, setShowNotifications] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showSearch, setShowSearch] = useState(false)
@@ -251,6 +253,16 @@ export default function Home() {
       fetchNotifications()
     } catch (e) {
       console.error('Failed to mark notifications as read', e)
+    }
+  }
+
+  const fetchAnalytics = async () => {
+    try {
+      const res = await fetch('/api/analytics')
+      const data = await res.json()
+      setAnalytics(data)
+    } catch (e) {
+      console.error('Failed to fetch analytics', e)
     }
   }
 
@@ -492,6 +504,13 @@ export default function Home() {
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter className="p-3 border-t border-border">
+          <button
+            onClick={() => { fetchAnalytics(); setShowAnalytics(true) }}
+            className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <span>📊</span>
+            <span>Analytics</span>
+          </button>
           <button
             onClick={() => setShowSettings(true)}
             className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
@@ -776,6 +795,127 @@ export default function Home() {
               Press <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">?</kbd> anytime to toggle this help
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Analytics Dialog */}
+      <Dialog open={showAnalytics} onOpenChange={setShowAnalytics}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>📊 Analytics Dashboard</DialogTitle>
+          </DialogHeader>
+          {analytics && (
+            <div className="space-y-6">
+              {/* Overview Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-4 rounded-lg bg-muted/50 border border-border">
+                  <div className="text-2xl font-bold">{analytics.overview.total}</div>
+                  <div className="text-xs text-muted-foreground">Total Tasks</div>
+                </div>
+                <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <div className="text-2xl font-bold text-green-500">{analytics.overview.completionRate}%</div>
+                  <div className="text-xs text-muted-foreground">Completion Rate</div>
+                </div>
+                <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                  <div className="text-2xl font-bold text-blue-500">{analytics.overview.recentlyCompleted}</div>
+                  <div className="text-xs text-muted-foreground">Completed (7 days)</div>
+                </div>
+                <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                  <div className="text-2xl font-bold text-red-500">{analytics.overview.overdue}</div>
+                  <div className="text-xs text-muted-foreground">Overdue</div>
+                </div>
+              </div>
+
+              {/* Status Breakdown */}
+              <div>
+                <h3 className="text-sm font-medium mb-3">Status Breakdown</h3>
+                <div className="space-y-2">
+                  {[
+                    { key: 'backlog', label: '📋 Backlog', color: 'bg-gray-500' },
+                    { key: 'todo', label: '📝 To Do', color: 'bg-yellow-500' },
+                    { key: 'in_progress', label: '🔄 In Progress', color: 'bg-blue-500' },
+                    { key: 'done', label: '✅ Done', color: 'bg-green-500' },
+                  ].map(status => {
+                    const count = analytics.status[status.key]
+                    const percentage = analytics.overview.total > 0 
+                      ? Math.round((count / analytics.overview.total) * 100) 
+                      : 0
+                    return (
+                      <div key={status.key} className="flex items-center gap-3">
+                        <span className="text-sm w-32">{status.label}</span>
+                        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full ${status.color} transition-all`}
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                        <span className="text-sm text-muted-foreground w-12 text-right">{count}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Priority Breakdown */}
+              <div>
+                <h3 className="text-sm font-medium mb-3">Priority Breakdown</h3>
+                <div className="flex gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-red-500"></span>
+                    <span className="text-sm">High: {analytics.priority.high}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-yellow-500"></span>
+                    <span className="text-sm">Medium: {analytics.priority.medium}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                    <span className="text-sm">Low: {analytics.priority.low}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Projects */}
+              {analytics.projects.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium mb-3">By Project</h3>
+                  <div className="space-y-2">
+                    {analytics.projects.map((project: any) => (
+                      <div key={project.id} className="flex items-center justify-between p-2 rounded bg-muted/30">
+                        <div className="flex items-center gap-2">
+                          <span>{project.icon}</span>
+                          <span className="text-sm">{project.name}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span>✅ {project.done}</span>
+                          <span>🔄 {project.inProgress}</span>
+                          <span>Total: {project.total}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Top Labels */}
+              {analytics.labels.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Top Labels</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {analytics.labels.slice(0, 8).map((label: any) => (
+                      <span 
+                        key={label.id}
+                        className="px-2 py-1 rounded text-xs"
+                        style={{ backgroundColor: label.color + '30', color: label.color }}
+                      >
+                        {label.name}: {label.count}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
