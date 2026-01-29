@@ -13,6 +13,8 @@ interface TaskCardProps {
   onClick: () => void
   variant?: 'card' | 'list'
   compact?: boolean
+  isSelected?: boolean
+  onToggleSelect?: () => void
 }
 
 export function TaskCard({
@@ -23,6 +25,8 @@ export function TaskCard({
   onClick,
   variant = 'card',
   compact = false,
+  isSelected = false,
+  onToggleSelect,
 }: TaskCardProps) {
   const agent = AGENTS.find((a) => a.id === task.assignee)
   const statusInfo = COLUMNS.find((c) => c.id === task.status)
@@ -30,11 +34,23 @@ export function TaskCard({
   if (variant === 'list') {
     return (
       <div
-        className="flex items-center gap-4 px-3 py-2 rounded-md cursor-pointer hover:bg-accent/50 transition-colors"
+        className={`flex items-center gap-4 px-3 py-2 rounded-md cursor-pointer hover:bg-accent/50 transition-colors ${isSelected ? 'bg-primary/10' : ''}`}
         draggable
         onDragStart={onDragStart}
         onClick={onClick}
       >
+        {onToggleSelect && (
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={(e) => {
+              e.stopPropagation()
+              onToggleSelect()
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="rounded flex-shrink-0"
+          />
+        )}
         <div
           className="w-2 h-2 rounded-full flex-shrink-0"
           style={{ backgroundColor: PRIORITY_COLORS[task.priority] }}
@@ -87,12 +103,24 @@ export function TaskCard({
 
   return (
     <Card
-      className="cursor-pointer hover:bg-accent/50 hover:border-primary/50 transition-all"
+      className={`cursor-pointer hover:bg-accent/50 hover:border-primary/50 transition-all ${isSelected ? 'ring-2 ring-primary' : ''}`}
       draggable
       onDragStart={onDragStart}
       onClick={onClick}
     >
       <CardContent className={`relative ${compact ? 'p-2' : 'p-3'}`}>
+        {onToggleSelect && (
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={(e) => {
+              e.stopPropagation()
+              onToggleSelect()
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="absolute top-2 right-2 rounded z-10"
+          />
+        )}
         <div
           className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg"
           style={{ backgroundColor: PRIORITY_COLORS[task.priority] }}

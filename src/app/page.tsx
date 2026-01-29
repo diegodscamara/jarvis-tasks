@@ -73,6 +73,7 @@ import type {
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([])
+  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set())
   const [projects, setProjects] = useState<Project[]>([])
   const [labels, setLabels] = useState<Label[]>([])
   const [showModal, setShowModal] = useState(false)
@@ -198,6 +199,50 @@ export default function Home() {
       console.error('Failed to fetch notifications', e)
     }
   }, [])
+
+  // Bulk selection helpers
+  const toggleTaskSelection = (taskId: string) => {
+    setSelectedTaskIds(prev => {
+      const next = new Set(prev)
+      if (next.has(taskId)) {
+        next.delete(taskId)
+      } else {
+        next.add(taskId)
+      }
+      return next
+    })
+  }
+
+  const selectAllTasks = () => {
+    setSelectedTaskIds(new Set(filteredTasks.map(t => t.id)))
+  }
+
+  const clearSelection = () => {
+    setSelectedTaskIds(new Set())
+  }
+
+  const bulkUpdateStatus = async (status: Status) => {
+    const promises = Array.from(selectedTaskIds).map(id =>
+      fetch('/api/tasks', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status })
+      })
+    )
+    await Promise.all(promises)
+    fetchTasks()
+    clearSelection()
+  }
+
+  const bulkDelete = async () => {
+    if (!confirm(`Delete ${selectedTaskIds.size} tasks?`)) return
+    const promises = Array.from(selectedTaskIds).map(id =>
+      fetch(`/api/tasks?id=${id}`, { method: 'DELETE' })
+    )
+    await Promise.all(promises)
+    fetchTasks()
+    clearSelection()
+  }
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -539,6 +584,53 @@ export default function Home() {
       </Sidebar>
 
       <SidebarInset className="flex flex-col">
+        {/* Bulk Actions Bar */}
+        {selectedTaskIds.size > 0 && (
+          <div className="flex items-center justify-between p-2 md:p-3 border-b border-border bg-primary/10">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={selectedTaskIds.size === filteredTasks.length}
+                onChange={(e) => e.target.checked ? selectAllTasks() : clearSelection()}
+                className="rounded"
+              />
+              <span className="text-sm font-medium">{selectedTaskIds.size} selected</span>
+              <button
+                onClick={clearSelection}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Clear
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                onChange={(e) => {
+                  if (e.target.value) {
+                    bulkUpdateStatus(e.target.value as Status)
+                    e.target.value = ''
+                  }
+                }}
+                className="text-xs px-2 py-1 rounded border border-input bg-background"
+                defaultValue=""
+              >
+                <option value="" disabled>Move to...</option>
+                <option value="backlog">Backlog</option>
+                <option value="planning">Planning</option>
+                <option value="todo">To Do</option>
+                <option value="in_progress">In Progress</option>
+                <option value="review">Review</option>
+                <option value="done">Done</option>
+              </select>
+              <button
+                onClick={bulkDelete}
+                className="text-xs px-2 py-1 rounded bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        )}
+
         <header className="flex items-center justify-between p-2 md:p-4 border-b border-border bg-background">
           <div className="flex items-center gap-2 md:gap-4">
             <SidebarTrigger />
@@ -709,6 +801,8 @@ export default function Home() {
                         setShowModal(true)
                       }}
                       compact={settings.compactView}
+                      isSelected={selectedTaskIds.has(task.id)}
+                      onToggleSelect={() => toggleTaskSelection(task.id)}
                     />
                   ))}
                 </div>
@@ -757,6 +851,8 @@ export default function Home() {
                   }}
                   variant="list"
                   compact={settings.compactView}
+                  isSelected={selectedTaskIds.has(task.id)}
+                  onToggleSelect={() => toggleTaskSelection(task.id)}
                 />
               ))}
             </div>
