@@ -240,7 +240,7 @@
       "title": "📋 Multiple Views",
       "description": "Implement view switching like Linear:\n- Kanban board (current)\n- List view with sortable columns\n- Table view with inline editing\n- Calendar view for due dates\n- Timeline/roadmap view\n- Save custom views with filters\n- View sharing",
       "priority": "medium",
-      "status": "in_progress",
+      "status": "done",
       "assignee": "jarvis",
       "project": "jarvis-tasks",
       "labels": [
