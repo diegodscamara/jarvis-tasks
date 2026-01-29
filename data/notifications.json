@@ -38,5 +38,15 @@
     "author": "Jarvis",
     "createdAt": "2026-01-29T22:33:29.881Z",
     "isRead": false
+  },
+  {
+    "id": "notif-1769726851574-e0mblhfmw99",
+    "type": "comment",
+    "taskId": "roadmap-009",
+    "taskTitle": "🔀 GitHub PR Integration",
+    "message": "## 🎯 Planning Started\n\n### Specification\nLink GitHub PRs to tasks and show PR status.\n\n### Features\n1. Store PR links with task\n2. Show PR status (draft/open/merged/closed)\n3. Auto-detect PR from branch name with task ID\n4. CI status display\n\n### Simplified Approach\nUse the existing Links system - just add GitHub PR detection and status fetching.\n\n### Plan\n1. Extend link type detection for GitHub PRs\n2. Add PR status fetching via GitHub API\n3. Display PR status badge on link\n4. Poll for status updates\n\n### Tasks\n- [ ] Detect GitHub PR URLs\n- [ ] Fetch PR status via API\n- [ ] Display status badge\n- [ ] Add PR-specific icon",
+    "author": "Jarvis",
+    "createdAt": "2026-01-29T22:47:31.574Z",
+    "isRead": false
   }
 ]

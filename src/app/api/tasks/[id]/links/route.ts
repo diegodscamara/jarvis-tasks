@@ -31,6 +31,14 @@ function detectLinkType(url: string): { type: string; icon: string } {
     return { type: 'figma', icon: '🎨' }
   }
   if (urlLower.includes('github.com')) {
+    // Check if it's a PR
+    if (urlLower.includes('/pull/')) {
+      return { type: 'github-pr', icon: '🔀' }
+    }
+    // Check if it's an issue
+    if (urlLower.includes('/issues/')) {
+      return { type: 'github-issue', icon: '🐛' }
+    }
     return { type: 'github', icon: '🐙' }
   }
   if (urlLower.includes('linear.app')) {
