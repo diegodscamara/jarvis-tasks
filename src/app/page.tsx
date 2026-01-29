@@ -1,6 +1,28 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarInset,
+  SidebarTrigger,
+} from '@/components/ui/sidebar'
 
 type Priority = 'high' | 'medium' | 'low'
 type Status = 'backlog' | 'todo' | 'in_progress' | 'done'
@@ -25,11 +47,11 @@ interface Task {
   comments?: Comment[]
 }
 
-const columns: { id: Status; title: string }[] = [
-  { id: 'backlog', title: '📋 Backlog' },
-  { id: 'todo', title: '📝 To Do' },
-  { id: 'in_progress', title: '🔄 In Progress' },
-  { id: 'done', title: '✅ Done' },
+const columns: { id: Status; title: string; icon: string }[] = [
+  { id: 'backlog', title: 'Backlog', icon: '📋' },
+  { id: 'todo', title: 'To Do', icon: '📝' },
+  { id: 'in_progress', title: 'In Progress', icon: '🔄' },
+  { id: 'done', title: 'Done', icon: '✅' },
 ]
 
 const agents: { id: Agent; name: string; color: string }[] = [
@@ -40,11 +62,18 @@ const agents: { id: Agent; name: string; color: string }[] = [
   { id: 'diego', name: 'Diego', color: '#2ed573' },
 ]
 
+const priorityColors: Record<Priority, string> = {
+  high: '#F59E0B',
+  medium: '#5E6AD2',
+  low: '#6B6B6B',
+}
+
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [showModal, setShowModal] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [draggedTask, setDraggedTask] = useState<Task | null>(null)
+  const [activeView, setActiveView] = useState<'all' | Status>('all')
 
   useEffect(() => {
     fetchTasks()
@@ -62,7 +91,7 @@ export default function Home() {
 
   const saveTask = async (task: Partial<Task>) => {
     const method = task.id ? 'PUT' : 'POST'
-    const res = await fetch('/api/tasks', {
+    await fetch('/api/tasks', {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(task),
@@ -79,6 +108,8 @@ export default function Home() {
       body: JSON.stringify({ id }),
     })
     await fetchTasks()
+    setShowModal(false)
+    setEditingTask(null)
   }
 
   const handleDragStart = (task: Task) => {
@@ -99,83 +130,265 @@ export default function Home() {
   const getTasksByStatus = (status: Status) => 
     tasks.filter(t => t.status === status)
 
+  const filteredTasks = activeView === 'all' 
+    ? tasks 
+    : tasks.filter(t => t.status === activeView)
+
   return (
-    <div className="container">
-      <header>
-        <h1>⚡ Jarvis Task Manager</h1>
-        <div className="status-bar">
-          <div className="status-item">
-            <span className="status-dot"></span>
-            <span>System Online</span>
+    <SidebarProvider>
+      <Sidebar className="border-r border-border">
+        <SidebarHeader className="p-4 border-b border-border">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">⚡</span>
+            <span className="font-semibold text-foreground">Jarvis Tasks</span>
           </div>
-          <div className="status-item">
-            <span>{tasks.length} tasks</span>
-          </div>
-        </div>
-      </header>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Views</SidebarGroupLabel>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  isActive={activeView === 'all'}
+                  onClick={() => setActiveView('all')}
+                >
+                  <span>📊</span>
+                  <span>All Issues</span>
+                  <span className="ml-auto text-xs text-muted-foreground">{tasks.length}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={activeView === 'in_progress'}
+                  onClick={() => setActiveView('in_progress')}
+                >
+                  <span>🔄</span>
+                  <span>Active</span>
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {getTasksByStatus('in_progress').length}
+                  </span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={activeView === 'backlog'}
+                  onClick={() => setActiveView('backlog')}
+                >
+                  <span>📋</span>
+                  <span>Backlog</span>
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {getTasksByStatus('backlog').length}
+                  </span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+          <SidebarGroup>
+            <SidebarGroupLabel>Status</SidebarGroupLabel>
+            <SidebarMenu>
+              {columns.map(col => (
+                <SidebarMenuItem key={col.id}>
+                  <SidebarMenuButton
+                    isActive={activeView === col.id}
+                    onClick={() => setActiveView(col.id)}
+                  >
+                    <span>{col.icon}</span>
+                    <span>{col.title}</span>
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      {getTasksByStatus(col.id).length}
+                    </span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
 
-      <div className="board">
-        {columns.map(column => (
-          <div 
-            key={column.id} 
-            className="column"
-            onDragOver={handleDragOver}
-            onDrop={() => handleDrop(column.id)}
-          >
-            <div className="column-header">
-              <span className="column-title">{column.title}</span>
-              <span className="column-count">{getTasksByStatus(column.id).length}</span>
+      <SidebarInset className="flex flex-col">
+        {/* Header */}
+        <header className="flex items-center justify-between p-4 border-b border-border bg-background">
+          <div className="flex items-center gap-4">
+            <SidebarTrigger />
+            <h1 className="text-lg font-semibold">
+              {activeView === 'all' ? 'All Issues' : columns.find(c => c.id === activeView)?.title || 'Tasks'}
+            </h1>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+              <span>System Online</span>
             </div>
-
-            {getTasksByStatus(column.id).map(task => (
-              <div
-                key={task.id}
-                className={`task-card priority-${task.priority}`}
-                draggable
-                onDragStart={() => handleDragStart(task)}
-                onClick={() => { setEditingTask(task); setShowModal(true) }}
-              >
-                <div className="task-title">{task.title}</div>
-                {task.description && (
-                  <div className="task-description">{task.description}</div>
-                )}
-                <div className="task-meta">
-                  <span className="task-assignee">
-                    {agents.find(a => a.id === task.assignee)?.name || task.assignee}
-                  </span>
-                  <span className="task-date">
-                    {new Date(task.updatedAt).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-            ))}
-
-            <button 
-              className="add-task-btn"
+            <span className="text-sm text-muted-foreground">{tasks.length} tasks</span>
+            <Button 
+              size="sm"
               onClick={() => { 
-                setEditingTask({ status: column.id } as Task)
+                setEditingTask({ status: 'todo' } as Task)
                 setShowModal(true) 
               }}
             >
-              + Add Task
-            </button>
+              + New Task
+            </Button>
           </div>
-        ))}
-      </div>
+        </header>
 
-      {showModal && (
-        <TaskModal
-          task={editingTask}
-          onSave={saveTask}
-          onDelete={editingTask?.id ? () => deleteTask(editingTask.id) : undefined}
-          onClose={() => { setShowModal(false); setEditingTask(null) }}
-        />
-      )}
-    </div>
+        {/* Board View */}
+        {activeView === 'all' ? (
+          <div className="flex gap-4 p-4 overflow-x-auto flex-1">
+            {columns.map(column => (
+              <div 
+                key={column.id} 
+                className="flex-1 min-w-[280px] flex flex-col gap-3 p-3 rounded-lg bg-muted/30"
+                onDragOver={handleDragOver}
+                onDrop={() => handleDrop(column.id)}
+              >
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <span>{column.icon}</span>
+                    <span className="font-medium text-sm">{column.title}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                    {getTasksByStatus(column.id).length}
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  {getTasksByStatus(column.id).map(task => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onDragStart={() => handleDragStart(task)}
+                      onClick={() => { setEditingTask(task); setShowModal(true) }}
+                    />
+                  ))}
+                </div>
+
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="w-full border border-dashed border-border text-muted-foreground hover:text-foreground"
+                  onClick={() => { 
+                    setEditingTask({ status: column.id } as Task)
+                    setShowModal(true) 
+                  }}
+                >
+                  + Add Task
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* List View for filtered status */
+          <div className="flex flex-col gap-2 p-4">
+            {filteredTasks.map(task => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                onDragStart={() => handleDragStart(task)}
+                onClick={() => { setEditingTask(task); setShowModal(true) }}
+                variant="list"
+              />
+            ))}
+            {filteredTasks.length === 0 && (
+              <div className="text-center text-muted-foreground py-8">
+                No tasks in this view
+              </div>
+            )}
+          </div>
+        )}
+      </SidebarInset>
+
+      {/* Task Dialog */}
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editingTask?.id ? 'Edit Task' : 'New Task'}</DialogTitle>
+          </DialogHeader>
+          <TaskForm
+            task={editingTask}
+            onSave={saveTask}
+            onDelete={editingTask?.id ? () => deleteTask(editingTask.id) : undefined}
+            onClose={() => { setShowModal(false); setEditingTask(null) }}
+          />
+        </DialogContent>
+      </Dialog>
+    </SidebarProvider>
   )
 }
 
-function TaskModal({ 
+function TaskCard({ 
+  task, 
+  onDragStart, 
+  onClick,
+  variant = 'card'
+}: { 
+  task: Task
+  onDragStart: () => void
+  onClick: () => void
+  variant?: 'card' | 'list'
+}) {
+  const agent = agents.find(a => a.id === task.assignee)
+  
+  if (variant === 'list') {
+    return (
+      <Card 
+        className="cursor-pointer hover:bg-accent/50 transition-colors"
+        draggable
+        onDragStart={onDragStart}
+        onClick={onClick}
+      >
+        <CardContent className="p-3 flex items-center gap-4">
+          <div 
+            className="w-1 h-8 rounded-full" 
+            style={{ backgroundColor: priorityColors[task.priority] }}
+          />
+          <div className="flex-1 min-w-0">
+            <div className="font-medium text-sm truncate">{task.title}</div>
+            {task.description && (
+              <div className="text-xs text-muted-foreground truncate">{task.description}</div>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="px-2 py-0.5 rounded bg-muted">{agent?.name || task.assignee}</span>
+            <span>{new Date(task.updatedAt).toLocaleDateString()}</span>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card 
+      className="cursor-pointer hover:bg-accent/50 hover:border-primary/50 transition-all"
+      draggable
+      onDragStart={onDragStart}
+      onClick={onClick}
+    >
+      <CardContent className="p-3 relative">
+        <div 
+          className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg" 
+          style={{ backgroundColor: priorityColors[task.priority] }}
+        />
+        <div className="pl-2">
+          <div className="font-medium text-sm mb-1">{task.title}</div>
+          {task.description && (
+            <div className="text-xs text-muted-foreground line-clamp-2 mb-2">
+              {task.description}
+            </div>
+          )}
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span className="px-2 py-0.5 rounded bg-muted">
+              {agent?.name || task.assignee}
+            </span>
+            <span>{new Date(task.updatedAt).toLocaleDateString()}</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function TaskForm({ 
   task, 
   onSave, 
   onDelete,
@@ -213,11 +426,10 @@ function TaskModal({
     const comment: Comment = {
       id: Date.now().toString(),
       text: newComment,
-      author: 'diego', // Default to diego, could be dynamic later
+      author: 'diego',
       createdAt: new Date().toISOString()
     }
 
-    // Add comment via API
     await fetch(`/api/tasks/${task.id}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -229,107 +441,119 @@ function TaskModal({
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
-        <h2>{task?.id ? 'Edit Task' : 'New Task'}</h2>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Title</label>
-            <input
-              type="text"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder="Task title..."
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Description</label>
-            <textarea
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              placeholder="Task description..."
-            />
-          </div>
-          <div className="form-group">
-            <label>Priority</label>
-            <select value={priority} onChange={e => setPriority(e.target.value as Priority)}>
-              <option value="high">🔴 High</option>
-              <option value="medium">🟡 Medium</option>
-              <option value="low">🟢 Low</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Assignee</label>
-            <select value={assignee} onChange={e => setAssignee(e.target.value as Agent)}>
-              {agents.map(agent => (
-                <option key={agent.id} value={agent.id}>{agent.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Status</label>
-            <select value={status} onChange={e => setStatus(e.target.value as Status)}>
-              {columns.map(col => (
-                <option key={col.id} value={col.id}>{col.title}</option>
-              ))}
-            </select>
-          </div>
-          
-          {task?.id && (
-            <div className="comments-section">
-              <h3>Comments</h3>
-              <div className="comments-list">
-                {comments.map(comment => (
-                  <div key={comment.id} className="comment">
-                    <div className="comment-header">
-                      <span className="comment-author">{comment.author}</span>
-                      <span className="comment-date">
-                        {new Date(comment.createdAt).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="comment-text">{comment.text}</div>
-                  </div>
-                ))}
-                {comments.length === 0 && (
-                  <div className="no-comments">No comments yet</div>
-                )}
-              </div>
-              <div className="comment-input">
-                <input
-                  type="text"
-                  value={newComment}
-                  onChange={e => setNewComment(e.target.value)}
-                  placeholder="Add a comment..."
-                  onKeyPress={e => e.key === 'Enter' && handleAddComment()}
-                />
-                <button 
-                  type="button" 
-                  className="btn btn-primary"
-                  onClick={handleAddComment}
-                  disabled={!newComment.trim()}
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-          )}
-          
-          <div className="form-actions">
-            <button type="submit" className="btn btn-primary">
-              {task?.id ? 'Update' : 'Create'}
-            </button>
-            {onDelete && (
-              <button type="button" className="btn btn-secondary" onClick={onDelete}>
-                Delete
-              </button>
-            )}
-            <button type="button" className="btn btn-secondary" onClick={onClose}>
-              Cancel
-            </button>
-          </div>
-        </form>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Title</label>
+        <Input
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          placeholder="Task title..."
+          required
+        />
       </div>
-    </div>
+      
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Description</label>
+        <textarea
+          className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm resize-y"
+          value={description}
+          onChange={e => setDescription(e.target.value)}
+          placeholder="Task description..."
+        />
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Priority</label>
+          <select 
+            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
+            value={priority} 
+            onChange={e => setPriority(e.target.value as Priority)}
+          >
+            <option value="high">🔴 High</option>
+            <option value="medium">🟡 Medium</option>
+            <option value="low">🟢 Low</option>
+          </select>
+        </div>
+        
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Assignee</label>
+          <select 
+            className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
+            value={assignee} 
+            onChange={e => setAssignee(e.target.value as Agent)}
+          >
+            {agents.map(agent => (
+              <option key={agent.id} value={agent.id}>{agent.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Status</label>
+        <select 
+          className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
+          value={status} 
+          onChange={e => setStatus(e.target.value as Status)}
+        >
+          {columns.map(col => (
+            <option key={col.id} value={col.id}>{col.icon} {col.title}</option>
+          ))}
+        </select>
+      </div>
+      
+      {task?.id && (
+        <div className="space-y-3 pt-4 border-t border-border">
+          <h3 className="text-sm font-medium">Comments</h3>
+          <div className="max-h-[150px] overflow-y-auto space-y-2">
+            {comments.map(comment => (
+              <div key={comment.id} className="p-2 rounded bg-muted text-sm">
+                <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                  <span className="text-primary">{comment.author}</span>
+                  <span>{new Date(comment.createdAt).toLocaleString()}</span>
+                </div>
+                <div>{comment.text}</div>
+              </div>
+            ))}
+            {comments.length === 0 && (
+              <div className="text-center text-muted-foreground text-sm py-4">
+                No comments yet
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              value={newComment}
+              onChange={e => setNewComment(e.target.value)}
+              placeholder="Add a comment..."
+              onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), handleAddComment())}
+            />
+            <Button 
+              type="button" 
+              size="sm"
+              onClick={handleAddComment}
+              disabled={!newComment.trim()}
+            >
+              Add
+            </Button>
+          </div>
+        </div>
+      )}
+      
+      <div className="flex gap-2 pt-4">
+        <Button type="submit" className="flex-1">
+          {task?.id ? 'Update' : 'Create'}
+        </Button>
+        {onDelete && (
+          <Button type="button" variant="destructive" onClick={onDelete}>
+            Delete
+          </Button>
+        )}
+        <Button type="button" variant="outline" onClick={onClose}>
+          Cancel
+        </Button>
+      </div>
+    </form>
   )
 }
