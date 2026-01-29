@@ -1,5 +1,5 @@
+import path from 'node:path'
 import Database from 'better-sqlite3'
-import path from 'path'
 
 // Types
 export interface Project {
@@ -76,7 +76,16 @@ export function createProject(project: Omit<Project, 'created_at' | 'updated_at'
   db.prepare(`
     INSERT INTO projects (id, name, icon, color, description, lead, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(project.id, project.name, project.icon, project.color, project.description, project.lead, now, now)
+  `).run(
+    project.id,
+    project.name,
+    project.icon,
+    project.color,
+    project.description,
+    project.lead,
+    now,
+    now
+  )
   const newProject = getProjectById(project.id)!
   db.close()
   return newProject
@@ -86,7 +95,7 @@ export function updateProject(id: string, updates: Partial<Project>): Project | 
   const db = getDb()
   const existing = getProjectById(id)
   if (!existing) return undefined
-  
+
   const now = new Date().toISOString()
   db.prepare(`
     UPDATE projects SET name = ?, icon = ?, color = ?, description = ?, lead = ?, updated_at = ?
@@ -142,7 +151,7 @@ export function updateLabel(id: string, updates: Partial<Label>): Label | undefi
   const db = getDb()
   const existing = getLabelById(id)
   if (!existing) return undefined
-  
+
   db.prepare(`
     UPDATE labels SET name = ?, color = ?, "group" = ?
     WHERE id = ?
@@ -176,13 +185,15 @@ export interface TaskWithRelations extends Task {
 export function getAllTasks(): TaskWithRelations[] {
   const db = getDb()
   const tasks = db.prepare('SELECT * FROM tasks ORDER BY updated_at DESC').all() as Task[]
-  
+
   // Get labels for each task
   const taskLabelsStmt = db.prepare('SELECT label_id FROM task_labels WHERE task_id = ?')
-  const commentsStmt = db.prepare('SELECT * FROM comments WHERE task_id = ? ORDER BY created_at ASC')
-  
-  const tasksWithRelations = tasks.map(task => {
-    const labelIds = (taskLabelsStmt.all(task.id) as { label_id: string }[]).map(r => r.label_id)
+  const commentsStmt = db.prepare(
+    'SELECT * FROM comments WHERE task_id = ? ORDER BY created_at ASC'
+  )
+
+  const tasksWithRelations = tasks.map((task) => {
+    const labelIds = (taskLabelsStmt.all(task.id) as { label_id: string }[]).map((r) => r.label_id)
     const comments = commentsStmt.all(task.id) as Comment[]
     return {
       ...task,
@@ -194,7 +205,7 @@ export function getAllTasks(): TaskWithRelations[] {
       comments: comments.length > 0 ? comments : undefined,
     }
   })
-  
+
   db.close()
   return tasksWithRelations
 }
@@ -206,10 +217,16 @@ export function getTaskById(id: string): TaskWithRelations | undefined {
     db.close()
     return undefined
   }
-  
-  const labelIds = (db.prepare('SELECT label_id FROM task_labels WHERE task_id = ?').all(id) as { label_id: string }[]).map(r => r.label_id)
-  const comments = db.prepare('SELECT * FROM comments WHERE task_id = ? ORDER BY created_at ASC').all(id) as Comment[]
-  
+
+  const labelIds = (
+    db.prepare('SELECT label_id FROM task_labels WHERE task_id = ?').all(id) as {
+      label_id: string
+    }[]
+  ).map((r) => r.label_id)
+  const comments = db
+    .prepare('SELECT * FROM comments WHERE task_id = ? ORDER BY created_at ASC')
+    .all(id) as Comment[]
+
   db.close()
   return {
     ...task,
@@ -238,7 +255,7 @@ export function createTask(task: {
 }): TaskWithRelations {
   const db = getDb()
   const now = new Date().toISOString()
-  
+
   db.prepare(`
     INSERT INTO tasks (id, title, description, priority, status, assignee, project_id, due_date, estimate, parent_id, recurrence_type, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -257,38 +274,43 @@ export function createTask(task: {
     now,
     now
   )
-  
+
   // Insert labels
   if (task.labelIds && task.labelIds.length > 0) {
-    const insertLabel = db.prepare('INSERT OR IGNORE INTO task_labels (task_id, label_id) VALUES (?, ?)')
+    const insertLabel = db.prepare(
+      'INSERT OR IGNORE INTO task_labels (task_id, label_id) VALUES (?, ?)'
+    )
     for (const labelId of task.labelIds) {
       insertLabel.run(task.id, labelId)
     }
   }
-  
+
   db.close()
   return getTaskById(task.id)!
 }
 
-export function updateTask(id: string, updates: Partial<{
-  title: string
-  description: string
-  priority: 'low' | 'medium' | 'high'
-  status: 'backlog' | 'planning' | 'todo' | 'in_progress' | 'review' | 'done'
-  assignee: string
-  projectId: string | null
-  labelIds: string[]
-  dueDate: string | null
-  estimate: number | null
-  parentId: string | null
-  timeSpent: number | null
-}>): TaskWithRelations | undefined {
+export function updateTask(
+  id: string,
+  updates: Partial<{
+    title: string
+    description: string
+    priority: 'low' | 'medium' | 'high'
+    status: 'backlog' | 'planning' | 'todo' | 'in_progress' | 'review' | 'done'
+    assignee: string
+    projectId: string | null
+    labelIds: string[]
+    dueDate: string | null
+    estimate: number | null
+    parentId: string | null
+    timeSpent: number | null
+  }>
+): TaskWithRelations | undefined {
   const db = getDb()
   const existing = getTaskById(id)
   if (!existing) return undefined
-  
+
   const now = new Date().toISOString()
-  
+
   db.prepare(`
     UPDATE tasks SET
       title = ?,
@@ -317,18 +339,20 @@ export function updateTask(id: string, updates: Partial<{
     now,
     id
   )
-  
+
   // Update labels if provided
   if (updates.labelIds !== undefined) {
     db.prepare('DELETE FROM task_labels WHERE task_id = ?').run(id)
     if (updates.labelIds.length > 0) {
-      const insertLabel = db.prepare('INSERT OR IGNORE INTO task_labels (task_id, label_id) VALUES (?, ?)')
+      const insertLabel = db.prepare(
+        'INSERT OR IGNORE INTO task_labels (task_id, label_id) VALUES (?, ?)'
+      )
       for (const labelId of updates.labelIds) {
         insertLabel.run(id, labelId)
       }
     }
   }
-  
+
   db.close()
   return getTaskById(id)
 }
@@ -343,7 +367,9 @@ export function deleteTask(id: string): boolean {
 // Comments
 export function getCommentsForTask(taskId: string): Comment[] {
   const db = getDb()
-  const comments = db.prepare('SELECT * FROM comments WHERE task_id = ? ORDER BY created_at ASC').all(taskId) as Comment[]
+  const comments = db
+    .prepare('SELECT * FROM comments WHERE task_id = ? ORDER BY created_at ASC')
+    .all(taskId) as Comment[]
   db.close()
   return comments
 }

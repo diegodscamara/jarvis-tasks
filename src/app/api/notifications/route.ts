@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
-import Database from 'better-sqlite3'
-import path from 'path'
-import fs from 'fs'
+import fs from 'node:fs'
+import path from 'node:path'
+import { type NextRequest, NextResponse } from 'next/server'
 
 interface Notification {
   id: string
@@ -37,21 +36,19 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const unreadOnly = searchParams.get('unread') === 'true'
-    
+
     let notifications = getNotifications()
-    
+
     if (unreadOnly) {
-      notifications = notifications.filter(n => !n.isRead)
+      notifications = notifications.filter((n) => !n.isRead)
     }
-    
+
     // Sort by createdAt descending
-    notifications.sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
-    
-    return NextResponse.json({ 
+    notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+    return NextResponse.json({
       notifications,
-      unreadCount: notifications.filter(n => !n.isRead).length
+      unreadCount: notifications.filter((n) => !n.isRead).length,
     })
   } catch (error) {
     console.error('Error fetching notifications:', error)
@@ -64,7 +61,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const notifications = getNotifications()
-    
+
     const notification: Notification = {
       id: `notif-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       type: body.type || 'comment',
@@ -75,10 +72,10 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString(),
       isRead: false,
     }
-    
+
     notifications.push(notification)
     saveNotifications(notifications)
-    
+
     return NextResponse.json(notification)
   } catch (error) {
     console.error('Error creating notification:', error)
@@ -91,23 +88,25 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
     const notifications = getNotifications()
-    
+
     if (body.markAllRead) {
       // Mark all as read
-      notifications.forEach(n => n.isRead = true)
+      for (const n of notifications) {
+        n.isRead = true
+      }
     } else if (body.id) {
       // Mark specific notification as read
-      const notification = notifications.find(n => n.id === body.id)
+      const notification = notifications.find((n) => n.id === body.id)
       if (notification) {
         notification.isRead = true
       }
     }
-    
+
     saveNotifications(notifications)
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       success: true,
-      unreadCount: notifications.filter(n => !n.isRead).length
+      unreadCount: notifications.filter((n) => !n.isRead).length,
     })
   } catch (error) {
     console.error('Error updating notification:', error)

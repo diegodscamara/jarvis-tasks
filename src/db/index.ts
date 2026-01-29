@@ -1,7 +1,7 @@
+import path from 'node:path'
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import * as schema from './schema'
-import path from 'path'
 
 // Database file location
 const dbPath = path.join(process.cwd(), 'data', 'jarvis-tasks.db')
