@@ -28,5 +28,15 @@
     "author": "Jarvis",
     "createdAt": "2026-01-29T22:28:30.224Z",
     "isRead": false
+  },
+  {
+    "id": "notif-1769726009881-j7w38rjvmvn",
+    "type": "comment",
+    "taskId": "roadmap-006",
+    "taskTitle": "📝 Rich Text Editor",
+    "message": "## 🎯 Planning Started\n\n### Specification\nImplement Linear-style rich text editor for task descriptions with:\n- Slash commands (/) for formatting\n- Markdown support\n- Basic formatting (bold, italic, code)\n- Lists (bullet, numbered, checklist)\n\n### Approach\nUse TipTap editor (based on ProseMirror) - the same foundation Linear uses.\n\n### Plan\n1. Install @tiptap/react and extensions\n2. Create RichTextEditor component\n3. Add slash command menu\n4. Integrate into TaskForm description field\n5. Store HTML, render markdown\n\n### Tasks\n- [ ] Install TipTap dependencies\n- [ ] Create RichTextEditor component\n- [ ] Add slash commands menu\n- [ ] Integrate with TaskForm\n- [ ] Style to match Linear theme",
+    "author": "Jarvis",
+    "createdAt": "2026-01-29T22:33:29.881Z",
+    "isRead": false
   }
 ]

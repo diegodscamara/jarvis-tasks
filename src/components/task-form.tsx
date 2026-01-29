@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { RichTextEditor } from '@/components/rich-text-editor'
 import { AGENTS, COLUMNS } from '@/lib/constants'
 import type {
   Agent,
@@ -165,11 +166,10 @@ export function TaskForm({ task, projects, labels, onSave, onDelete, onClose }: 
 
       <div className="space-y-2">
         <label className="text-sm font-medium">Description</label>
-        <Textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
+        <RichTextEditor
+          content={description}
+          onChange={setDescription}
           placeholder="Task description..."
-          className="min-h-[80px] resize-y"
         />
       </div>
 
