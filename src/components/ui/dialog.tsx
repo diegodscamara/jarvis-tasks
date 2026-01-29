@@ -92,7 +92,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       className={cn(
-        'flex flex-col gap-2 p-6 in-[[data-slot=dialog-popup]:has([data-slot=dialog-panel])]:pb-3 max-sm:pb-4',
+        'flex flex-col gap-1.5 px-6 pt-6 pb-4 in-[[data-slot=dialog-popup]:has([data-slot=dialog-panel])]:pb-0 max-sm:pb-3',
         className
       )}
       data-slot="dialog-header"
@@ -112,9 +112,8 @@ function DialogFooter({
     <div
       className={cn(
         'flex flex-col-reverse gap-2 px-6 sm:flex-row sm:justify-end sm:rounded-b-[calc(var(--radius-2xl)-1px)]',
-        variant === 'default' && 'border-t bg-muted/72 py-4',
-        variant === 'bare' &&
-          'in-[[data-slot=dialog-popup]:has([data-slot=dialog-panel])]:pt-3 pt-4 pb-6',
+        variant === 'default' && 'border-t border-border bg-muted/50 py-4',
+        variant === 'bare' && 'pt-4 pb-6',
         className
       )}
       data-slot="dialog-footer"
@@ -126,7 +125,7 @@ function DialogFooter({
 function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
-      className={cn('font-heading font-semibold text-xl leading-none', className)}
+      className={cn('font-medium text-lg leading-tight tracking-tight', className)}
       data-slot="dialog-title"
       {...props}
     />
@@ -152,7 +151,7 @@ function DialogPanel({
     <ScrollArea scrollFade={scrollFade}>
       <div
         className={cn(
-          'p-6 in-[[data-slot=dialog-popup]:has([data-slot=dialog-header])]:pt-1 in-[[data-slot=dialog-popup]:has([data-slot=dialog-footer]:not(.border-t))]:pb-1',
+          'px-6 py-4 in-[[data-slot=dialog-popup]:has([data-slot=dialog-header])]:pt-2 in-[[data-slot=dialog-popup]:has([data-slot=dialog-footer])]:pb-2',
           className
         )}
         data-slot="dialog-panel"

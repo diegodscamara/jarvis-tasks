@@ -26,7 +26,13 @@ import { ShortcutRow } from '@/components/shortcut-row'
 import { TaskCard } from '@/components/task-card'
 import { TaskForm } from '@/components/task-form'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogPanel,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Kbd } from '@/components/ui/kbd'
 import {
@@ -759,21 +765,23 @@ export default function Home() {
       </SidebarInset>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>{editingTask?.id ? 'Edit Task' : 'New Task'}</DialogTitle>
           </DialogHeader>
-          <TaskForm
-            task={editingTask}
-            projects={projects}
-            labels={labels}
-            onSave={saveTask}
-            onDelete={editingTask?.id ? () => deleteTask(editingTask.id) : undefined}
-            onClose={() => {
-              setShowModal(false)
-              setEditingTask(null)
-            }}
-          />
+          <DialogPanel className="max-h-[calc(90vh-120px)]">
+            <TaskForm
+              task={editingTask}
+              projects={projects}
+              labels={labels}
+              onSave={saveTask}
+              onDelete={editingTask?.id ? () => deleteTask(editingTask.id) : undefined}
+              onClose={() => {
+                setShowModal(false)
+                setEditingTask(null)
+              }}
+            />
+          </DialogPanel>
         </DialogContent>
       </Dialog>
 

@@ -112,7 +112,7 @@ export function TaskForm({ task, projects, labels, onSave, onDelete, onClose }: 
   )
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div className="space-y-2">
         <label className="text-sm font-medium">Title</label>
         <Input
@@ -369,16 +369,16 @@ export function TaskForm({ task, projects, labels, onSave, onDelete, onClose }: 
         </div>
       )}
 
-      <div className="flex gap-2 pt-4">
+      <div className="flex items-center gap-2 pt-5 mt-2 border-t border-border">
         <Button type="submit" className="flex-1">
-          {task?.id ? 'Update' : 'Create'}
+          {task?.id ? 'Update Task' : 'Create Task'}
         </Button>
         {onDelete && (
-          <Button type="button" variant="destructive" onClick={onDelete}>
+          <Button type="button" variant="destructive-outline" onClick={onDelete}>
             Delete
           </Button>
         )}
-        <Button type="button" variant="outline" onClick={onClose}>
+        <Button type="button" variant="ghost" onClick={onClose}>
           Cancel
         </Button>
       </div>
