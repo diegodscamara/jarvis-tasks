@@ -99,6 +99,7 @@ export default function Home() {
   const [activeLabel, setActiveLabel] = useState<string | null>(null)
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [viewMode, setViewMode] = useState<'board' | 'list'>('board')
   
   // Settings state (persisted to localStorage)
   const [settings, setSettings] = useState({
@@ -474,6 +475,31 @@ export default function Home() {
             )}
           </div>
           <div className="flex items-center gap-4">
+            {/* View Toggle */}
+            <div className="flex items-center bg-muted rounded-md p-0.5">
+              <button
+                onClick={() => setViewMode('board')}
+                className={`px-2 py-1 rounded text-xs transition-colors ${
+                  viewMode === 'board' 
+                    ? 'bg-background text-foreground shadow-sm' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="Board view"
+              >
+                📋 Board
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-2 py-1 rounded text-xs transition-colors ${
+                  viewMode === 'list' 
+                    ? 'bg-background text-foreground shadow-sm' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="List view"
+              >
+                📝 List
+              </button>
+            </div>
             <button
               onClick={() => setShowShortcuts(true)}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -503,8 +529,8 @@ export default function Home() {
           </div>
         </header>
 
-        {/* Board View */}
-        {!activeProject && !activeLabel && activeView === 'all' ? (
+        {/* Board View (Kanban) */}
+        {viewMode === 'board' && !activeProject && !activeLabel && activeView === 'all' ? (
           <div className="flex gap-4 p-4 overflow-x-auto flex-1">
             {columns.map(column => (
               <div 
@@ -532,6 +558,7 @@ export default function Home() {
                       labels={labels.filter(l => task.labelIds?.includes(l.id))}
                       onDragStart={() => handleDragStart(task)}
                       onClick={() => { setEditingTask(task); setShowModal(true) }}
+                      compact={settings.compactView}
                     />
                   ))}
                 </div>
@@ -556,19 +583,32 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          /* List View for filtered status, project, or label */
-          <div className="flex flex-col gap-2 p-4">
-            {filteredTasks.map(task => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                project={projects.find(p => p.id === task.projectId)}
-                labels={labels.filter(l => task.labelIds?.includes(l.id))}
-                onDragStart={() => handleDragStart(task)}
-                onClick={() => { setEditingTask(task); setShowModal(true) }}
-                variant="list"
-              />
-            ))}
+          /* List View */
+          <div className="flex flex-col p-4">
+            {/* List Header */}
+            <div className="flex items-center gap-4 px-3 py-2 text-xs text-muted-foreground font-medium border-b border-border mb-2">
+              <div className="w-8"></div>
+              <div className="flex-1">Title</div>
+              <div className="w-24">Status</div>
+              <div className="w-32">Project</div>
+              <div className="w-28">Assignee</div>
+              <div className="w-24 text-right">Updated</div>
+            </div>
+            {/* List Items */}
+            <div className="flex flex-col gap-1">
+              {filteredTasks.map(task => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  project={projects.find(p => p.id === task.projectId)}
+                  labels={labels.filter(l => task.labelIds?.includes(l.id))}
+                  onDragStart={() => handleDragStart(task)}
+                  onClick={() => { setEditingTask(task); setShowModal(true) }}
+                  variant="list"
+                  compact={settings.compactView}
+                />
+              ))}
+            </div>
             {filteredTasks.length === 0 && (
               <div className="text-center text-muted-foreground py-8">
                 No tasks in this view
@@ -740,7 +780,8 @@ function TaskCard({
   labels,
   onDragStart, 
   onClick,
-  variant = 'card'
+  variant = 'card',
+  compact = false
 }: { 
   task: Task
   project?: Project
@@ -748,53 +789,71 @@ function TaskCard({
   onDragStart: () => void
   onClick: () => void
   variant?: 'card' | 'list'
+  compact?: boolean
 }) {
   const agent = agents.find(a => a.id === task.assignee)
+  const statusInfo = columns.find(c => c.id === task.status)
   
   if (variant === 'list') {
     return (
-      <Card 
-        className="cursor-pointer hover:bg-accent/50 transition-colors"
+      <div 
+        className="flex items-center gap-4 px-3 py-2 rounded-md cursor-pointer hover:bg-accent/50 transition-colors"
         draggable
         onDragStart={onDragStart}
         onClick={onClick}
       >
-        <CardContent className="p-3 flex items-center gap-4">
-          <div 
-            className="w-1 h-8 rounded-full" 
-            style={{ backgroundColor: priorityColors[task.priority] }}
-          />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="font-medium text-sm truncate">{task.title}</span>
-              {labels.map(label => (
-                <span 
-                  key={label.id}
-                  className="px-1.5 py-0.5 rounded text-[10px]"
-                  style={{ backgroundColor: label.color + '30', color: label.color }}
-                >
-                  {label.name}
-                </span>
-              ))}
-            </div>
-            {task.description && (
-              <div className="text-xs text-muted-foreground truncate">{task.description}</div>
-            )}
-          </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            {project && (
-              <span 
-                className="px-2 py-0.5 rounded"
-                style={{ backgroundColor: project.color + '20', color: project.color }}
-              >
-                {project.icon} {project.name}
-              </span>
-            )}
-            <span className="px-2 py-0.5 rounded bg-muted">{agent?.name || task.assignee}</span>
-            <span>{new Date(task.updatedAt).toLocaleDateString()}</span>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Priority Indicator */}
+        <div 
+          className="w-2 h-2 rounded-full flex-shrink-0" 
+          style={{ backgroundColor: priorityColors[task.priority] }}
+        />
+        
+        {/* Title & Labels */}
+        <div className="flex-1 min-w-0 flex items-center gap-2">
+          <span className="font-medium text-sm truncate">{task.title}</span>
+          {labels.slice(0, 2).map(label => (
+            <span 
+              key={label.id}
+              className="px-1.5 py-0.5 rounded text-[10px] flex-shrink-0"
+              style={{ backgroundColor: label.color + '30', color: label.color }}
+            >
+              {label.name}
+            </span>
+          ))}
+          {labels.length > 2 && (
+            <span className="text-[10px] text-muted-foreground">+{labels.length - 2}</span>
+          )}
+        </div>
+        
+        {/* Status */}
+        <div className="w-24 text-xs text-muted-foreground flex-shrink-0">
+          {statusInfo?.icon} {statusInfo?.title}
+        </div>
+        
+        {/* Project */}
+        <div className="w-32 flex-shrink-0">
+          {project ? (
+            <span 
+              className="px-2 py-0.5 rounded text-xs"
+              style={{ backgroundColor: project.color + '20', color: project.color }}
+            >
+              {project.icon} {project.name}
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">-</span>
+          )}
+        </div>
+        
+        {/* Assignee */}
+        <div className="w-28 text-xs text-muted-foreground truncate flex-shrink-0">
+          {agent?.name || task.assignee}
+        </div>
+        
+        {/* Date */}
+        <div className="w-24 text-xs text-muted-foreground text-right flex-shrink-0">
+          {new Date(task.updatedAt).toLocaleDateString()}
+        </div>
+      </div>
     )
   }
 

@@ -240,7 +240,7 @@
       "title": "📋 Multiple Views",
       "description": "Implement view switching like Linear:\n- Kanban board (current)\n- List view with sortable columns\n- Table view with inline editing\n- Calendar view for due dates\n- Timeline/roadmap view\n- Save custom views with filters\n- View sharing",
       "priority": "medium",
-      "status": "backlog",
+      "status": "in_progress",
       "assignee": "jarvis",
       "project": "jarvis-tasks",
       "labels": [
@@ -270,7 +270,7 @@
       "title": "⚙️ Settings Page",
       "description": "Implement settings like Linear:\n- General settings\n  - Theme (dark/light/system)\n  - Language\n  - Date/time format\n- Account settings\n  - Profile\n  - Notification preferences\n- Workspace settings\n  - Projects\n  - Labels\n  - Status workflows\n  - Integrations\n- Keyboard shortcuts reference",
       "priority": "medium",
-      "status": "in_progress",
+      "status": "done",
       "assignee": "jarvis",
       "project": "jarvis-tasks",
       "labels": [
