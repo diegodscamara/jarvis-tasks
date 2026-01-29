@@ -89,6 +89,7 @@ export interface Settings {
   showCompletedTasks: boolean
   compactView: boolean
   theme: 'dark' | 'light'
+  accentColor: string
 }
 
 export interface Column {

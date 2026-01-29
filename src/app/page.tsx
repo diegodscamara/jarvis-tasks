@@ -59,7 +59,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar'
 import { Switch } from '@/components/ui/switch'
-import { AGENTS, COLUMNS, DEFAULT_SETTINGS, STORAGE_KEYS } from '@/lib/constants'
+import { ACCENT_COLORS, AGENTS, COLUMNS, DEFAULT_SETTINGS, STORAGE_KEYS } from '@/lib/constants'
 import type {
   Agent,
   Analytics,
@@ -1169,6 +1169,33 @@ export default function Home() {
                 checked={settings.compactView}
                 onCheckedChange={(checked) => updateSettings({ compactView: checked })}
               />
+            </div>
+
+            <div className="pt-4 border-t border-border">
+              <div>
+                <label className="text-sm font-medium">Accent Color</label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Customize the primary accent color
+                </p>
+                <div className="flex gap-2 flex-wrap">
+                  {ACCENT_COLORS.map((color) => (
+                    <button
+                      key={color.value}
+                      onClick={() => {
+                        updateSettings({ accentColor: color.value })
+                        document.documentElement.style.setProperty('--accent-color', color.value)
+                      }}
+                      className={`w-8 h-8 rounded-full border-2 transition-all ${
+                        settings.accentColor === color.value 
+                          ? 'border-white scale-110' 
+                          : 'border-transparent hover:scale-105'
+                      }`}
+                      style={{ backgroundColor: color.value }}
+                      title={color.name}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div className="pt-4 border-t border-border">
