@@ -507,10 +507,10 @@ export default function Home() {
 
       <SidebarInset className="flex flex-col">
         {/* Header */}
-        <header className="flex items-center justify-between p-4 border-b border-border bg-background">
-          <div className="flex items-center gap-4">
+        <header className="flex items-center justify-between p-2 md:p-4 border-b border-border bg-background">
+          <div className="flex items-center gap-2 md:gap-4">
             <SidebarTrigger />
-            <h1 className="text-lg font-semibold">
+            <h1 className="text-base md:text-lg font-semibold truncate max-w-[150px] md:max-w-none">
               {activeLabel
                 ? labels.find(l => l.id === activeLabel)?.name || 'Label'
                 : activeProject 
@@ -531,9 +531,9 @@ export default function Home() {
               />
             )}
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             {/* Search */}
-            <div className="relative">
+            <div className="relative hidden md:block">
               {showSearch ? (
                 <div className="flex items-center gap-2">
                   <input
@@ -572,8 +572,8 @@ export default function Home() {
                 </button>
               )}
             </div>
-            {/* View Toggle */}
-            <div className="flex items-center bg-muted rounded-md p-0.5">
+            {/* View Toggle - Hidden on mobile */}
+            <div className="hidden md:flex items-center bg-muted rounded-md p-0.5">
               <button
                 onClick={() => setViewMode('board')}
                 className={`px-2 py-1 rounded text-xs transition-colors ${
@@ -599,7 +599,7 @@ export default function Home() {
             </div>
             <button
               onClick={() => setShowShortcuts(true)}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="hidden md:block text-xs text-muted-foreground hover:text-foreground transition-colors"
               title="Keyboard shortcuts"
             >
               <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">?</kbd>
@@ -617,11 +617,12 @@ export default function Home() {
                 </span>
               )}
             </button>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
               <span className="w-2 h-2 rounded-full bg-green-500"></span>
               <span>System Online</span>
             </div>
-            <span className="text-sm text-muted-foreground">{filteredTasks.length} tasks</span>
+            <span className="hidden md:inline text-sm text-muted-foreground">{filteredTasks.length} tasks</span>
+            <span className="md:hidden text-xs text-muted-foreground">{filteredTasks.length}</span>
             <Button 
               size="sm"
               onClick={() => { 
@@ -641,11 +642,11 @@ export default function Home() {
 
         {/* Board View (Kanban) */}
         {viewMode === 'board' && !activeProject && !activeLabel && activeView === 'all' ? (
-          <div className="flex gap-4 p-4 overflow-x-auto flex-1">
+          <div className="flex flex-col md:flex-row gap-4 p-4 overflow-x-auto flex-1">
             {columns.map(column => (
               <div 
                 key={column.id} 
-                className="flex-1 min-w-[280px] flex flex-col gap-3 p-3 rounded-lg bg-muted/30"
+                className="flex-1 min-w-full md:min-w-[280px] flex flex-col gap-3 p-3 rounded-lg bg-muted/30"
                 onDragOver={handleDragOver}
                 onDrop={() => handleDrop(column.id)}
               >
