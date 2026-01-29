@@ -98,6 +98,34 @@ export default function Home() {
   const [activeProject, setActiveProject] = useState<string | null>(null)
   const [activeLabel, setActiveLabel] = useState<string | null>(null)
   const [showShortcuts, setShowShortcuts] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  
+  // Settings state (persisted to localStorage)
+  const [settings, setSettings] = useState({
+    defaultAssignee: 'jarvis' as Agent,
+    showCompletedTasks: true,
+    compactView: false,
+    theme: 'dark' as 'dark' | 'light',
+  })
+
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('jarvis-tasks-settings')
+    if (savedSettings) {
+      try {
+        setSettings(JSON.parse(savedSettings))
+      } catch (e) {
+        console.error('Failed to parse settings', e)
+      }
+    }
+  }, [])
+
+  // Save settings to localStorage when changed
+  const updateSettings = (newSettings: Partial<typeof settings>) => {
+    const updated = { ...settings, ...newSettings }
+    setSettings(updated)
+    localStorage.setItem('jarvis-tasks-settings', JSON.stringify(updated))
+  }
 
   // Keyboard shortcuts
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -126,7 +154,7 @@ export default function Home() {
     // c - create new task
     if (e.key === 'c' && !e.metaKey && !e.ctrlKey) {
       e.preventDefault()
-      setEditingTask({ status: 'todo' } as Task)
+      setEditingTask({ status: 'todo', assignee: settings.defaultAssignee } as Task)
       setShowModal(true)
       return
     }
@@ -406,7 +434,14 @@ export default function Home() {
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter className="p-3 border-t border-border">
-          <div className="text-xs text-muted-foreground text-center">
+          <button
+            onClick={() => setShowSettings(true)}
+            className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <span>⚙️</span>
+            <span>Settings</span>
+          </button>
+          <div className="text-xs text-muted-foreground text-center mt-2">
             Built with ⚡ by Jarvis
           </div>
         </SidebarFooter>
@@ -456,6 +491,7 @@ export default function Home() {
               onClick={() => { 
                 setEditingTask({ 
                   status: 'todo',
+                  assignee: settings.defaultAssignee,
                   projectId: activeProject || undefined,
                   labelIds: activeLabel ? [activeLabel] : undefined
                 } as Task)
@@ -506,7 +542,8 @@ export default function Home() {
                   className="w-full border border-dashed border-border text-muted-foreground hover:text-foreground"
                   onClick={() => { 
                     setEditingTask({ 
-                      status: column.id, 
+                      status: column.id,
+                      assignee: settings.defaultAssignee,
                       projectId: activeProject || undefined,
                       labelIds: activeLabel ? [activeLabel] : undefined
                     } as Task)
@@ -585,6 +622,92 @@ export default function Home() {
             </div>
             <div className="pt-2 text-xs text-muted-foreground text-center border-t border-border">
               Press <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">?</kbd> anytime to toggle this help
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Settings Dialog */}
+      <Dialog open={showSettings} onOpenChange={setShowSettings}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>⚙️ Settings</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Default Assignee</label>
+              <select 
+                className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
+                value={settings.defaultAssignee}
+                onChange={e => updateSettings({ defaultAssignee: e.target.value as Agent })}
+              >
+                {agents.map(agent => (
+                  <option key={agent.id} value={agent.id}>{agent.name}</option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                New tasks will be assigned to this agent by default
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-sm font-medium">Show Completed Tasks</label>
+                <p className="text-xs text-muted-foreground">
+                  Display tasks marked as done in the board view
+                </p>
+              </div>
+              <button
+                onClick={() => updateSettings({ showCompletedTasks: !settings.showCompletedTasks })}
+                className={`w-11 h-6 rounded-full transition-colors ${
+                  settings.showCompletedTasks ? 'bg-primary' : 'bg-muted'
+                }`}
+              >
+                <span 
+                  className={`block w-5 h-5 rounded-full bg-white transition-transform ${
+                    settings.showCompletedTasks ? 'translate-x-5' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-sm font-medium">Compact View</label>
+                <p className="text-xs text-muted-foreground">
+                  Show smaller task cards with less detail
+                </p>
+              </div>
+              <button
+                onClick={() => updateSettings({ compactView: !settings.compactView })}
+                className={`w-11 h-6 rounded-full transition-colors ${
+                  settings.compactView ? 'bg-primary' : 'bg-muted'
+                }`}
+              >
+                <span 
+                  className={`block w-5 h-5 rounded-full bg-white transition-transform ${
+                    settings.compactView ? 'translate-x-5' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
+
+            <div className="pt-4 border-t border-border">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-medium">Theme</label>
+                  <p className="text-xs text-muted-foreground">
+                    Dark theme optimized for reduced eye strain
+                  </p>
+                </div>
+                <span className="px-2 py-1 rounded bg-muted text-xs">
+                  🌙 Dark
+                </span>
+              </div>
+            </div>
+
+            <div className="pt-4 text-xs text-muted-foreground text-center border-t border-border">
+              Settings are saved automatically
             </div>
           </div>
         </DialogContent>

@@ -270,7 +270,7 @@
       "title": "⚙️ Settings Page",
       "description": "Implement settings like Linear:\n- General settings\n  - Theme (dark/light/system)\n  - Language\n  - Date/time format\n- Account settings\n  - Profile\n  - Notification preferences\n- Workspace settings\n  - Projects\n  - Labels\n  - Status workflows\n  - Integrations\n- Keyboard shortcuts reference",
       "priority": "medium",
-      "status": "backlog",
+      "status": "in_progress",
       "assignee": "jarvis",
       "project": "jarvis-tasks",
       "labels": [
@@ -285,7 +285,7 @@
       "title": "⌨️ Keyboard Shortcuts",
       "description": "Implement Linear-style keyboard navigation:\n- c = create new task\n- g then i = go to issues\n- g then p = go to projects\n- j/k = navigate up/down\n- enter = open task\n- esc = close modal\n- cmd+k = command palette\n- / = search\n- 1-4 = set priority\n- s = change status\n- a = assign\n- l = add label",
       "priority": "low",
-      "status": "in_progress",
+      "status": "done",
       "assignee": "jarvis",
       "project": "jarvis-tasks",
       "labels": [
