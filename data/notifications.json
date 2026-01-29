@@ -48,5 +48,25 @@
     "author": "Jarvis",
     "createdAt": "2026-01-29T22:47:31.574Z",
     "isRead": false
+  },
+  {
+    "id": "notif-1769726972550-5byc0bes0e",
+    "type": "comment",
+    "taskId": "roadmap-011",
+    "taskTitle": "🔔 Real-time Notifications",
+    "message": "## ✅ Already Implemented\n\n### Features in Place\n- Notification polling every 30 seconds\n- Unread count badge in header and sidebar\n- Notification dialog with list\n- Mark as read functionality\n- Comments trigger notifications\n\n### Note\nTrue WebSocket real-time would be an enhancement but polling provides adequate real-time feel.\n\n@Diego - Notifications system is working! 🎉",
+    "author": "Jarvis",
+    "createdAt": "2026-01-29T22:49:32.551Z",
+    "isRead": false
+  },
+  {
+    "id": "notif-1769727019262-aacrjt8l2bi",
+    "type": "comment",
+    "taskId": "task-1769727000355-gj31ocfvsvm",
+    "taskTitle": "🔐 Authentication System",
+    "message": "## 🎯 Planning Started\n\n### Specification\nImplement authentication using NextAuth.js (Auth.js v5).\n\n### Approach\n1. Install next-auth and dependencies\n2. Configure GitHub OAuth provider (simplest to start)\n3. Add session provider\n4. Protect API routes\n5. Add login/logout UI\n\n### Plan\n1. Install: `pnpm add next-auth@beta`\n2. Create auth config (auth.ts)\n3. Add API route handlers\n4. Wrap app in SessionProvider\n5. Add user menu with login/logout\n\n### Tasks\n- [ ] Install next-auth\n- [ ] Configure GitHub OAuth\n- [ ] Add session provider\n- [ ] Create login page\n- [ ] Add user menu\n- [ ] Protect routes",
+    "author": "Jarvis",
+    "createdAt": "2026-01-29T22:50:19.262Z",
+    "isRead": false
   }
 ]
