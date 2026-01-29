@@ -6,6 +6,13 @@ type Priority = 'high' | 'medium' | 'low'
 type Status = 'backlog' | 'todo' | 'in_progress' | 'done'
 type Agent = 'jarvis' | 'gemini' | 'copilot' | 'claude' | 'diego'
 
+interface Comment {
+  id: string
+  text: string
+  author: string
+  createdAt: string
+}
+
 interface Task {
   id: string
   title: string
@@ -15,6 +22,7 @@ interface Task {
   assignee: Agent
   createdAt: string
   updatedAt: string
+  comments?: Comment[]
 }
 
 const columns: { id: Status; title: string }[] = [
@@ -183,6 +191,8 @@ function TaskModal({
   const [priority, setPriority] = useState<Priority>(task?.priority || 'medium')
   const [assignee, setAssignee] = useState<Agent>(task?.assignee || 'jarvis')
   const [status, setStatus] = useState<Status>(task?.status || 'todo')
+  const [comments, setComments] = useState<Comment[]>(task?.comments || [])
+  const [newComment, setNewComment] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -193,7 +203,29 @@ function TaskModal({
       priority,
       assignee,
       status,
+      comments,
     })
+  }
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !task?.id) return
+
+    const comment: Comment = {
+      id: Date.now().toString(),
+      text: newComment,
+      author: 'diego', // Default to diego, could be dynamic later
+      createdAt: new Date().toISOString()
+    }
+
+    // Add comment via API
+    await fetch(`/api/tasks/${task.id}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(comment)
+    })
+
+    setComments([...comments, comment])
+    setNewComment('')
   }
 
   return (
@@ -243,6 +275,46 @@ function TaskModal({
               ))}
             </select>
           </div>
+          
+          {task?.id && (
+            <div className="comments-section">
+              <h3>Comments</h3>
+              <div className="comments-list">
+                {comments.map(comment => (
+                  <div key={comment.id} className="comment">
+                    <div className="comment-header">
+                      <span className="comment-author">{comment.author}</span>
+                      <span className="comment-date">
+                        {new Date(comment.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="comment-text">{comment.text}</div>
+                  </div>
+                ))}
+                {comments.length === 0 && (
+                  <div className="no-comments">No comments yet</div>
+                )}
+              </div>
+              <div className="comment-input">
+                <input
+                  type="text"
+                  value={newComment}
+                  onChange={e => setNewComment(e.target.value)}
+                  placeholder="Add a comment..."
+                  onKeyPress={e => e.key === 'Enter' && handleAddComment()}
+                />
+                <button 
+                  type="button" 
+                  className="btn btn-primary"
+                  onClick={handleAddComment}
+                  disabled={!newComment.trim()}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          )}
+          
           <div className="form-actions">
             <button type="submit" className="btn btn-primary">
               {task?.id ? 'Update' : 'Create'}

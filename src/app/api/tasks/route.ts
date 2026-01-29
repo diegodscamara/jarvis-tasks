@@ -4,6 +4,13 @@ import { join } from 'path'
 
 const DATA_FILE = join(process.cwd(), 'data', 'tasks.json')
 
+interface Comment {
+  id: string
+  text: string
+  author: string
+  createdAt: string
+}
+
 interface Task {
   id: string
   title: string
@@ -13,6 +20,7 @@ interface Task {
   assignee: string
   createdAt: string
   updatedAt: string
+  comments?: Comment[]
 }
 
 function loadTasks(): Task[] {
@@ -53,6 +61,7 @@ export async function POST(request: NextRequest) {
     assignee: body.assignee || 'jarvis',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    comments: body.comments || []
   }
   
   tasks.push(newTask)
