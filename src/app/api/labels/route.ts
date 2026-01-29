@@ -1,75 +1,96 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { readFileSync, writeFileSync, existsSync } from 'fs'
-import { join } from 'path'
-
-const DATA_FILE = join(process.cwd(), 'data', 'labels.json')
-
-export interface Label {
-  id: string
-  name: string
-  color: string
-  group?: string
-}
-
-function loadLabels(): Label[] {
-  try {
-    if (existsSync(DATA_FILE)) {
-      const data = readFileSync(DATA_FILE, 'utf-8')
-      return JSON.parse(data).labels || []
-    }
-  } catch (e) {
-    console.error('Failed to load labels', e)
-  }
-  return []
-}
-
-function saveLabels(labels: Label[]) {
-  writeFileSync(DATA_FILE, JSON.stringify({ labels }, null, 2))
-}
+import * as db from '@/db/queries'
 
 export async function GET() {
-  const labels = loadLabels()
-  return NextResponse.json({ labels })
+  try {
+    const labels = db.getAllLabels()
+    // Transform to match expected frontend format
+    const formattedLabels = labels.map(label => ({
+      id: label.id,
+      name: label.name,
+      color: label.color,
+      group: label.group,
+    }))
+    return NextResponse.json({ labels: formattedLabels })
+  } catch (error) {
+    console.error('Error fetching labels:', error)
+    return NextResponse.json({ error: 'Failed to fetch labels' }, { status: 500 })
+  }
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json()
-  const labels = loadLabels()
-  
-  const newLabel: Label = {
-    id: `label-${Date.now()}`,
-    name: body.name,
-    color: body.color || '#5E6AD2',
-    group: body.group,
+  try {
+    const body = await request.json()
+    const id = body.id || `label-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    
+    const label = db.createLabel({
+      id,
+      name: body.name,
+      color: body.color,
+      group: body.group || null,
+    })
+    
+    return NextResponse.json({
+      id: label.id,
+      name: label.name,
+      color: label.color,
+      group: label.group,
+    })
+  } catch (error) {
+    console.error('Error creating label:', error)
+    return NextResponse.json({ error: 'Failed to create label' }, { status: 500 })
   }
-  
-  labels.push(newLabel)
-  saveLabels(labels)
-  
-  return NextResponse.json({ label: newLabel })
 }
 
 export async function PUT(request: NextRequest) {
-  const body = await request.json()
-  const labels = loadLabels()
-  
-  const index = labels.findIndex(l => l.id === body.id)
-  if (index === -1) {
-    return NextResponse.json({ error: 'Label not found' }, { status: 404 })
+  try {
+    const body = await request.json()
+    const { id, ...updates } = body
+    
+    if (!id) {
+      return NextResponse.json({ error: 'Label ID required' }, { status: 400 })
+    }
+    
+    const label = db.updateLabel(id, {
+      name: updates.name,
+      color: updates.color,
+      group: updates.group,
+    })
+    
+    if (!label) {
+      return NextResponse.json({ error: 'Label not found' }, { status: 404 })
+    }
+    
+    return NextResponse.json({
+      id: label.id,
+      name: label.name,
+      color: label.color,
+      group: label.group,
+    })
+  } catch (error) {
+    console.error('Error updating label:', error)
+    return NextResponse.json({ error: 'Failed to update label' }, { status: 500 })
   }
-  
-  labels[index] = { ...labels[index], ...body }
-  saveLabels(labels)
-  
-  return NextResponse.json({ label: labels[index] })
 }
 
 export async function DELETE(request: NextRequest) {
-  const body = await request.json()
-  let labels = loadLabels()
-  
-  labels = labels.filter(l => l.id !== body.id)
-  saveLabels(labels)
-  
-  return NextResponse.json({ success: true })
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+    
+    if (!id) {
+      return NextResponse.json({ error: 'Label ID required' }, { status: 400 })
+    }
+    
+    const deleted = db.deleteLabel(id)
+    
+    if (!deleted) {
+      return NextResponse.json({ error: 'Label not found' }, { status: 404 })
+    }
+    
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error deleting label:', error)
+    return NextResponse.json({ error: 'Failed to delete label' }, { status: 500 })
+  }
 }

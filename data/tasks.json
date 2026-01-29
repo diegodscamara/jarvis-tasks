@@ -164,7 +164,7 @@
       "title": "📊 Task Properties Extension",
       "description": "Add Linear-style task properties:\n- Estimates (points or time)\n- Due dates with calendar picker\n- Priority (Urgent/High/Medium/Low/No priority)\n- Status workflow (Backlog → Todo → In Progress → In Review → Done → Cancelled)\n- Cycle/Sprint assignment\n- Parent task (for sub-issues)",
       "priority": "high",
-      "status": "in_progress",
+      "status": "done",
       "assignee": "jarvis",
       "project": "jarvis-tasks",
       "labels": [
@@ -285,7 +285,7 @@
       "title": "⌨️ Keyboard Shortcuts",
       "description": "Implement Linear-style keyboard navigation:\n- c = create new task\n- g then i = go to issues\n- g then p = go to projects\n- j/k = navigate up/down\n- enter = open task\n- esc = close modal\n- cmd+k = command palette\n- / = search\n- 1-4 = set priority\n- s = change status\n- a = assign\n- l = add label",
       "priority": "low",
-      "status": "done",
+      "status": "in_progress",
       "assignee": "jarvis",
       "project": "jarvis-tasks",
       "labels": [
