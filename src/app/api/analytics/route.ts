@@ -10,8 +10,10 @@ export async function GET() {
     // Status breakdown
     const statusCounts = {
       backlog: tasks.filter(t => t.status === 'backlog').length,
+      planning: tasks.filter(t => t.status === 'planning').length,
       todo: tasks.filter(t => t.status === 'todo').length,
       in_progress: tasks.filter(t => t.status === 'in_progress').length,
+      review: tasks.filter(t => t.status === 'review').length,
       done: tasks.filter(t => t.status === 'done').length,
     }
     

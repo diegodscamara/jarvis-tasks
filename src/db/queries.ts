@@ -26,7 +26,7 @@ export interface Task {
   title: string
   description: string
   priority: 'low' | 'medium' | 'high'
-  status: 'backlog' | 'todo' | 'in_progress' | 'done'
+  status: 'backlog' | 'planning' | 'todo' | 'in_progress' | 'review' | 'done'
   assignee: string
   project_id: string | null
   due_date: string | null
@@ -227,7 +227,7 @@ export function createTask(task: {
   title: string
   description?: string
   priority?: 'low' | 'medium' | 'high'
-  status?: 'backlog' | 'todo' | 'in_progress' | 'done'
+  status?: 'backlog' | 'planning' | 'todo' | 'in_progress' | 'review' | 'done'
   assignee?: string
   projectId?: string
   labelIds?: string[]
@@ -274,7 +274,7 @@ export function updateTask(id: string, updates: Partial<{
   title: string
   description: string
   priority: 'low' | 'medium' | 'high'
-  status: 'backlog' | 'todo' | 'in_progress' | 'done'
+  status: 'backlog' | 'planning' | 'todo' | 'in_progress' | 'review' | 'done'
   assignee: string
   projectId: string | null
   labelIds: string[]

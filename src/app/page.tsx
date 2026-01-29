@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/sidebar'
 
 type Priority = 'high' | 'medium' | 'low'
-type Status = 'backlog' | 'todo' | 'in_progress' | 'done'
+type Status = 'backlog' | 'planning' | 'todo' | 'in_progress' | 'review' | 'done'
 type Agent = 'jarvis' | 'gemini' | 'copilot' | 'claude' | 'diego'
 
 interface Comment {
@@ -78,8 +78,10 @@ interface Task {
 
 const columns: { id: Status; title: string; icon: string }[] = [
   { id: 'backlog', title: 'Backlog', icon: '📋' },
+  { id: 'planning', title: 'Planning', icon: '🎯' },
   { id: 'todo', title: 'To Do', icon: '📝' },
   { id: 'in_progress', title: 'In Progress', icon: '🔄' },
+  { id: 'review', title: 'Review', icon: '👀' },
   { id: 'done', title: 'Done', icon: '✅' },
 ]
 
@@ -837,8 +839,10 @@ export default function Home() {
                 <div className="space-y-2">
                   {[
                     { key: 'backlog', label: '📋 Backlog', color: 'bg-gray-500' },
+                    { key: 'planning', label: '🎯 Planning', color: 'bg-purple-500' },
                     { key: 'todo', label: '📝 To Do', color: 'bg-yellow-500' },
                     { key: 'in_progress', label: '🔄 In Progress', color: 'bg-blue-500' },
+                    { key: 'review', label: '👀 Review', color: 'bg-orange-500' },
                     { key: 'done', label: '✅ Done', color: 'bg-green-500' },
                   ].map(status => {
                     const count = analytics.status[status.key]
