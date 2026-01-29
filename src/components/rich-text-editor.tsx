@@ -1,11 +1,13 @@
 'use client'
 
-import { useEditor, EditorContent, Editor } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
+import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import Placeholder from '@tiptap/extension-placeholder'
-import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
+import TaskList from '@tiptap/extension-task-list'
+import StarterKit from '@tiptap/starter-kit'
 import { useCallback, useEffect } from 'react'
+import { Toggle } from '@/components/ui/toggle'
+import { Separator } from '@/components/ui/separator'
 
 interface RichTextEditorProps {
   content: string
@@ -14,7 +16,12 @@ interface RichTextEditorProps {
   className?: string
 }
 
-export function RichTextEditor({ content, onChange, placeholder = 'Add a description...', className }: RichTextEditorProps) {
+export function RichTextEditor({
+  content,
+  onChange,
+  placeholder = 'Add a description...',
+  className,
+}: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -33,7 +40,8 @@ export function RichTextEditor({ content, onChange, placeholder = 'Add a descrip
     content,
     editorProps: {
       attributes: {
-        class: 'prose prose-sm prose-invert max-w-none focus:outline-none min-h-[100px] px-3 py-2',
+        class:
+          'prose prose-sm prose-invert max-w-none focus:outline-none min-h-[100px] px-3 py-2',
       },
     },
     onUpdate: ({ editor }) => {
@@ -95,72 +103,83 @@ function MenuBar({ editor }: { editor: Editor }) {
 
   return (
     <div className="flex items-center gap-1 px-2 py-1 border-b border-input flex-wrap">
-      <button
-        type="button"
-        onClick={toggleBold}
-        className={`p-1.5 rounded hover:bg-muted text-xs font-bold ${editor.isActive('bold') ? 'bg-muted' : ''}`}
+      <Toggle
+        size="sm"
+        pressed={editor.isActive('bold')}
+        onPressedChange={toggleBold}
+        aria-label="Bold"
         title="Bold (Ctrl+B)"
+        className="font-bold"
       >
         B
-      </button>
-      <button
-        type="button"
-        onClick={toggleItalic}
-        className={`p-1.5 rounded hover:bg-muted text-xs italic ${editor.isActive('italic') ? 'bg-muted' : ''}`}
+      </Toggle>
+      <Toggle
+        size="sm"
+        pressed={editor.isActive('italic')}
+        onPressedChange={toggleItalic}
+        aria-label="Italic"
         title="Italic (Ctrl+I)"
+        className="italic"
       >
         I
-      </button>
-      <button
-        type="button"
-        onClick={toggleCode}
-        className={`p-1.5 rounded hover:bg-muted text-xs font-mono ${editor.isActive('code') ? 'bg-muted' : ''}`}
+      </Toggle>
+      <Toggle
+        size="sm"
+        pressed={editor.isActive('code')}
+        onPressedChange={toggleCode}
+        aria-label="Code"
         title="Code"
+        className="font-mono"
       >
         {'</>'}
-      </button>
-      <div className="w-px h-4 bg-border mx-1" />
-      <button
-        type="button"
-        onClick={toggleBulletList}
-        className={`p-1.5 rounded hover:bg-muted text-xs ${editor.isActive('bulletList') ? 'bg-muted' : ''}`}
+      </Toggle>
+      <Separator orientation="vertical" className="h-4 mx-1" />
+      <Toggle
+        size="sm"
+        pressed={editor.isActive('bulletList')}
+        onPressedChange={toggleBulletList}
+        aria-label="Bullet List"
         title="Bullet List"
       >
         • List
-      </button>
-      <button
-        type="button"
-        onClick={toggleOrderedList}
-        className={`p-1.5 rounded hover:bg-muted text-xs ${editor.isActive('orderedList') ? 'bg-muted' : ''}`}
+      </Toggle>
+      <Toggle
+        size="sm"
+        pressed={editor.isActive('orderedList')}
+        onPressedChange={toggleOrderedList}
+        aria-label="Numbered List"
         title="Numbered List"
       >
         1. List
-      </button>
-      <button
-        type="button"
-        onClick={toggleTaskList}
-        className={`p-1.5 rounded hover:bg-muted text-xs ${editor.isActive('taskList') ? 'bg-muted' : ''}`}
+      </Toggle>
+      <Toggle
+        size="sm"
+        pressed={editor.isActive('taskList')}
+        onPressedChange={toggleTaskList}
+        aria-label="Checklist"
         title="Checklist"
       >
         ☑ Check
-      </button>
-      <div className="w-px h-4 bg-border mx-1" />
-      <button
-        type="button"
-        onClick={toggleCodeBlock}
-        className={`p-1.5 rounded hover:bg-muted text-xs ${editor.isActive('codeBlock') ? 'bg-muted' : ''}`}
+      </Toggle>
+      <Separator orientation="vertical" className="h-4 mx-1" />
+      <Toggle
+        size="sm"
+        pressed={editor.isActive('codeBlock')}
+        onPressedChange={toggleCodeBlock}
+        aria-label="Code Block"
         title="Code Block"
       >
         {'{ }'}
-      </button>
-      <button
-        type="button"
-        onClick={toggleBlockquote}
-        className={`p-1.5 rounded hover:bg-muted text-xs ${editor.isActive('blockquote') ? 'bg-muted' : ''}`}
+      </Toggle>
+      <Toggle
+        size="sm"
+        pressed={editor.isActive('blockquote')}
+        onPressedChange={toggleBlockquote}
+        aria-label="Quote"
         title="Quote"
       >
         ❝
-      </button>
+      </Toggle>
     </div>
   )
 }

@@ -28,6 +28,7 @@ import { ShortcutRow } from '@/components/shortcut-row'
 import { TaskCard } from '@/components/task-card'
 import { TaskForm } from '@/components/task-form'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -59,6 +60,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar'
 import { Switch } from '@/components/ui/switch'
+import { Toggle } from '@/components/ui/toggle'
 import { ACCENT_COLORS, AGENTS, COLUMNS, DEFAULT_SETTINGS, STORAGE_KEYS } from '@/lib/constants'
 import type {
   Agent,
@@ -560,23 +562,27 @@ export default function Home() {
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter className="p-3 border-t border-border">
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => {
               fetchAnalytics()
               setShowAnalytics(true)
             }}
-            className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
           >
             <AnalyticsIcon size={14} />
             <span>Analytics</span>
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setShowSettings(true)}
-            className="flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
           >
             <SettingsIcon size={14} />
             <span>Settings</span>
-          </button>
+          </Button>
           <div className="text-xs text-muted-foreground text-center mt-2 flex items-center justify-center gap-1">
             Built with <FlashLightIcon size={10} /> by Jarvis
           </div>
@@ -588,45 +594,38 @@ export default function Home() {
         {selectedTaskIds.size > 0 && (
           <div className="flex items-center justify-between p-2 md:p-3 border-b border-border bg-primary/10">
             <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={selectedTaskIds.size === filteredTasks.length}
-                onChange={(e) => e.target.checked ? selectAllTasks() : clearSelection()}
-                className="rounded"
+                onCheckedChange={(checked) => checked ? selectAllTasks() : clearSelection()}
               />
               <span className="text-sm font-medium">{selectedTaskIds.size} selected</span>
-              <button
-                onClick={clearSelection}
-                className="text-xs text-muted-foreground hover:text-foreground"
-              >
+              <Button variant="link" size="sm" onClick={clearSelection} className="text-xs h-auto p-0">
                 Clear
-              </button>
+              </Button>
             </div>
             <div className="flex items-center gap-2">
-              <select
-                onChange={(e) => {
-                  if (e.target.value) {
-                    bulkUpdateStatus(e.target.value as Status)
-                    e.target.value = ''
+              <Select
+                onValueChange={(value) => {
+                  if (value) {
+                    bulkUpdateStatus(value as Status)
                   }
                 }}
-                className="text-xs px-2 py-1 rounded border border-input bg-background"
-                defaultValue=""
               >
-                <option value="" disabled>Move to...</option>
-                <option value="backlog">Backlog</option>
-                <option value="planning">Planning</option>
-                <option value="todo">To Do</option>
-                <option value="in_progress">In Progress</option>
-                <option value="review">Review</option>
-                <option value="done">Done</option>
-              </select>
-              <button
-                onClick={bulkDelete}
-                className="text-xs px-2 py-1 rounded bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
+                <SelectTrigger className="w-[120px] h-7 text-xs">
+                  <SelectValue placeholder="Move to..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="backlog">Backlog</SelectItem>
+                  <SelectItem value="planning">Planning</SelectItem>
+                  <SelectItem value="todo">To Do</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="review">Review</SelectItem>
+                  <SelectItem value="done">Done</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="destructive" size="sm" onClick={bulkDelete} className="h-7 text-xs">
                 Delete
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -678,61 +677,65 @@ export default function Home() {
                     }}
                   />
                   {searchQuery && (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
                       onClick={() => {
                         setSearchQuery('')
                         setShowSearch(false)
                       }}
-                      className="text-muted-foreground hover:text-foreground"
                     >
                       <CloseIcon size={14} />
-                    </button>
+                    </Button>
                   )}
                 </div>
               ) : (
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setShowSearch(true)}
-                  className="flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  className="text-xs text-muted-foreground"
                   title="Search (press /)"
                 >
                   <SearchIcon size={14} /> <Kbd>/</Kbd>
-                </button>
+                </Button>
               )}
             </div>
             <div className="hidden md:flex items-center bg-muted rounded-md p-0.5">
-              <button
-                onClick={() => setViewMode('board')}
-                className={`px-2 py-1 rounded text-xs transition-colors flex items-center gap-1 ${
-                  viewMode === 'board'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
+              <Toggle
+                size="sm"
+                pressed={viewMode === 'board'}
+                onPressedChange={() => setViewMode('board')}
                 title="Board view"
+                className="data-[state=on]:bg-background data-[state=on]:shadow-sm"
               >
                 <BoardIcon size={14} /> Board
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`px-2 py-1 rounded text-xs transition-colors flex items-center gap-1 ${
-                  viewMode === 'list'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
+              </Toggle>
+              <Toggle
+                size="sm"
+                pressed={viewMode === 'list'}
+                onPressedChange={() => setViewMode('list')}
                 title="List view"
+                className="data-[state=on]:bg-background data-[state=on]:shadow-sm"
               >
                 <ListIcon size={14} /> List
-              </button>
+              </Toggle>
             </div>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setShowShortcuts(true)}
-              className="hidden md:block text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="hidden md:flex text-xs text-muted-foreground"
               title="Keyboard shortcuts"
             >
               <Kbd>?</Kbd>
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setShowNotifications(true)}
-              className="relative p-1.5 rounded hover:bg-muted transition-colors"
+              className="relative"
               title="Notifications"
             >
               <NotificationIcon size={16} />
@@ -741,7 +744,7 @@ export default function Home() {
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
-            </button>
+            </Button>
             <ThemeToggle />
             <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
               <span className="w-2 h-2 rounded-full bg-green-500"></span>

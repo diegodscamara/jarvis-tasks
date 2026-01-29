@@ -2,6 +2,7 @@
 
 import { CalendarIcon, ClockIcon, StatusIcon } from '@/components/icons'
 import { Card, CardContent } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { AGENTS, COLUMNS, PRIORITY_COLORS } from '@/lib/constants'
 import type { Label, Project, Task } from '@/types'
 
@@ -40,15 +41,11 @@ export function TaskCard({
         onClick={onClick}
       >
         {onToggleSelect && (
-          <input
-            type="checkbox"
+          <Checkbox
             checked={isSelected}
-            onChange={(e) => {
-              e.stopPropagation()
-              onToggleSelect()
-            }}
+            onCheckedChange={() => onToggleSelect()}
             onClick={(e) => e.stopPropagation()}
-            className="rounded flex-shrink-0"
+            className="flex-shrink-0"
           />
         )}
         <div
@@ -110,15 +107,11 @@ export function TaskCard({
     >
       <CardContent className={`relative ${compact ? 'p-2' : 'p-3'}`}>
         {onToggleSelect && (
-          <input
-            type="checkbox"
+          <Checkbox
             checked={isSelected}
-            onChange={(e) => {
-              e.stopPropagation()
-              onToggleSelect()
-            }}
+            onCheckedChange={() => onToggleSelect()}
             onClick={(e) => e.stopPropagation()}
-            className="absolute top-2 right-2 rounded z-10"
+            className="absolute top-2 right-2 z-10"
           />
         )}
         <div
