@@ -1,0 +1,34 @@
+{
+  "tasks": [
+    {
+      "id": "task-1",
+      "title": "Set up daily security audits",
+      "description": "Configure automated security scans for AdPilotPro and report vulnerabilities",
+      "priority": "high",
+      "status": "done",
+      "assignee": "jarvis",
+      "createdAt": "2026-01-29T14:00:00Z",
+      "updatedAt": "2026-01-29T16:00:00Z"
+    },
+    {
+      "id": "task-2",
+      "title": "Monitor Luxor PRs",
+      "description": "Check for PR review requests every 15 minutes and provide code review summaries",
+      "priority": "medium",
+      "status": "in_progress",
+      "assignee": "jarvis",
+      "createdAt": "2026-01-29T14:20:00Z",
+      "updatedAt": "2026-01-29T14:20:00Z"
+    },
+    {
+      "id": "task-3",
+      "title": "Fix remaining security vulnerabilities",
+      "description": "Update transitive dependencies to reduce vuln count from 18 to lower",
+      "priority": "medium",
+      "status": "todo",
+      "assignee": "gemini",
+      "createdAt": "2026-01-29T16:45:00Z",
+      "updatedAt": "2026-01-29T16:45:00Z"
+    }
+  ]
+}
