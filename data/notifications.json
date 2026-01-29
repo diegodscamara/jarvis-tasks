@@ -8,5 +8,15 @@
     "author": "Diego",
     "createdAt": "2026-01-29T21:06:37.331Z",
     "isRead": true
+  },
+  {
+    "id": "notif-1769725528760-wpfrb9vwwuj",
+    "type": "comment",
+    "taskId": "roadmap-008",
+    "taskTitle": "📎 Document Links & Resources",
+    "message": "## 🎯 Planning Started\n\n### Specification\nAdd a resources/links section to tasks for attaching external documents:\n- Notion pages\n- Google Docs\n- Figma files\n- GitHub repos\n- Any URL\n\n### Requirements\n1. Store links with metadata (title, url, type, icon)\n2. Auto-detect link type from URL patterns\n3. Display links in task detail view\n4. Quick-add from clipboard\n5. Allow reordering links\n\n### Plan\n1. Add `links` table in database\n2. Create /api/tasks/[id]/links endpoint\n3. Add LinksSection component to TaskForm\n4. Implement link type detection\n5. Add drag-drop reordering\n\n### Tasks\n- [ ] Database: Create links table\n- [ ] API: CRUD endpoints for links\n- [ ] UI: LinksList component\n- [ ] UI: AddLinkDialog\n- [ ] Feature: URL type detection\n- [ ] Feature: Link preview metadata",
+    "author": "Jarvis",
+    "createdAt": "2026-01-29T22:25:28.760Z",
+    "isRead": false
   }
 ]

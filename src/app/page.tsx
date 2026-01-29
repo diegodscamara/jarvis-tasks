@@ -1265,6 +1265,9 @@ function TaskForm({
   const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>(task?.recurrenceType || 'none')
   const [timeSpent, setTimeSpent] = useState<string>(task?.timeSpent?.toString() || '0')
   const [comments, setComments] = useState<Comment[]>(task?.comments || [])
+  const [links, setLinks] = useState<{ id: string; url: string; title: string | null; type: string; icon: string }[]>([])
+  const [newLinkUrl, setNewLinkUrl] = useState('')
+  const [showAddLink, setShowAddLink] = useState(false)
   const [newComment, setNewComment] = useState('')
 
   const toggleLabel = (labelId: string) => {
@@ -1292,6 +1295,43 @@ function TaskForm({
       timeSpent: timeSpent ? parseInt(timeSpent) : undefined,
       comments,
     })
+  }
+
+  // Fetch links when task changes
+  useEffect(() => {
+    if (task?.id) {
+      fetch(`/api/tasks/${task.id}/links`)
+        .then(res => res.json())
+        .then(data => setLinks(data.links || []))
+        .catch(console.error)
+    }
+  }, [task?.id])
+
+  const handleAddLink = async () => {
+    if (!newLinkUrl.trim() || !task?.id) return
+    try {
+      const res = await fetch(`/api/tasks/${task.id}/links`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: newLinkUrl.trim() })
+      })
+      const link = await res.json()
+      setLinks(prev => [...prev, link])
+      setNewLinkUrl('')
+      setShowAddLink(false)
+    } catch (e) {
+      console.error('Failed to add link', e)
+    }
+  }
+
+  const handleRemoveLink = async (linkId: string) => {
+    if (!task?.id) return
+    try {
+      await fetch(`/api/tasks/${task.id}/links?linkId=${linkId}`, { method: 'DELETE' })
+      setLinks(prev => prev.filter(l => l.id !== linkId))
+    } catch (e) {
+      console.error('Failed to remove link', e)
+    }
   }
 
   const handleAddComment = async () => {
@@ -1492,6 +1532,67 @@ function TaskForm({
               ({Math.floor(parseInt(timeSpent || '0') / 60)}h {parseInt(timeSpent || '0') % 60}m)
             </span>
           </div>
+        </div>
+      )}
+
+      {task?.id && (
+        <div className="space-y-3 pt-4 border-t border-border">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium">🔗 Links & Resources</h3>
+            <button 
+              type="button"
+              onClick={() => setShowAddLink(!showAddLink)}
+              className="text-xs text-primary hover:underline"
+            >
+              + Add
+            </button>
+          </div>
+          {showAddLink && (
+            <div className="flex gap-2">
+              <input
+                type="url"
+                placeholder="Paste URL..."
+                className="flex-1 px-2 py-1 text-sm rounded border border-input bg-background"
+                value={newLinkUrl}
+                onChange={e => setNewLinkUrl(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAddLink()}
+              />
+              <button
+                type="button"
+                onClick={handleAddLink}
+                className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded"
+              >
+                Add
+              </button>
+            </div>
+          )}
+          {links.length > 0 ? (
+            <div className="space-y-1">
+              {links.map(link => (
+                <div key={link.id} className="flex items-center gap-2 p-2 rounded bg-muted/30 group">
+                  <span>{link.icon || '🔗'}</span>
+                  <a 
+                    href={link.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex-1 text-sm text-primary hover:underline truncate"
+                  >
+                    {link.title || link.url}
+                  </a>
+                  <span className="text-xs text-muted-foreground">{link.type}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveLink(link.id)}
+                    className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">No links attached</p>
+          )}
         </div>
       )}
 
