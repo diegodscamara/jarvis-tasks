@@ -32,8 +32,10 @@ type Agent = 'jarvis' | 'gemini' | 'copilot' | 'claude' | 'diego'
 interface Comment {
   id: string
   text: string
+  content?: string  // alias for text (API uses content)
   author: string
   createdAt: string
+  isRead?: boolean
 }
 
 interface Project {
@@ -101,6 +103,9 @@ export default function Home() {
   const [activeLabel, setActiveLabel] = useState<string | null>(null)
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [notifications, setNotifications] = useState<{id: string; type: string; taskId: string; taskTitle: string; message: string; author: string; createdAt: string; isRead: boolean}[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
   const [viewMode, setViewMode] = useState<'board' | 'list'>('board')
   
   // Settings state (persisted to localStorage)
@@ -207,7 +212,35 @@ export default function Home() {
     fetchTasks()
     fetchProjects()
     fetchLabels()
+    fetchNotifications()
+    // Poll for notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000)
+    return () => clearInterval(interval)
   }, [])
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await fetch('/api/notifications')
+      const data = await res.json()
+      setNotifications(data.notifications || [])
+      setUnreadCount(data.unreadCount || 0)
+    } catch (e) {
+      console.error('Failed to fetch notifications', e)
+    }
+  }
+
+  const markAllNotificationsRead = async () => {
+    try {
+      await fetch('/api/notifications', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ markAllRead: true })
+      })
+      fetchNotifications()
+    } catch (e) {
+      console.error('Failed to mark notifications as read', e)
+    }
+  }
 
   const fetchTasks = async () => {
     try {
@@ -509,6 +542,19 @@ export default function Home() {
             >
               <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">?</kbd>
             </button>
+            {/* Notifications Bell */}
+            <button
+              onClick={() => setShowNotifications(true)}
+              className="relative p-1.5 rounded hover:bg-muted transition-colors"
+              title="Notifications"
+            >
+              <span>🔔</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-primary text-[10px] font-medium flex items-center justify-center text-primary-foreground">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span className="w-2 h-2 rounded-full bg-green-500"></span>
               <span>System Online</span>
@@ -665,6 +711,65 @@ export default function Home() {
             <div className="pt-2 text-xs text-muted-foreground text-center border-t border-border">
               Press <kbd className="px-1.5 py-0.5 rounded bg-muted font-mono">?</kbd> anytime to toggle this help
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Notifications Dialog */}
+      <Dialog open={showNotifications} onOpenChange={setShowNotifications}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>🔔 Notifications</span>
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllNotificationsRead}
+                  className="text-xs text-primary hover:underline font-normal"
+                >
+                  Mark all as read
+                </button>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[400px] overflow-y-auto space-y-2">
+            {notifications.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                <div className="text-2xl mb-2">🔔</div>
+                <div>No notifications</div>
+                <div className="text-xs mt-1">Comments and updates will appear here</div>
+              </div>
+            ) : (
+              notifications.map(notif => (
+                <div
+                  key={notif.id}
+                  className={`p-3 rounded-lg text-sm cursor-pointer transition-colors ${
+                    notif.isRead 
+                      ? 'bg-muted/50 hover:bg-muted' 
+                      : 'bg-primary/10 border border-primary/20 hover:bg-primary/20'
+                  }`}
+                  onClick={() => {
+                    // Find and open the task
+                    const task = tasks.find(t => t.id === notif.taskId)
+                    if (task) {
+                      setEditingTask(task)
+                      setShowModal(true)
+                      setShowNotifications(false)
+                    }
+                  }}
+                >
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className={notif.isRead ? 'text-muted-foreground' : 'text-primary font-medium'}>
+                      {notif.author} commented
+                    </span>
+                    <span className="text-muted-foreground">
+                      {new Date(notif.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="font-medium mb-1">{notif.taskTitle}</div>
+                  <div className="text-muted-foreground line-clamp-2">{notif.message}</div>
+                </div>
+              ))
+            )}
           </div>
         </DialogContent>
       </Dialog>
@@ -1136,20 +1241,43 @@ function TaskForm({
       
       {task?.id && (
         <div className="space-y-3 pt-4 border-t border-border">
-          <h3 className="text-sm font-medium">Comments</h3>
-          <div className="max-h-[150px] overflow-y-auto space-y-2">
-            {comments.map(comment => (
-              <div key={comment.id} className="p-2 rounded bg-muted text-sm">
-                <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                  <span className="text-primary">{comment.author}</span>
-                  <span>{new Date(comment.createdAt).toLocaleString()}</span>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium">💬 Comments</h3>
+            <span className="text-xs text-muted-foreground">{comments.length} comment{comments.length !== 1 ? 's' : ''}</span>
+          </div>
+          <div className="max-h-[200px] overflow-y-auto space-y-2">
+            {comments.map(comment => {
+              const isJarvis = comment.author === 'jarvis' || comment.author === 'Jarvis'
+              const commentText = comment.text || comment.content || ''
+              return (
+                <div 
+                  key={comment.id} 
+                  className={`p-3 rounded-lg text-sm ${
+                    isJarvis 
+                      ? 'bg-primary/10 border border-primary/20' 
+                      : 'bg-muted'
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-xs mb-2">
+                    <div className="flex items-center gap-2">
+                      {isJarvis && <span>⚡</span>}
+                      <span className={isJarvis ? 'text-primary font-medium' : 'text-muted-foreground'}>
+                        {comment.author}
+                      </span>
+                    </div>
+                    <span className="text-muted-foreground">
+                      {new Date(comment.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="whitespace-pre-wrap">{commentText}</div>
                 </div>
-                <div>{comment.text}</div>
-              </div>
-            ))}
+              )
+            })}
             {comments.length === 0 && (
-              <div className="text-center text-muted-foreground text-sm py-4">
-                No comments yet
+              <div className="text-center text-muted-foreground text-sm py-6 bg-muted/30 rounded-lg">
+                <div className="mb-1">💬</div>
+                <div>No comments yet</div>
+                <div className="text-xs mt-1">Add a comment or Jarvis will respond here</div>
               </div>
             )}
           </div>
@@ -1166,7 +1294,7 @@ function TaskForm({
               onClick={handleAddComment}
               disabled={!newComment.trim()}
             >
-              Add
+              Send
             </Button>
           </div>
         </div>

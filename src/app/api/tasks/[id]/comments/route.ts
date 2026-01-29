@@ -32,13 +32,46 @@ export async function POST(
     const { id: taskId } = await params
     const body = await request.json()
     const id = body.id || `comment-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    const author = body.author || 'jarvis'
     
     const comment = db.createComment({
       id,
       task_id: taskId,
-      author: body.author || 'jarvis',
+      author,
       content: body.content,
     })
+    
+    // Create notification for new comments (unless it's from Jarvis checking in)
+    // Jarvis will pick up notifications addressed to him
+    if (author !== 'jarvis') {
+      // Get task info for notification
+      const task = db.getTaskById(taskId)
+      if (task) {
+        const fs = await import('fs')
+        const path = await import('path')
+        const notificationsPath = path.join(process.cwd(), 'data', 'notifications.json')
+        
+        let notifications: any[] = []
+        try {
+          if (fs.existsSync(notificationsPath)) {
+            notifications = JSON.parse(fs.readFileSync(notificationsPath, 'utf-8') || '[]')
+          }
+        } catch (e) {}
+        
+        notifications.push({
+          id: `notif-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          type: 'comment',
+          taskId,
+          taskTitle: task.title,
+          message: body.content,
+          author,
+          createdAt: new Date().toISOString(),
+          isRead: false,
+        })
+        
+        fs.writeFileSync(notificationsPath, JSON.stringify(notifications, null, 2))
+      }
+    }
     
     return NextResponse.json({
       id: comment.id,
