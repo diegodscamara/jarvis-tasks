@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from '@jest/globals'
+import { beforeEach, describe, expect, it } from '@jest/globals'
 
 describe('Task Dependencies - TDD', () => {
   describe('Dependency Management', () => {
@@ -17,18 +17,18 @@ describe('Task Dependencies - TDD', () => {
         allTasks: Task[]
       ): Task => {
         const blockedBy = task.dependsOn || []
-        
+
         // Also update the tasks that this task depends on
-        blockedBy.forEach(depId => {
-          const depTask = allTasks.find(t => t.id === depId)
+        blockedBy.forEach((depId) => {
+          const depTask = allTasks.find((t) => t.id === depId)
           if (depTask && !depTask.blockedBy) {
             depTask.blockedBy = []
           }
-          if (depTask && !depTask.blockedBy.includes(task.id)) {
+          if (depTask && depTask.blockedBy && !depTask.blockedBy.includes(task.id)) {
             depTask.blockedBy.push(task.id)
           }
         })
-        
+
         return { ...task, blockedBy }
       }
 
@@ -66,7 +66,7 @@ describe('Task Dependencies - TDD', () => {
         newStatus: string,
         allTasks: typeof tasks
       ): { allowed: boolean; reason?: string } => {
-        const task = allTasks.find(t => t.id === taskId)
+        const task = allTasks.find((t) => t.id === taskId)
         if (!task) return { allowed: false, reason: 'Task not found' }
 
         // Can always move backwards
@@ -76,8 +76,8 @@ describe('Task Dependencies - TDD', () => {
 
         // Check dependencies for forward movement
         if (task.dependsOn && task.dependsOn.length > 0) {
-          const incompleteDeps = task.dependsOn.filter(depId => {
-            const dep = allTasks.find(t => t.id === depId)
+          const incompleteDeps = task.dependsOn.filter((depId) => {
+            const dep = allTasks.find((t) => t.id === depId)
             return dep && dep.status !== 'done'
           })
 
@@ -113,12 +113,12 @@ describe('Task Dependencies - TDD', () => {
         newStatus: string,
         allTasks: typeof tasks
       ): { allowed: boolean } => {
-        const task = allTasks.find(t => t.id === taskId)
+        const task = allTasks.find((t) => t.id === taskId)
         if (!task) return { allowed: false }
 
         if (task.dependsOn && task.dependsOn.length > 0) {
-          const allDepsComplete = task.dependsOn.every(depId => {
-            const dep = allTasks.find(t => t.id === depId)
+          const allDepsComplete = task.dependsOn.every((depId) => {
+            const dep = allTasks.find((t) => t.id === depId)
             return dep && dep.status === 'done'
           })
 
@@ -151,36 +151,37 @@ describe('Task Dependencies - TDD', () => {
         // Build dependency graph
         const visited = new Set<string>()
         const recursionStack = new Set<string>()
-        
+
         const hasCycle = (id: string, path: string[] = []): string[] | null => {
           if (recursionStack.has(id)) {
             const cycleStart = path.indexOf(id)
             return path.slice(cycleStart).concat(id)
           }
-          
+
           if (visited.has(id)) return null
-          
+
           visited.add(id)
           recursionStack.add(id)
           path.push(id)
-          
-          const task = id === taskId 
-            ? { id: taskId, dependsOn: newDependencies }
-            : allTasks.find(t => t.id === id)
-            
+
+          const task =
+            id === taskId
+              ? { id: taskId, dependsOn: newDependencies }
+              : allTasks.find((t) => t.id === id)
+
           if (task?.dependsOn) {
             for (const depId of task.dependsOn) {
               const cycle = hasCycle(depId, [...path])
               if (cycle) return cycle
             }
           }
-          
+
           recursionStack.delete(id)
           return null
         }
-        
+
         const cycle = hasCycle(taskId)
-        
+
         if (cycle) {
           return {
             valid: false,
@@ -188,7 +189,7 @@ describe('Task Dependencies - TDD', () => {
             cycle,
           }
         }
-        
+
         return { valid: true }
       }
 
@@ -224,17 +225,17 @@ describe('Task Dependencies - TDD', () => {
         memo: Map<string, number> = new Map()
       ): number => {
         if (memo.has(taskId)) return memo.get(taskId)!
-        
-        const task = allTasks.find(t => t.id === taskId)
+
+        const task = allTasks.find((t) => t.id === taskId)
         if (!task || !task.dependsOn || task.dependsOn.length === 0) {
           memo.set(taskId, 0)
           return 0
         }
-        
+
         const maxDepth = Math.max(
-          ...task.dependsOn.map(depId => calculateDepth(depId, allTasks, memo))
+          ...task.dependsOn.map((depId) => calculateDepth(depId, allTasks, memo))
         )
-        
+
         const depth = maxDepth + 1
         memo.set(taskId, depth)
         return depth
@@ -263,12 +264,12 @@ describe('Task Dependencies - TDD', () => {
       ]
 
       const getTaskRelations = (taskId: string, allTasks: typeof tasks) => {
-        const task = allTasks.find(t => t.id === taskId)
+        const task = allTasks.find((t) => t.id === taskId)
         if (!task) return { blocking: [], blockedBy: [] }
 
         // Tasks this task is blocking (tasks that depend on this)
         const blocking = task.blockedBy || []
-        
+
         // Tasks blocking this task (dependencies)
         const blockedBy = task.dependsOn || []
 
@@ -283,10 +284,10 @@ describe('Task Dependencies - TDD', () => {
       // Assert
       expect(relations1.blocking).toEqual(['task-2', 'task-3'])
       expect(relations1.blockedBy).toEqual([])
-      
+
       expect(relations2.blocking).toEqual([])
       expect(relations2.blockedBy).toEqual(['task-1'])
-      
+
       expect(relations4.blockedBy).toEqual(['task-2', 'task-3'])
     })
   })

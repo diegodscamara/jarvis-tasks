@@ -1,34 +1,34 @@
-import { NextRequest, NextResponse } from "next/server"
-import * as fs from "fs"
-import * as path from "path"
+import * as fs from 'fs'
+import { type NextRequest, NextResponse } from 'next/server'
+import * as path from 'path'
 
-const SETTINGS_FILE = path.join(process.cwd(), "data", "settings.json")
+const SETTINGS_FILE = path.join(process.cwd(), 'data', 'settings.json')
 
 const DEFAULT_SETTINGS = {
-  theme: "dark",
-  accentColor: "#5E6AD2",
-  fontSize: "medium",
+  theme: 'dark',
+  accentColor: '#5E6AD2',
+  fontSize: 'medium',
   compactMode: false,
   showCompletedTasks: true,
-  defaultView: "board",
+  defaultView: 'board',
   notificationsEnabled: true,
   soundEffects: false,
   keyboardShortcuts: true,
   autoSave: true,
-  dateFormat: "relative",
+  dateFormat: 'relative',
   weekStartsOn: 1, // Monday
   defaultProject: null,
-  defaultPriority: "medium",
+  defaultPriority: 'medium',
 }
 
 function getSettings() {
   try {
     if (fs.existsSync(SETTINGS_FILE)) {
-      const data = fs.readFileSync(SETTINGS_FILE, "utf8")
+      const data = fs.readFileSync(SETTINGS_FILE, 'utf8')
       return { ...DEFAULT_SETTINGS, ...JSON.parse(data) }
     }
   } catch (error) {
-    console.error("Error reading settings:", error)
+    console.error('Error reading settings:', error)
   }
   return DEFAULT_SETTINGS
 }
@@ -49,8 +49,8 @@ export async function PATCH(request: NextRequest) {
     saveSettings(merged)
     return NextResponse.json(merged)
   } catch (error) {
-    console.error("Settings update error:", error)
-    return NextResponse.json({ error: "Failed to update settings" }, { status: 500 })
+    console.error('Settings update error:', error)
+    return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 })
   }
 }
 
@@ -61,7 +61,7 @@ export async function PUT(request: NextRequest) {
     saveSettings(merged)
     return NextResponse.json(merged)
   } catch (error) {
-    console.error("Settings replace error:", error)
-    return NextResponse.json({ error: "Failed to replace settings" }, { status: 500 })
+    console.error('Settings replace error:', error)
+    return NextResponse.json({ error: 'Failed to replace settings' }, { status: 500 })
   }
 }

@@ -1,6 +1,5 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
 import {
   addDays,
   addMonths,
@@ -14,6 +13,7 @@ import {
   startOfWeek,
   subMonths,
 } from 'date-fns'
+import { useCallback, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -24,8 +24,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { PRIORITY_COLORS } from '@/lib/constants'
-import type { Project, Task } from '@/types'
 import { cn } from '@/lib/utils'
+import type { Project, Task } from '@/types'
 
 interface CalendarViewProps {
   tasks: Task[]
@@ -50,15 +50,11 @@ export function CalendarView({
   const [dragOverDate, setDragOverDate] = useState<Date | null>(null)
 
   const goToPrevious = useCallback(() => {
-    setCurrentDate((prev) =>
-      viewMode === 'month' ? subMonths(prev, 1) : addWeeks(prev, -1)
-    )
+    setCurrentDate((prev) => (viewMode === 'month' ? subMonths(prev, 1) : addWeeks(prev, -1)))
   }, [viewMode])
 
   const goToNext = useCallback(() => {
-    setCurrentDate((prev) =>
-      viewMode === 'month' ? addMonths(prev, 1) : addWeeks(prev, 1)
-    )
+    setCurrentDate((prev) => (viewMode === 'month' ? addMonths(prev, 1) : addWeeks(prev, 1)))
   }, [viewMode])
 
   const goToToday = useCallback(() => {
@@ -159,9 +155,7 @@ export function CalendarView({
         </div>
         <div className="flex items-center gap-2">
           {onTaskReschedule && (
-            <span className="text-xs text-muted-foreground">
-              Drag tasks to reschedule
-            </span>
+            <span className="text-xs text-muted-foreground">Drag tasks to reschedule</span>
           )}
           <Select value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
             <SelectTrigger className="w-[120px]">
@@ -180,10 +174,7 @@ export function CalendarView({
         {/* Week day headers */}
         <div className="grid grid-cols-7 gap-1 mb-2">
           {weekDays.map((day) => (
-            <div
-              key={day}
-              className="text-center text-sm font-medium text-muted-foreground py-2"
-            >
+            <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">
               {day}
             </div>
           ))}
@@ -191,10 +182,7 @@ export function CalendarView({
 
         {/* Calendar cells */}
         <div
-          className={cn(
-            'grid grid-cols-7 gap-1',
-            viewMode === 'week' ? 'h-[calc(100%-40px)]' : ''
-          )}
+          className={cn('grid grid-cols-7 gap-1', viewMode === 'week' ? 'h-[calc(100%-40px)]' : '')}
         >
           {calendarDays.map((day) => {
             const dayTasks = getTasksForDate(day)
@@ -218,12 +206,7 @@ export function CalendarView({
                 onDrop={() => handleDrop(day)}
               >
                 <CardContent className="p-2">
-                  <div
-                    className={cn(
-                      'text-sm font-medium mb-1',
-                      isToday && 'text-primary'
-                    )}
-                  >
+                  <div className={cn('text-sm font-medium mb-1', isToday && 'text-primary')}>
                     {format(day, 'd')}
                   </div>
                   <div className="space-y-1 overflow-y-auto max-h-[80px]">
@@ -277,24 +260,15 @@ export function CalendarView({
       <div className="flex items-center gap-4 p-4 border-t border-border text-xs text-muted-foreground">
         <span>Priority:</span>
         <div className="flex items-center gap-1">
-          <span
-            className="w-3 h-3 rounded"
-            style={{ backgroundColor: PRIORITY_COLORS.high }}
-          />
+          <span className="w-3 h-3 rounded" style={{ backgroundColor: PRIORITY_COLORS.high }} />
           <span>High</span>
         </div>
         <div className="flex items-center gap-1">
-          <span
-            className="w-3 h-3 rounded"
-            style={{ backgroundColor: PRIORITY_COLORS.medium }}
-          />
+          <span className="w-3 h-3 rounded" style={{ backgroundColor: PRIORITY_COLORS.medium }} />
           <span>Medium</span>
         </div>
         <div className="flex items-center gap-1">
-          <span
-            className="w-3 h-3 rounded"
-            style={{ backgroundColor: PRIORITY_COLORS.low }}
-          />
+          <span className="w-3 h-3 rounded" style={{ backgroundColor: PRIORITY_COLORS.low }} />
           <span>Low</span>
         </div>
       </div>

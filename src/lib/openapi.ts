@@ -46,7 +46,8 @@ export const openAPIDocument = {
   info: {
     title: 'Jarvis Tasks API',
     version: '1.0.0',
-    description: 'A powerful task management API with AI assistant integration, time tracking, and advanced features.',
+    description:
+      'A powerful task management API with AI assistant integration, time tracking, and advanced features.',
     contact: {
       name: 'API Support',
       url: 'https://github.com/diegodscamara/jarvis-tasks',
@@ -622,7 +623,16 @@ export const openAPIDocument = {
     schemas: {
       Task: {
         type: 'object',
-        required: ['id', 'title', 'description', 'priority', 'status', 'assignee', 'createdAt', 'updatedAt'],
+        required: [
+          'id',
+          'title',
+          'description',
+          'priority',
+          'status',
+          'assignee',
+          'createdAt',
+          'updatedAt',
+        ],
         properties: {
           id: { type: 'string' },
           title: { type: 'string' },

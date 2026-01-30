@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { DependencyPicker } from '@/components/dependency-picker'
 import {
   CalendarIcon,
   ClockIcon,
@@ -8,6 +9,9 @@ import {
   FlashLightIcon,
   RecurrenceIcon,
 } from '@/components/icons'
+import { LinkItem } from '@/components/link-item'
+import { RichTextEditor } from '@/components/rich-text-editor'
+import { TimeEstimate, TimeTracker } from '@/components/time-tracker'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -18,10 +22,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { RichTextEditor } from '@/components/rich-text-editor'
-import { LinkItem } from '@/components/link-item'
-import { DependencyPicker } from '@/components/dependency-picker'
-import { TimeTracker, TimeEstimate } from '@/components/time-tracker'
 import { AGENTS, COLUMNS } from '@/lib/constants'
 import type {
   Agent,
@@ -44,7 +44,15 @@ interface TaskFormProps {
   onClose: () => void
 }
 
-export function TaskForm({ task, tasks, projects, labels, onSave, onDelete, onClose }: TaskFormProps) {
+export function TaskForm({
+  task,
+  tasks,
+  projects,
+  labels,
+  onSave,
+  onDelete,
+  onClose,
+}: TaskFormProps) {
   const [title, setTitle] = useState(task?.title || '')
   const [description, setDescription] = useState(task?.description || '')
   const [priority, setPriority] = useState<Priority>(task?.priority || 'medium')
@@ -60,7 +68,9 @@ export function TaskForm({ task, tasks, projects, labels, onSave, onDelete, onCl
   const [timeSpent, setTimeSpent] = useState<string>(task?.timeSpent?.toString() || '0')
   const [comments, setComments] = useState<Comment[]>(task?.comments || [])
   const [newComment, setNewComment] = useState('')
-  const [links, setLinks] = useState<{ id: string; url: string; title: string | null; type: string; icon: string }[]>([])
+  const [links, setLinks] = useState<
+    { id: string; url: string; title: string | null; type: string; icon: string }[]
+  >([])
   const [newLinkUrl, setNewLinkUrl] = useState('')
   const [showAddLink, setShowAddLink] = useState(false)
   const [selectedDependencies, setSelectedDependencies] = useState<string[]>(task?.dependsOn || [])
@@ -70,19 +80,19 @@ export function TaskForm({ task, tasks, projects, labels, onSave, onDelete, onCl
     if (task?.id) {
       // Fetch links
       fetch(`/api/tasks/${task.id}/links`)
-        .then(res => res.json())
-        .then(data => setLinks(data.links || []))
+        .then((res) => res.json())
+        .then((data) => setLinks(data.links || []))
         .catch(console.error)
-      
+
       // Fetch comments
       fetch(`/api/tasks/${task.id}/comments`)
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
           if (data.comments) {
             // Map the backend format to frontend format
             const formattedComments = data.comments.map((c: any) => ({
               id: c.id,
-              text: c.content || c.text,  // Support both formats
+              text: c.content || c.text, // Support both formats
               author: c.author,
               createdAt: c.createdAt,
             }))
@@ -99,10 +109,10 @@ export function TaskForm({ task, tasks, projects, labels, onSave, onDelete, onCl
       const res = await fetch(`/api/tasks/${task.id}/links`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: newLinkUrl.trim() })
+        body: JSON.stringify({ url: newLinkUrl.trim() }),
       })
       const link = await res.json()
-      setLinks(prev => [...prev, link])
+      setLinks((prev) => [...prev, link])
       setNewLinkUrl('')
       setShowAddLink(false)
     } catch (e) {
@@ -114,7 +124,7 @@ export function TaskForm({ task, tasks, projects, labels, onSave, onDelete, onCl
     if (!task?.id) return
     try {
       await fetch(`/api/tasks/${task.id}/links?linkId=${linkId}`, { method: 'DELETE' })
-      setLinks(prev => prev.filter(l => l.id !== linkId))
+      setLinks((prev) => prev.filter((l) => l.id !== linkId))
     } catch (e) {
       console.error('Failed to remove link', e)
     }
@@ -133,7 +143,7 @@ export function TaskForm({ task, tasks, projects, labels, onSave, onDelete, onCl
   }
 
   const handleRemoveDependency = (taskId: string) => {
-    setSelectedDependencies(selectedDependencies.filter(id => id !== taskId))
+    setSelectedDependencies(selectedDependencies.filter((id) => id !== taskId))
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -172,12 +182,15 @@ export function TaskForm({ task, tasks, projects, labels, onSave, onDelete, onCl
       if (response.ok) {
         const savedComment = await response.json()
         // Use the response from server which has the correct format
-        setComments([...comments, {
-          id: savedComment.id,
-          text: savedComment.content, // Map content to text for UI
-          author: savedComment.author,
-          createdAt: savedComment.createdAt,
-        }])
+        setComments([
+          ...comments,
+          {
+            id: savedComment.id,
+            text: savedComment.content, // Map content to text for UI
+            author: savedComment.author,
+            createdAt: savedComment.createdAt,
+          },
+        ])
         setNewComment('')
       } else {
         console.error('Failed to add comment')
@@ -322,10 +335,9 @@ export function TaskForm({ task, tasks, projects, labels, onSave, onDelete, onCl
           </label>
           <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
         </div>
-
       </div>
 
-      <TimeEstimate 
+      <TimeEstimate
         estimate={estimate ? parseFloat(estimate) : undefined}
         onChange={(value) => setEstimate(value?.toString() || '')}
       />
@@ -368,7 +380,7 @@ export function TaskForm({ task, tasks, projects, labels, onSave, onDelete, onCl
 
       {task?.id && (
         <div className="pt-4 border-t border-border">
-          <TimeTracker 
+          <TimeTracker
             task={{
               ...task,
               timeSpent: timeSpent ? parseFloat(timeSpent) / 60 : undefined, // Convert minutes to hours
@@ -382,13 +394,47 @@ export function TaskForm({ task, tasks, projects, labels, onSave, onDelete, onCl
         <div className="space-y-3 pt-4 border-t border-border">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium">🔗 Links & Resources</h3>
-            <button 
-              type="button"
-              onClick={() => setShowAddLink(!showAddLink)}
-              className="text-xs text-primary hover:underline"
-            >
-              + Add
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/github/scan-prs', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ taskId: task.id }),
+                    })
+                    const result = await res.json()
+                    if (result.linked > 0) {
+                      // Refresh links
+                      fetch(`/api/tasks/${task.id}/links`)
+                        .then((res) => res.json())
+                        .then((data) => setLinks(data.links || []))
+                        .catch(console.error)
+                      alert(`Found and linked ${result.linked} GitHub PR(s)!`)
+                    } else if (result.found > 0) {
+                      alert(`Found ${result.found} PR(s) but they were already linked.`)
+                    } else {
+                      alert('No matching PRs found.')
+                    }
+                  } catch (error) {
+                    console.error('Error scanning PRs:', error)
+                    alert('Failed to scan for PRs')
+                  }
+                }}
+                className="text-xs text-muted-foreground hover:text-primary"
+                title="Scan GitHub for PRs related to this task"
+              >
+                🔍 Scan PRs
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAddLink(!showAddLink)}
+                className="text-xs text-primary hover:underline"
+              >
+                + Add
+              </button>
+            </div>
           </div>
           {showAddLink && (
             <div className="flex gap-2">
@@ -397,15 +443,17 @@ export function TaskForm({ task, tasks, projects, labels, onSave, onDelete, onCl
                 placeholder="Paste URL..."
                 className="flex-1"
                 value={newLinkUrl}
-                onChange={e => setNewLinkUrl(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddLink())}
+                onChange={(e) => setNewLinkUrl(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddLink())}
               />
-              <Button type="button" size="sm" onClick={handleAddLink}>Add</Button>
+              <Button type="button" size="sm" onClick={handleAddLink}>
+                Add
+              </Button>
             </div>
           )}
           {links.length > 0 ? (
             <div className="space-y-1">
-              {links.map(link => (
+              {links.map((link) => (
                 <LinkItem key={link.id} link={link} onRemove={handleRemoveLink} />
               ))}
             </div>

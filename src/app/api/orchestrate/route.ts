@@ -1,23 +1,23 @@
 /**
  * Orchestrator API - Dispatch tasks to sub-agents
- * 
+ *
  * GET /api/orchestrate - Get orchestrator status and pending dispatches
  * POST /api/orchestrate - Dispatch pending tasks to sub-agents
  * PUT /api/orchestrate - Update session status (for sub-agent callbacks)
  */
 
+import { and, eq, inArray } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
 import { tasks } from '@/db/schema'
-import { eq, and, inArray } from 'drizzle-orm'
 import {
-  loadSessions,
-  loadMetrics,
-  getDispatchableTasks,
-  recordDispatch,
-  completeSession,
-  canDispatch,
   AGENT_CONFIG,
+  canDispatch,
+  completeSession,
+  getDispatchableTasks,
+  loadMetrics,
+  loadSessions,
+  recordDispatch,
 } from '@/lib/orchestrator'
 
 // GET - Status and pending dispatches
@@ -25,13 +25,10 @@ export async function GET() {
   try {
     const sessions = loadSessions()
     const metrics = loadMetrics()
-    
+
     // Get all todo tasks
-    const todoTasks = await db
-      .select()
-      .from(tasks)
-      .where(eq(tasks.status, 'todo'))
-    
+    const todoTasks = await db.select().from(tasks).where(eq(tasks.status, 'todo'))
+
     const dispatchable = getDispatchableTasks(
       todoTasks.map((t) => ({
         id: t.id,
@@ -40,7 +37,7 @@ export async function GET() {
         assignee: t.assignee,
       }))
     )
-    
+
     // Agent availability
     const agentStatus = Object.entries(AGENT_CONFIG).map(([agent, config]) => ({
       agent,
@@ -48,7 +45,7 @@ export async function GET() {
       active: sessions.filter((s) => s.agent === agent && s.status === 'running').length,
       canDispatch: canDispatch(agent),
     }))
-    
+
     return NextResponse.json({
       status: 'ok',
       activeSessions: sessions.filter((s) => s.status === 'running'),
@@ -75,18 +72,15 @@ export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}))
     const { taskIds, dryRun = false } = body as { taskIds?: string[]; dryRun?: boolean }
-    
+
     // Get tasks to dispatch
-    let todoTasks = await db
-      .select()
-      .from(tasks)
-      .where(eq(tasks.status, 'todo'))
-    
+    let todoTasks = await db.select().from(tasks).where(eq(tasks.status, 'todo'))
+
     // Filter to specific tasks if provided
     if (taskIds && taskIds.length > 0) {
       todoTasks = todoTasks.filter((t) => taskIds.includes(t.id))
     }
-    
+
     const dispatchable = getDispatchableTasks(
       todoTasks.map((t) => ({
         id: t.id,
@@ -96,7 +90,7 @@ export async function POST(request: Request) {
         description: t.description,
       }))
     )
-    
+
     if (dryRun) {
       return NextResponse.json({
         dryRun: true,
@@ -107,19 +101,19 @@ export async function POST(request: Request) {
         })),
       })
     }
-    
+
     const dispatched: Array<{ taskId: string; title: string; agent: string; method: string }> = []
-    
+
     for (const { task, agent } of dispatchable) {
       // Record the dispatch
       recordDispatch(task.id, task.title, agent)
-      
+
       // Update task status to in_progress
       await db
         .update(tasks)
         .set({ status: 'in_progress', updatedAt: new Date().toISOString() })
         .where(eq(tasks.id, task.id))
-      
+
       dispatched.push({
         taskId: task.id,
         title: task.title,
@@ -127,7 +121,7 @@ export async function POST(request: Request) {
         method: agent === 'claude' ? 'sessions_spawn' : 'cli',
       })
     }
-    
+
     return NextResponse.json({
       success: true,
       dispatched,
@@ -148,29 +142,29 @@ export async function PUT(request: Request) {
       status: 'completed' | 'failed'
       result?: string
     }
-    
+
     if (!taskId || !status) {
       return NextResponse.json({ error: 'taskId and status required' }, { status: 400 })
     }
-    
+
     // Update session
     completeSession(taskId, result || '', status === 'completed')
-    
+
     // Update task status
     const newStatus = status === 'completed' ? 'done' : 'todo' // Reset to todo if failed
     await db
       .update(tasks)
-      .set({ 
-        status: newStatus, 
-        updatedAt: new Date().toISOString() 
+      .set({
+        status: newStatus,
+        updatedAt: new Date().toISOString(),
       })
       .where(eq(tasks.id, taskId))
-    
+
     // If result provided, add as comment
     if (result) {
       // TODO: Add comment to task
     }
-    
+
     return NextResponse.json({
       success: true,
       taskId,

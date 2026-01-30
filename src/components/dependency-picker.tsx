@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -12,6 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { Task, Project } from '@/types'
+import type { Project, Task } from '@/types'
 
 interface DependencyPickerProps {
   currentTaskId?: string
@@ -44,7 +44,7 @@ export function DependencyPicker({
   const [filterStatus, setFilterStatus] = useState('')
 
   // Filter out current task and already selected dependencies
-  const filteredTasks = availableTasks.filter(task => {
+  const filteredTasks = availableTasks.filter((task) => {
     if (task.id === currentTaskId) return false
     if (search && !task.title.toLowerCase().includes(search.toLowerCase())) return false
     if (filterProject && task.projectId !== filterProject) return false
@@ -53,9 +53,7 @@ export function DependencyPicker({
   })
 
   // Get selected task details
-  const selectedTasks = availableTasks.filter(task => 
-    selectedDependencies.includes(task.id)
-  )
+  const selectedTasks = availableTasks.filter((task) => selectedDependencies.includes(task.id))
 
   return (
     <div className="space-y-2">
@@ -74,7 +72,7 @@ export function DependencyPicker({
                 Choose tasks that must be completed before this task can begin.
               </DialogDescription>
             </DialogHeader>
-            
+
             <div className="space-y-4">
               <div className="flex gap-2">
                 <Input
@@ -83,7 +81,10 @@ export function DependencyPicker({
                   onChange={(e) => setSearch(e.target.value)}
                   className="flex-1"
                 />
-                <Select value={filterProject} onValueChange={(value) => setFilterProject(value ?? '')}>
+                <Select
+                  value={filterProject}
+                  onValueChange={(value) => setFilterProject(value ?? '')}
+                >
                   <SelectTrigger className="w-48">
                     <SelectValue placeholder="All projects" />
                   </SelectTrigger>
@@ -96,7 +97,10 @@ export function DependencyPicker({
                     ))}
                   </SelectContent>
                 </Select>
-                <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value ?? '')}>
+                <Select
+                  value={filterStatus}
+                  onValueChange={(value) => setFilterStatus(value ?? '')}
+                >
                   <SelectTrigger className="w-32">
                     <SelectValue placeholder="All status" />
                   </SelectTrigger>
@@ -109,23 +113,21 @@ export function DependencyPicker({
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="max-h-96 overflow-y-auto space-y-1">
                 {filteredTasks.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">
-                    No tasks found
-                  </p>
+                  <p className="text-sm text-muted-foreground text-center py-8">No tasks found</p>
                 ) : (
                   filteredTasks.map((task) => {
-                    const project = projects.find(p => p.id === task.projectId)
+                    const project = projects.find((p) => p.id === task.projectId)
                     const isSelected = selectedDependencies.includes(task.id)
-                    
+
                     return (
                       <div
                         key={task.id}
                         className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                          isSelected 
-                            ? 'bg-primary/10 border-primary' 
+                          isSelected
+                            ? 'bg-primary/10 border-primary'
                             : 'hover:bg-muted border-border'
                         }`}
                         onClick={() => {
@@ -142,7 +144,7 @@ export function DependencyPicker({
                             <div className="font-medium text-sm">{task.title}</div>
                             <div className="flex items-center gap-2 mt-1">
                               {project && (
-                                <span 
+                                <span
                                   className="text-xs px-2 py-0.5 rounded"
                                   style={{
                                     backgroundColor: `${project.color}20`,
@@ -152,18 +154,20 @@ export function DependencyPicker({
                                   {project.name}
                                 </span>
                               )}
-                              <span className={`text-xs ${
-                                task.status === 'done' ? 'text-green-600' :
-                                task.status === 'in_progress' ? 'text-blue-600' :
-                                'text-muted-foreground'
-                              }`}>
+                              <span
+                                className={`text-xs ${
+                                  task.status === 'done'
+                                    ? 'text-green-600'
+                                    : task.status === 'in_progress'
+                                      ? 'text-blue-600'
+                                      : 'text-muted-foreground'
+                                }`}
+                              >
                                 {task.status.replace(/_/g, ' ')}
                               </span>
                             </div>
                           </div>
-                          {isSelected && (
-                            <span className="text-primary">✓</span>
-                          )}
+                          {isSelected && <span className="text-primary">✓</span>}
                         </div>
                       </div>
                     )
@@ -174,12 +178,12 @@ export function DependencyPicker({
           </DialogContent>
         </Dialog>
       </div>
-      
+
       {selectedTasks.length > 0 ? (
         <div className="space-y-1">
           {selectedTasks.map((task) => {
-            const project = projects.find(p => p.id === task.projectId)
-            
+            const project = projects.find((p) => p.id === task.projectId)
+
             return (
               <div
                 key={task.id}
@@ -188,7 +192,7 @@ export function DependencyPicker({
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <span className="text-sm truncate">{task.title}</span>
                   {project && (
-                    <span 
+                    <span
                       className="text-xs px-1.5 py-0.5 rounded flex-shrink-0"
                       style={{
                         backgroundColor: `${project.color}20`,
@@ -198,7 +202,7 @@ export function DependencyPicker({
                       {project.name}
                     </span>
                   )}
-                  <Badge 
+                  <Badge
                     variant={task.status === 'done' ? 'default' : 'secondary'}
                     className="text-xs"
                   >

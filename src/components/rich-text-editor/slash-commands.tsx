@@ -1,10 +1,6 @@
-import React, {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useState,
-} from 'react'
-import { Editor } from '@tiptap/react'
+import type { Editor } from '@tiptap/react'
+import type React from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
 import { cn } from '@/lib/utils'
 
 export interface SlashCommandItem {
@@ -77,84 +73,76 @@ export interface SlashCommandsProps {
   items: SlashCommandItem[]
 }
 
-export const SlashCommands = forwardRef<any, SlashCommandsProps>(
-  ({ query, items }, ref) => {
-    const [selectedIndex, setSelectedIndex] = useState(0)
+export const SlashCommands = forwardRef<any, SlashCommandsProps>(({ query, items }, ref) => {
+  const [selectedIndex, setSelectedIndex] = useState(0)
 
-    const selectItem = (index: number) => {
-      const item = items[index]
-      if (!item) return
-      
-      // You'll implement the actual command execution in the parent
-      ;(window as any).__slashCommand = item
-    }
-
-    const upHandler = () => {
-      setSelectedIndex((items.length + selectedIndex - 1) % items.length)
-    }
-
-    const downHandler = () => {
-      setSelectedIndex((selectedIndex + 1) % items.length)
-    }
-
-    const enterHandler = () => {
-      selectItem(selectedIndex)
-    }
-
-    useEffect(() => setSelectedIndex(0), [items])
-
-    useImperativeHandle(ref, () => ({
-      onKeyDown: ({ event }: { event: KeyboardEvent }) => {
-        if (event.key === 'ArrowUp') {
-          upHandler()
-          return true
-        }
-
-        if (event.key === 'ArrowDown') {
-          downHandler()
-          return true
-        }
-
-        if (event.key === 'Enter') {
-          enterHandler()
-          return true
-        }
-
-        return false
-      },
-    }))
-
-    return (
-      <div className="z-50 min-w-[200px] overflow-hidden rounded-md border border-border bg-popover p-1 shadow-md">
-        {items.length ? (
-          items.map((item, index) => (
-            <button
-              className={cn(
-                'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent',
-                index === selectedIndex && 'bg-accent'
-              )}
-              key={item.command}
-              onClick={() => selectItem(index)}
-            >
-              <span className="flex h-5 w-5 items-center justify-center text-muted-foreground">
-                {item.icon}
-              </span>
-              <div className="flex flex-col">
-                <span className="font-medium">{item.title}</span>
-                <span className="text-xs text-muted-foreground">
-                  {item.description}
-                </span>
-              </div>
-            </button>
-          ))
-        ) : (
-          <div className="px-2 py-1.5 text-sm text-muted-foreground">
-            No results
-          </div>
-        )}
-      </div>
-    )
+  const selectItem = (index: number) => {
+    const item = items[index]
+    if (!item) return // You'll implement the actual command execution in the parent
+    ;(window as any).__slashCommand = item
   }
-)
+
+  const upHandler = () => {
+    setSelectedIndex((items.length + selectedIndex - 1) % items.length)
+  }
+
+  const downHandler = () => {
+    setSelectedIndex((selectedIndex + 1) % items.length)
+  }
+
+  const enterHandler = () => {
+    selectItem(selectedIndex)
+  }
+
+  useEffect(() => setSelectedIndex(0), [items])
+
+  useImperativeHandle(ref, () => ({
+    onKeyDown: ({ event }: { event: KeyboardEvent }) => {
+      if (event.key === 'ArrowUp') {
+        upHandler()
+        return true
+      }
+
+      if (event.key === 'ArrowDown') {
+        downHandler()
+        return true
+      }
+
+      if (event.key === 'Enter') {
+        enterHandler()
+        return true
+      }
+
+      return false
+    },
+  }))
+
+  return (
+    <div className="z-50 min-w-[200px] overflow-hidden rounded-md border border-border bg-popover p-1 shadow-md">
+      {items.length ? (
+        items.map((item, index) => (
+          <button
+            className={cn(
+              'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent',
+              index === selectedIndex && 'bg-accent'
+            )}
+            key={item.command}
+            onClick={() => selectItem(index)}
+          >
+            <span className="flex h-5 w-5 items-center justify-center text-muted-foreground">
+              {item.icon}
+            </span>
+            <div className="flex flex-col">
+              <span className="font-medium">{item.title}</span>
+              <span className="text-xs text-muted-foreground">{item.description}</span>
+            </div>
+          </button>
+        ))
+      ) : (
+        <div className="px-2 py-1.5 text-sm text-muted-foreground">No results</div>
+      )}
+    </div>
+  )
+})
 
 SlashCommands.displayName = 'SlashCommands'

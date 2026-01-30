@@ -46,8 +46,8 @@ export interface Task {
   createdAt: string
   updatedAt: string
   comments?: Comment[]
-  dependsOn?: string[]  // Task IDs this task depends on
-  blockedBy?: string[]  // Task IDs that depend on this task
+  dependsOn?: string[] // Task IDs this task depends on
+  blockedBy?: string[] // Task IDs that depend on this task
 }
 
 export interface Notification {

@@ -1,15 +1,15 @@
 'use client'
 
+import { Calendar, Clock, Target, TrendingUp } from 'lucide-react'
 import { useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { 
-  calculateSprintMetrics, 
-  getVelocityTrend, 
+import {
+  calculateSprintMetrics,
+  estimateCompletionDate,
   formatDuration,
-  estimateCompletionDate 
+  getVelocityTrend,
 } from '@/lib/time-tracking'
-import { Clock, TrendingUp, Target, Calendar } from 'lucide-react'
 import type { Task } from '@/types'
 
 interface SprintMetricsProps {
@@ -18,25 +18,22 @@ interface SprintMetricsProps {
   endDate?: Date
 }
 
-export function SprintMetrics({ 
-  tasks, 
+export function SprintMetrics({
+  tasks,
   startDate = new Date(new Date().setDate(new Date().getDate() - 7)),
-  endDate = new Date()
+  endDate = new Date(),
 }: SprintMetricsProps) {
   const metrics = useMemo(
     () => calculateSprintMetrics(tasks, startDate, endDate),
     [tasks, startDate, endDate]
   )
-  
-  const velocityTrend = useMemo(
-    () => getVelocityTrend(tasks, 4),
-    [tasks]
-  )
-  
-  const remainingTasks = tasks.filter(t => t.status !== 'done')
+
+  const velocityTrend = useMemo(() => getVelocityTrend(tasks, 4), [tasks])
+
+  const remainingTasks = tasks.filter((t) => t.status !== 'done')
   const remainingEstimate = remainingTasks.reduce((sum, t) => sum + (t.estimate || 0), 0)
   const completionDate = estimateCompletionDate(remainingEstimate, metrics.velocity)
-  
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {/* Velocity Card */}
@@ -47,9 +44,7 @@ export function SprintMetrics({
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{metrics.velocity.toFixed(2)}</div>
-          <p className="text-xs text-muted-foreground">
-            points per hour
-          </p>
+          <p className="text-xs text-muted-foreground">points per hour</p>
           <div className="mt-4 space-y-1">
             {velocityTrend.slice(-2).map((week, idx) => (
               <div key={idx} className="flex items-center justify-between text-xs">
@@ -60,7 +55,7 @@ export function SprintMetrics({
           </div>
         </CardContent>
       </Card>
-      
+
       {/* Time Tracking Card */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -68,22 +63,17 @@ export function SprintMetrics({
           <Clock className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
-            {formatDuration(metrics.totalSpent * 60)}
-          </div>
+          <div className="text-2xl font-bold">{formatDuration(metrics.totalSpent * 60)}</div>
           <p className="text-xs text-muted-foreground">
             of {formatDuration(metrics.totalEstimate * 60)} estimated
           </p>
-          <Progress 
-            value={(metrics.totalSpent / metrics.totalEstimate) * 100} 
-            className="mt-3"
-          />
+          <Progress value={(metrics.totalSpent / metrics.totalEstimate) * 100} className="mt-3" />
           <p className="text-xs text-muted-foreground mt-1">
             {metrics.averageAccuracy.toFixed(0)}% accuracy
           </p>
         </CardContent>
       </Card>
-      
+
       {/* Sprint Progress Card */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -92,9 +82,7 @@ export function SprintMetrics({
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{metrics.completedTasks}</div>
-          <p className="text-xs text-muted-foreground">
-            tasks completed
-          </p>
+          <p className="text-xs text-muted-foreground">tasks completed</p>
           <div className="mt-4">
             <div className="flex items-center justify-between text-xs mb-1">
               <span className="text-muted-foreground">Remaining</span>
@@ -107,7 +95,7 @@ export function SprintMetrics({
           </div>
         </CardContent>
       </Card>
-      
+
       {/* Completion Forecast Card */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -116,21 +104,19 @@ export function SprintMetrics({
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {completionDate 
+            {completionDate
               ? completionDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-              : 'N/A'
-            }
+              : 'N/A'}
           </div>
-          <p className="text-xs text-muted-foreground">
-            estimated completion
-          </p>
+          <p className="text-xs text-muted-foreground">estimated completion</p>
           {completionDate && (
             <div className="mt-4 text-xs">
+              <p className="text-muted-foreground">Based on current velocity</p>
               <p className="text-muted-foreground">
-                Based on current velocity
-              </p>
-              <p className="text-muted-foreground">
-                {Math.ceil((completionDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days
+                {Math.ceil(
+                  (completionDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+                )}{' '}
+                days
               </p>
             </div>
           )}
@@ -145,27 +131,27 @@ export function BurndownChart({ tasks, startDate, endDate }: SprintMetricsProps)
     () => calculateSprintMetrics(tasks, startDate || new Date(), endDate || new Date()),
     [tasks, startDate, endDate]
   )
-  
+
   if (metrics.burndownData.length === 0) {
     return null
   }
-  
-  const maxEstimate = Math.max(...metrics.burndownData.map(d => Math.max(d.remainingEstimate, d.actualRemaining)))
-  
+
+  const maxEstimate = Math.max(
+    ...metrics.burndownData.map((d) => Math.max(d.remainingEstimate, d.actualRemaining))
+  )
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Burndown Chart</CardTitle>
-        <CardDescription>
-          Sprint progress over time
-        </CardDescription>
+        <CardDescription>Sprint progress over time</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-64 relative">
           {/* Simple SVG chart - in production would use a proper charting library */}
           <svg className="w-full h-full">
             {/* Grid lines */}
-            {[0, 25, 50, 75, 100].map(percent => (
+            {[0, 25, 50, 75, 100].map((percent) => (
               <line
                 key={percent}
                 x1="0"
@@ -176,28 +162,34 @@ export function BurndownChart({ tasks, startDate, endDate }: SprintMetricsProps)
                 strokeOpacity={0.1}
               />
             ))}
-            
+
             {/* Ideal line */}
             <polyline
-              points={metrics.burndownData.map((d, i) => 
-                `${(i / (metrics.burndownData.length - 1)) * 100}%,${100 - (d.remainingEstimate / maxEstimate) * 100}%`
-              ).join(' ')}
+              points={metrics.burndownData
+                .map(
+                  (d, i) =>
+                    `${(i / (metrics.burndownData.length - 1)) * 100}%,${100 - (d.remainingEstimate / maxEstimate) * 100}%`
+                )
+                .join(' ')}
               fill="none"
               stroke="rgb(156, 163, 175)"
               strokeWidth="2"
               strokeDasharray="4"
             />
-            
+
             {/* Actual line */}
             <polyline
-              points={metrics.burndownData.map((d, i) => 
-                `${(i / (metrics.burndownData.length - 1)) * 100}%,${100 - (d.actualRemaining / maxEstimate) * 100}%`
-              ).join(' ')}
+              points={metrics.burndownData
+                .map(
+                  (d, i) =>
+                    `${(i / (metrics.burndownData.length - 1)) * 100}%,${100 - (d.actualRemaining / maxEstimate) * 100}%`
+                )
+                .join(' ')}
               fill="none"
               stroke="hsl(var(--primary))"
               strokeWidth="2"
             />
-            
+
             {/* Data points */}
             {metrics.burndownData.map((d, i) => (
               <circle
@@ -209,7 +201,7 @@ export function BurndownChart({ tasks, startDate, endDate }: SprintMetricsProps)
               />
             ))}
           </svg>
-          
+
           {/* Legend */}
           <div className="absolute bottom-0 right-0 flex items-center gap-4 text-xs">
             <div className="flex items-center gap-1">

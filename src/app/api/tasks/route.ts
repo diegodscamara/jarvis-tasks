@@ -1,28 +1,30 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import * as db from '@/db/queries'
-import { notifyTaskEvent } from '@/lib/telegram-notifier'
 import { canChangeTaskStatus, getTaskDependencies, getTaskDependents } from '@/db/task-dependencies'
+import { notifyTaskEvent } from '@/lib/telegram-notifier'
 
 export async function GET() {
   try {
     const tasks = await db.getAllTasks()
     // Transform to match expected frontend format
-    const formattedTasks = await Promise.all(tasks.map(async (task) => ({
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      priority: task.priority,
-      status: task.status,
-      assignee: task.assignee,
-      projectId: task.projectId,
-      dueDate: task.dueDate,
-      estimate: task.estimate,
-      createdAt: task.createdAt,
-      updatedAt: task.updatedAt,
-      // Add dependencies information
-      dependsOn: await getTaskDependencies(task.id),
-      blockedBy: await getTaskDependents(task.id),
-    })))
+    const formattedTasks = await Promise.all(
+      tasks.map(async (task) => ({
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        priority: task.priority,
+        status: task.status,
+        assignee: task.assignee,
+        projectId: task.projectId,
+        dueDate: task.dueDate,
+        estimate: task.estimate,
+        createdAt: task.createdAt,
+        updatedAt: task.updatedAt,
+        // Add dependencies information
+        dependsOn: await getTaskDependencies(task.id),
+        blockedBy: await getTaskDependents(task.id),
+      }))
+    )
     return NextResponse.json({ tasks: formattedTasks })
   } catch (error) {
     console.error('Error fetching tasks:', error)
@@ -48,7 +50,15 @@ export async function POST(request: NextRequest) {
     })
 
     // Send Telegram notification
-    await notifyTaskEvent('task_created', task.id, task.title, task.status, task.assignee, task.dueDate ?? undefined, body.telegramChannel)
+    await notifyTaskEvent(
+      'task_created',
+      task.id,
+      task.title,
+      task.status,
+      task.assignee,
+      task.dueDate ?? undefined,
+      body.telegramChannel
+    )
 
     return NextResponse.json({
       id: task.id,
@@ -87,7 +97,7 @@ export async function PUT(request: NextRequest) {
         const validation = await canChangeTaskStatus(id, updates.status)
         if (!validation.allowed) {
           return NextResponse.json(
-            { 
+            {
               error: 'Status change blocked',
               reason: validation.reason,
             },
@@ -98,10 +108,31 @@ export async function PUT(request: NextRequest) {
     }
 
     // Send Telegram notification for task update or completion
-    if (currentTask && updates.status && updates.status === 'done' && currentTask.status !== 'done') {
-      await notifyTaskEvent('task_completed', id, currentTask.title, updates.status, currentTask.assignee, currentTask.dueDate ?? undefined, body.telegramChannel)
+    if (
+      currentTask &&
+      updates.status &&
+      updates.status === 'done' &&
+      currentTask.status !== 'done'
+    ) {
+      await notifyTaskEvent(
+        'task_completed',
+        id,
+        currentTask.title,
+        updates.status,
+        currentTask.assignee,
+        currentTask.dueDate ?? undefined,
+        body.telegramChannel
+      )
     } else if (currentTask && updates.status && currentTask.status !== updates.status) {
-      await notifyTaskEvent('task_updated', id, currentTask.title, updates.status, currentTask.assignee, currentTask.dueDate ?? undefined, body.telegramChannel)
+      await notifyTaskEvent(
+        'task_updated',
+        id,
+        currentTask.title,
+        updates.status,
+        currentTask.assignee,
+        currentTask.dueDate ?? undefined,
+        body.telegramChannel
+      )
     }
 
     const task = await db.updateTask(id, {

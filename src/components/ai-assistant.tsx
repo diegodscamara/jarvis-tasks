@@ -1,8 +1,9 @@
 'use client'
 
+import { Loader2, Mic, Send, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -11,8 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Card, CardContent } from '@/components/ui/card'
-import { Loader2, Sparkles, Mic, Send } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 import type { Task } from '@/types'
 
 interface AIAssistantProps {
@@ -54,14 +54,14 @@ export function AIAssistant({ onTaskCreated, onTasksQueried }: AIAssistantProps)
 
       if (data.success) {
         setResponse(data)
-        
+
         // Call callbacks if provided
         if (data.action === 'created' && data.task && onTaskCreated) {
           onTaskCreated(data.task)
         } else if (data.action === 'queried' && data.tasks && onTasksQueried) {
           onTasksQueried(data.tasks)
         }
-        
+
         // Clear input on successful task creation
         if (data.action === 'created') {
           setInput('')
@@ -86,9 +86,10 @@ export function AIAssistant({ onTaskCreated, onTasksQueried }: AIAssistantProps)
       return
     }
 
-    const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition
+    const SpeechRecognition =
+      (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition
     const recognition = new SpeechRecognition()
-    
+
     recognition.lang = 'en-US'
     recognition.interimResults = false
     recognition.maxAlternatives = 1
@@ -127,10 +128,11 @@ export function AIAssistant({ onTaskCreated, onTasksQueried }: AIAssistantProps)
         <DialogHeader>
           <DialogTitle>AI Task Assistant</DialogTitle>
           <DialogDescription>
-            Use natural language to create, update, or query tasks. Try "Create a high priority task to review PRs tomorrow at 2pm".
+            Use natural language to create, update, or query tasks. Try "Create a high priority task
+            to review PRs tomorrow at 2pm".
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex gap-2">
             <Input
@@ -150,16 +152,20 @@ export function AIAssistant({ onTaskCreated, onTasksQueried }: AIAssistantProps)
               <Mic className={`h-4 w-4 ${isListening ? 'animate-pulse text-red-500' : ''}`} />
             </Button>
             <Button type="submit" disabled={isLoading || !input.trim()}>
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </form>
-        
+
         {response && (
           <Card className="mt-4">
             <CardContent className="pt-6">
               <p className="text-sm mb-4">{response.message}</p>
-              
+
               {response.suggestions?.breakdown && (
                 <div className="mt-4">
                   <h4 className="font-medium text-sm mb-2">Suggested Subtasks:</h4>
@@ -175,7 +181,7 @@ export function AIAssistant({ onTaskCreated, onTasksQueried }: AIAssistantProps)
                   </ul>
                 </div>
               )}
-              
+
               {response.suggestions?.similar && response.suggestions.similar.length > 0 && (
                 <div className="mt-4">
                   <h4 className="font-medium text-sm mb-2">Similar Completed Tasks:</h4>
@@ -188,7 +194,7 @@ export function AIAssistant({ onTaskCreated, onTasksQueried }: AIAssistantProps)
                   </ul>
                 </div>
               )}
-              
+
               {response.task && (
                 <div className="mt-4 p-3 bg-muted rounded-lg">
                   <p className="text-sm font-medium">{response.task.title}</p>
@@ -200,7 +206,7 @@ export function AIAssistant({ onTaskCreated, onTasksQueried }: AIAssistantProps)
             </CardContent>
           </Card>
         )}
-        
+
         <div className="text-xs text-muted-foreground">
           <p className="font-medium mb-1">Example commands:</p>
           <ul className="space-y-0.5">

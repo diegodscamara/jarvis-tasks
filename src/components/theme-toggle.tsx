@@ -28,11 +28,7 @@ export function ThemeToggle() {
       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
     >
-      {theme === 'dark' ? (
-        <span className="text-lg">☀️</span>
-      ) : (
-        <span className="text-lg">🌙</span>
-      )}
+      {theme === 'dark' ? <span className="text-lg">☀️</span> : <span className="text-lg">🌙</span>}
     </Button>
   )
 }

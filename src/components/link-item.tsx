@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -39,10 +39,10 @@ export function LinkItem({ link, onRemove }: LinkItemProps) {
   useEffect(() => {
     if (link.type === 'github-pr') {
       fetchPRStatus()
-      
+
       // Set up auto-refresh every 60 seconds
       const interval = setInterval(fetchPRStatus, 60000)
-      
+
       return () => clearInterval(interval)
     }
   }, [link.url, link.type])
@@ -50,15 +50,15 @@ export function LinkItem({ link, onRemove }: LinkItemProps) {
   const fetchPRStatus = async () => {
     setLoading(true)
     setError(null)
-    
+
     try {
       const response = await fetch(`/api/github/pr-status?url=${encodeURIComponent(link.url)}`)
-      
+
       if (!response.ok) {
         const data = await response.json()
         throw new Error(data.error || 'Failed to fetch PR status')
       }
-      
+
       const status = await response.json()
       setPrStatus(status)
     } catch (err) {
@@ -75,23 +75,23 @@ export function LinkItem({ link, onRemove }: LinkItemProps) {
       <div className="flex items-center gap-2 p-2 rounded bg-muted/30 group">
         <span>{link.icon || '🔀'}</span>
         <div className="flex-1 min-w-0">
-          <a 
-            href={link.url} 
-            target="_blank" 
+          <a
+            href={link.url}
+            target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-primary hover:underline truncate block"
           >
             #{prStatus.number}: {prStatus.title || link.title || 'GitHub PR'}
           </a>
           <div className="flex items-center gap-2 mt-0.5">
-            <span 
+            <span
               className={cn(
-                "inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded",
-                "font-medium"
+                'inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded',
+                'font-medium'
               )}
               style={{
                 backgroundColor: `${prStatus.statusColor}20`,
-                color: prStatus.statusColor
+                color: prStatus.statusColor,
               }}
             >
               <span className="text-[10px]">{prStatus.statusIcon}</span>
@@ -99,12 +99,12 @@ export function LinkItem({ link, onRemove }: LinkItemProps) {
               {prStatus.draft && ' (DRAFT)'}
             </span>
             {prStatus.checksStatus !== 'unknown' && (
-              <span 
+              <span
                 className={cn(
-                  "inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded",
-                  prStatus.checksStatus === 'passed' && "bg-green-500/10 text-green-600",
-                  prStatus.checksStatus === 'failed' && "bg-red-500/10 text-red-600",
-                  prStatus.checksStatus === 'pending' && "bg-yellow-500/10 text-yellow-600"
+                  'inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded',
+                  prStatus.checksStatus === 'passed' && 'bg-green-500/10 text-green-600',
+                  prStatus.checksStatus === 'failed' && 'bg-red-500/10 text-red-600',
+                  prStatus.checksStatus === 'pending' && 'bg-yellow-500/10 text-yellow-600'
                 )}
               >
                 <span className="text-[10px]">{prStatus.checksIcon}</span>
@@ -139,9 +139,9 @@ export function LinkItem({ link, onRemove }: LinkItemProps) {
   return (
     <div className="flex items-center gap-2 p-2 rounded bg-muted/30 group">
       <span>{link.icon || '🔗'}</span>
-      <a 
-        href={link.url} 
-        target="_blank" 
+      <a
+        href={link.url}
+        target="_blank"
         rel="noopener noreferrer"
         className="flex-1 text-sm text-primary hover:underline truncate"
       >
@@ -152,7 +152,9 @@ export function LinkItem({ link, onRemove }: LinkItemProps) {
         <span className="text-xs text-muted-foreground">Loading...</span>
       )}
       {link.type === 'github-pr' && error && (
-        <span className="text-xs text-red-500" title={error}>⚠️</span>
+        <span className="text-xs text-red-500" title={error}>
+          ⚠️
+        </span>
       )}
       <button
         type="button"

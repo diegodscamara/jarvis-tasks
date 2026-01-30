@@ -58,12 +58,18 @@ export function TaskCard({
         <div className="flex-1 min-w-0 flex items-center gap-2">
           <span className="font-medium text-sm truncate">{task.title}</span>
           {task.dependsOn && task.dependsOn.length > 0 && (
-            <span className="text-xs text-orange-400" title={`Blocked by ${task.dependsOn.length} task(s)`}>
+            <span
+              className="text-xs text-orange-400"
+              title={`Blocked by ${task.dependsOn.length} task(s)`}
+            >
               🔒{task.dependsOn.length}
             </span>
           )}
           {task.blockedBy && task.blockedBy.length > 0 && (
-            <span className="text-xs text-purple-400" title={`Blocking ${task.blockedBy.length} task(s)`}>
+            <span
+              className="text-xs text-purple-400"
+              title={`Blocking ${task.blockedBy.length} task(s)`}
+            >
               🚫{task.blockedBy.length}
             </span>
           )}
