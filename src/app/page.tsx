@@ -446,19 +446,27 @@ export default function Home() {
 
   const getTasksByStatus = (status: Status) => getFilteredTasks(status)
 
+  // Use state for date to avoid hydration mismatch
+  const [todayDate, setTodayDate] = useState<string | null>(null)
+
+  useEffect(() => {
+    setTodayDate(new Date().toISOString().split('T')[0])
+  }, [])
+
   const filteredTasks = (() => {
     if (activeView === 'all') {
       return getFilteredTasks()
     }
     if (activeView === 'due_today') {
-      const today = new Date().toISOString().split('T')[0]
+      if (!todayDate) return [] // Return empty during SSR/hydration
       return getFilteredTasks().filter((t) => {
         if (!t.dueDate || t.status === 'done') return false
-        return t.dueDate.split('T')[0] === today
+        return t.dueDate.split('T')[0] === todayDate
       })
     }
     if (activeView === 'overdue') {
-      const today = new Date(new Date().toISOString().split('T')[0])
+      if (!todayDate) return [] // Return empty during SSR/hydration
+      const today = new Date(todayDate)
       return getFilteredTasks().filter((t) => {
         if (!t.dueDate || t.status === 'done') return false
         return new Date(t.dueDate) < today
@@ -575,11 +583,12 @@ export default function Home() {
                     <span>Due Today</span>
                     <span className="ml-auto text-xs text-muted-foreground">
                       {
-                        tasks.filter((t) => {
-                          if (!t.dueDate || t.status === 'done') return false
-                          const today = new Date().toISOString().split('T')[0]
-                          return t.dueDate.split('T')[0] === today
-                        }).length
+                        todayDate
+                          ? tasks.filter((t) => {
+                              if (!t.dueDate || t.status === 'done') return false
+                              return t.dueDate.split('T')[0] === todayDate
+                            }).length
+                          : 0
                       }
                     </span>
                   </SidebarMenuButton>
@@ -593,11 +602,10 @@ export default function Home() {
                       setActiveLabel(null)
                     }}
                     className={
+                      todayDate &&
                       tasks.filter((t) => {
                         if (!t.dueDate || t.status === 'done') return false
-                        return (
-                          new Date(t.dueDate) < new Date(new Date().toISOString().split('T')[0])
-                        )
+                        return new Date(t.dueDate) < new Date(todayDate)
                       }).length > 0
                         ? 'text-red-400'
                         : ''
@@ -607,12 +615,12 @@ export default function Home() {
                     <span>Overdue</span>
                     <span className="ml-auto text-xs px-1.5 rounded bg-red-500/20 text-red-400">
                       {
-                        tasks.filter((t) => {
-                          if (!t.dueDate || t.status === 'done') return false
-                          return (
-                            new Date(t.dueDate) < new Date(new Date().toISOString().split('T')[0])
-                          )
-                        }).length
+                        todayDate
+                          ? tasks.filter((t) => {
+                              if (!t.dueDate || t.status === 'done') return false
+                              return new Date(t.dueDate) < new Date(todayDate)
+                            }).length
+                          : 0
                       }
                     </span>
                   </SidebarMenuButton>
