@@ -1,8 +1,6 @@
 'use client'
 
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
-import HorizontalRule from '@tiptap/extension-horizontal-rule'
-import Link from '@tiptap/extension-link'
 import Mention from '@tiptap/extension-mention'
 import Placeholder from '@tiptap/extension-placeholder'
 import TaskItem from '@tiptap/extension-task-item'
@@ -229,13 +227,6 @@ export function RichTextEditor({
       CodeBlockLowlight.configure({
         lowlight,
       }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: 'text-primary underline',
-        },
-      }),
-      HorizontalRule,
       Mention.configure({
         HTMLAttributes: {
           class: 'mention',
