@@ -20,6 +20,8 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { RichTextEditor } from '@/components/rich-text-editor'
 import { LinkItem } from '@/components/link-item'
+import { DependencyPicker } from '@/components/dependency-picker'
+import { TimeTracker, TimeEstimate } from '@/components/time-tracker'
 import { AGENTS, COLUMNS } from '@/lib/constants'
 import type {
   Agent,
@@ -34,6 +36,7 @@ import type {
 
 interface TaskFormProps {
   task: Task | null
+  tasks: Task[]
   projects: Project[]
   labels: Label[]
   onSave: (task: Partial<Task>) => void
@@ -41,7 +44,7 @@ interface TaskFormProps {
   onClose: () => void
 }
 
-export function TaskForm({ task, projects, labels, onSave, onDelete, onClose }: TaskFormProps) {
+export function TaskForm({ task, tasks, projects, labels, onSave, onDelete, onClose }: TaskFormProps) {
   const [title, setTitle] = useState(task?.title || '')
   const [description, setDescription] = useState(task?.description || '')
   const [priority, setPriority] = useState<Priority>(task?.priority || 'medium')
@@ -60,13 +63,32 @@ export function TaskForm({ task, projects, labels, onSave, onDelete, onClose }: 
   const [links, setLinks] = useState<{ id: string; url: string; title: string | null; type: string; icon: string }[]>([])
   const [newLinkUrl, setNewLinkUrl] = useState('')
   const [showAddLink, setShowAddLink] = useState(false)
+  const [selectedDependencies, setSelectedDependencies] = useState<string[]>(task?.dependsOn || [])
 
-  // Fetch links when task changes
+  // Fetch links and comments when task changes
   useEffect(() => {
     if (task?.id) {
+      // Fetch links
       fetch(`/api/tasks/${task.id}/links`)
         .then(res => res.json())
         .then(data => setLinks(data.links || []))
+        .catch(console.error)
+      
+      // Fetch comments
+      fetch(`/api/tasks/${task.id}/comments`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.comments) {
+            // Map the backend format to frontend format
+            const formattedComments = data.comments.map((c: any) => ({
+              id: c.id,
+              text: c.content || c.text,  // Support both formats
+              author: c.author,
+              createdAt: c.createdAt,
+            }))
+            setComments(formattedComments)
+          }
+        })
         .catch(console.error)
     }
   }, [task?.id])
@@ -104,6 +126,16 @@ export function TaskForm({ task, projects, labels, onSave, onDelete, onClose }: 
     )
   }
 
+  const handleAddDependency = (taskId: string) => {
+    if (!selectedDependencies.includes(taskId)) {
+      setSelectedDependencies([...selectedDependencies, taskId])
+    }
+  }
+
+  const handleRemoveDependency = (taskId: string) => {
+    setSelectedDependencies(selectedDependencies.filter(id => id !== taskId))
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSave({
@@ -120,27 +152,39 @@ export function TaskForm({ task, projects, labels, onSave, onDelete, onClose }: 
       recurrenceType: recurrenceType !== 'none' ? recurrenceType : undefined,
       timeSpent: timeSpent ? parseInt(timeSpent, 10) : undefined,
       comments,
+      dependsOn: selectedDependencies.length > 0 ? selectedDependencies : undefined,
     })
   }
 
   const handleAddComment = async () => {
     if (!newComment.trim() || !task?.id) return
 
-    const comment: Comment = {
-      id: Date.now().toString(),
-      text: newComment,
-      author: 'diego',
-      createdAt: new Date().toISOString(),
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: newComment,
+          author: 'diego', // TODO: Get from current user context
+        }),
+      })
+
+      if (response.ok) {
+        const savedComment = await response.json()
+        // Use the response from server which has the correct format
+        setComments([...comments, {
+          id: savedComment.id,
+          text: savedComment.content, // Map content to text for UI
+          author: savedComment.author,
+          createdAt: savedComment.createdAt,
+        }])
+        setNewComment('')
+      } else {
+        console.error('Failed to add comment')
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error)
     }
-
-    await fetch(`/api/tasks/${task.id}/comments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(comment),
-    })
-
-    setComments([...comments, comment])
-    setNewComment('')
   }
 
   const labelGroups = labels.reduce(
@@ -171,6 +215,7 @@ export function TaskForm({ task, projects, labels, onSave, onDelete, onClose }: 
           content={description}
           onChange={setDescription}
           placeholder="Task description..."
+          tasks={tasks}
         />
       </div>
 
@@ -278,21 +323,12 @@ export function TaskForm({ task, projects, labels, onSave, onDelete, onClose }: 
           <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium flex items-center gap-1">
-            <ClockIcon size={14} />
-            Estimate (hours)
-          </label>
-          <Input
-            type="number"
-            min="0"
-            step="0.5"
-            value={estimate}
-            onChange={(e) => setEstimate(e.target.value)}
-            placeholder="e.g. 2"
-          />
-        </div>
       </div>
+
+      <TimeEstimate 
+        estimate={estimate ? parseFloat(estimate) : undefined}
+        onChange={(value) => setEstimate(value?.toString() || '')}
+      />
 
       <div className="space-y-2">
         <label className="text-sm font-medium flex items-center gap-1">
@@ -321,26 +357,24 @@ export function TaskForm({ task, projects, labels, onSave, onDelete, onClose }: 
         )}
       </div>
 
+      <DependencyPicker
+        currentTaskId={task?.id}
+        selectedDependencies={selectedDependencies}
+        availableTasks={tasks}
+        projects={projects}
+        onAdd={handleAddDependency}
+        onRemove={handleRemoveDependency}
+      />
+
       {task?.id && (
-        <div className="space-y-2 pt-4 border-t border-border">
-          <label className="text-sm font-medium flex items-center gap-1">
-            <ClockIcon size={14} />
-            Time Spent
-          </label>
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              min="0"
-              className="w-20"
-              value={timeSpent}
-              onChange={(e) => setTimeSpent(e.target.value)}
-            />
-            <span className="text-sm text-muted-foreground">minutes</span>
-            <span className="text-xs text-muted-foreground ml-auto">
-              ({Math.floor(parseInt(timeSpent || '0', 10) / 60)}h{' '}
-              {parseInt(timeSpent || '0', 10) % 60}m)
-            </span>
-          </div>
+        <div className="pt-4 border-t border-border">
+          <TimeTracker 
+            task={{
+              ...task,
+              timeSpent: timeSpent ? parseFloat(timeSpent) / 60 : undefined, // Convert minutes to hours
+            }}
+            onUpdate={(hours) => setTimeSpent((hours * 60).toString())}
+          />
         </div>
       )}
 

@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import * as db from '@/db/queries'
+import { notifyTaskEvent } from '@/lib/telegram-notifier'
+import { canChangeTaskStatus, getTaskDependencies, getTaskDependents } from '@/lib/task-dependencies'
 
 export async function GET() {
   try {
@@ -21,10 +23,13 @@ export async function GET() {
       estimate: task.estimate,
       createdAt: task.created_at,
       updatedAt: task.updated_at,
+      // Add dependencies information
+      dependsOn: getTaskDependencies(task.id),
+      blockedBy: getTaskDependents(task.id),
       comments: task.comments?.map((c) => ({
         id: c.id,
         author: c.author,
-        content: c.content,
+        text: c.content,  // Map content to text for frontend compatibility
         createdAt: c.created_at,
       })),
     }))
@@ -55,6 +60,9 @@ export async function POST(request: NextRequest) {
       recurrenceType: body.recurrenceType,
     })
 
+    // Send Telegram notification
+    await notifyTaskEvent('task_created', task.id, task.title, task.status, task.assignee, task.due_date ?? undefined, body.telegramChannel)
+
     return NextResponse.json({
       id: task.id,
       title: task.title,
@@ -83,6 +91,32 @@ export async function PUT(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json({ error: 'Task ID required' }, { status: 400 })
+    }
+
+    // Get current task for notifications
+    const currentTask = db.getTaskById(id)
+
+    // Check if status is being changed and validate dependencies
+    if (updates.status) {
+      if (currentTask && currentTask.status !== updates.status) {
+        const validation = canChangeTaskStatus(id, updates.status)
+        if (!validation.allowed) {
+          return NextResponse.json(
+            { 
+              error: 'Status change blocked',
+              reason: validation.reason,
+            },
+            { status: 400 }
+          )
+        }
+      }
+    }
+
+    // Send Telegram notification for task update or completion
+    if (currentTask && updates.status && updates.status === 'done' && currentTask.status !== 'done') {
+      await notifyTaskEvent('task_completed', id, currentTask.title, updates.status, currentTask.assignee, currentTask.due_date ?? undefined, body.telegramChannel)
+    } else if (currentTask && updates.status && currentTask.status !== updates.status) {
+      await notifyTaskEvent('task_updated', id, currentTask.title, updates.status, currentTask.assignee, currentTask.due_date ?? undefined, body.telegramChannel)
     }
 
     const task = db.updateTask(id, {

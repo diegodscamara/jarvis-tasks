@@ -258,5 +258,35 @@
     "author": "Jarvis",
     "createdAt": "2026-01-30T00:47:47.814Z",
     "isRead": false
+  },
+  {
+    "id": "notif-1769765050433-tdzk5jb95",
+    "type": "comment",
+    "taskId": "roadmap-006",
+    "taskTitle": "📝 Rich Text Editor",
+    "message": "## 🎯 Implementation Started\n\nStarting work on the Rich Text Editor feature as requested.\n\n### Approach\n- Using TipTap editor (same as Linear)\n- Implementing slash commands menu\n- Adding markdown support\n- Integrating @ mentions and # task links\n\n### Current Status\n- Sub-agent spawned to handle implementation\n- Will update with progress shortly\n\n@Diego - Working on this now! 🚀",
+    "author": "Jarvis",
+    "createdAt": "2026-01-30T09:24:10.433Z",
+    "isRead": false
+  },
+  {
+    "id": "notif-1769765292587-kq2ncytd8",
+    "type": "comment",
+    "taskId": "roadmap-006",
+    "taskTitle": "📝 Rich Text Editor",
+    "message": "## ✅ Implementation Complete\n\n### Summary\nImplemented the Linear-style rich text editor with all requested features.\n\n### Features Added\n- **Slash commands (/)** - Type / to access formatting options\n- **@ mentions** - Type @ to mention assignees\n- **# task links** - Type # to link to other tasks\n- **Code blocks** with syntax highlighting (lowlight)\n- **Markdown support** - Bold, italic, lists, quotes\n- **Horizontal dividers**\n\n@Diego - Rich Text Editor complete! 📝✨",
+    "author": "Jarvis",
+    "createdAt": "2026-01-30T09:28:12.587Z",
+    "isRead": false
+  },
+  {
+    "id": "notif-1769765569410-2bdnyr4tr",
+    "type": "comment",
+    "taskId": "roadmap-006",
+    "taskTitle": "📝 Rich Text Editor",
+    "message": "## 🔀 PR Created\n\n### Pull Request\nhttps://github.com/diegodscamara/jarvis-tasks/pull/2\n\n### Status\n- PR created and ready for review\n- All features implemented and tested\n- Waiting for code review\n\n@Diego - Following proper workflow now! The PR includes all recent features.",
+    "author": "Jarvis",
+    "createdAt": "2026-01-30T09:32:49.410Z",
+    "isRead": false
   }
 ]

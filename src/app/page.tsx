@@ -1,5 +1,7 @@
 'use client'
 
+import { QuickCapture } from '@/components/quick-capture'
+
 import { useCallback, useEffect, useState } from 'react'
 import {
   AddIcon,
@@ -64,7 +66,10 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { Toggle } from '@/components/ui/toggle'
 import { StatsWidget } from '@/components/stats-widget'
+import { AIAssistant } from '@/components/ai-assistant'
+import { SearchBar } from '@/components/search-bar'
 import { ACCENT_COLORS, AGENTS, COLUMNS, DEFAULT_SETTINGS, STORAGE_KEYS } from '@/lib/constants'
+import { parseSearchQuery, filterTasks, rankSearchResults } from '@/lib/search'
 import type {
   Agent,
   Analytics,
@@ -97,6 +102,7 @@ export default function Home() {
   const [showSearch, setShowSearch] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [showQuickCapture, setShowQuickCapture] = useState(false)
   const [viewMode, setViewMode] = useState<'board' | 'list' | 'calendar'>('board')
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
 
@@ -138,7 +144,9 @@ export default function Home() {
 
       if (e.key === '/' && !e.metaKey && !e.ctrlKey) {
         e.preventDefault()
-        setShowSearch(true)
+        // Focus search bar
+        const searchInput = document.querySelector('input[placeholder*="Search tasks"]') as HTMLInputElement
+        searchInput?.focus()
         return
       }
 
@@ -333,11 +341,44 @@ export default function Home() {
 
   const saveTask = async (task: Partial<Task>) => {
     const method = task.id ? 'PUT' : 'POST'
-    await fetch('/api/tasks', {
+    const response = await fetch('/api/tasks', {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(task),
     })
+    
+    if (response.ok) {
+      const savedTask = await response.json()
+      
+      // If dependencies were provided, update them via the dependencies API
+      if (task.dependsOn && savedTask.id) {
+        // First, get current dependencies
+        const depsResponse = await fetch(`/api/tasks/${savedTask.id}/dependencies`)
+        const depsData = await depsResponse.json()
+        const currentDeps = depsData.dependsOn || []
+        
+        // Remove dependencies that are no longer selected
+        for (const oldDep of currentDeps) {
+          if (!task.dependsOn.includes(oldDep)) {
+            await fetch(`/api/tasks/${savedTask.id}/dependencies?dependsOnId=${oldDep}`, {
+              method: 'DELETE',
+            })
+          }
+        }
+        
+        // Add new dependencies
+        for (const newDep of task.dependsOn) {
+          if (!currentDeps.includes(newDep)) {
+            await fetch(`/api/tasks/${savedTask.id}/dependencies`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ dependsOnId: newDep }),
+            })
+          }
+        }
+      }
+    }
+    
     await fetchTasks()
     setShowModal(false)
     setEditingTask(null)
@@ -372,16 +413,23 @@ export default function Home() {
   const getFilteredTasks = (statusFilter?: Status) => {
     let filtered = tasks
 
+    // Apply smart search if query exists
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter(
-        (t) =>
-          t.title.toLowerCase().includes(query) ||
-          t.description?.toLowerCase().includes(query) ||
-          t.id.toLowerCase().includes(query)
-      )
+      const parsedQuery = parseSearchQuery(searchQuery)
+      
+      // Apply filters from search query
+      filtered = filterTasks(filtered, {
+        ...parsedQuery.filters,
+        query: parsedQuery.text,
+      })
+      
+      // Rank results by relevance
+      if (parsedQuery.text) {
+        filtered = rankSearchResults(filtered, parsedQuery.text)
+      }
     }
 
+    // Apply UI filters (these override search filters)
     if (statusFilter) {
       filtered = filtered.filter((t) => t.status === statusFilter)
     }
@@ -479,7 +527,11 @@ export default function Home() {
   }
 
   return (
-    <SidebarProvider>
+    <>
+      <QuickCapture isOpen={showQuickCapture} onClose={() => setShowQuickCapture(false)} onTaskCreated={(task) => {
+        console.log('Task created via Quick Capture:', task)
+      }} />
+      <SidebarProvider>
       <Sidebar variant="inset" collapsible="icon" className="border-r border-border">
         <SidebarHeader className="p-4 border-b border-border">
           <div className="flex items-center gap-2">
@@ -768,50 +820,10 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-2 md:gap-4">
             <div className="relative hidden md:block">
-              {showSearch ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search tasks..."
-                    className="w-48"
-                    autoFocus
-                    onBlur={() => {
-                      if (!searchQuery) setShowSearch(false)
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') {
-                        setShowSearch(false)
-                        setSearchQuery('')
-                      }
-                    }}
-                  />
-                  {searchQuery && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => {
-                        setSearchQuery('')
-                        setShowSearch(false)
-                      }}
-                    >
-                      <CloseIcon size={14} />
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowSearch(true)}
-                  className="text-xs text-muted-foreground"
-                  title="Search (press /)"
-                >
-                  <SearchIcon size={14} /> <Kbd>/</Kbd>
-                </Button>
-              )}
+              <SearchBar
+                onSearch={(query) => setSearchQuery(query)}
+                className="w-64"
+              />
             </div>
             <div className="hidden md:flex items-center bg-muted rounded-md p-0.5">
               <Toggle
@@ -851,6 +863,15 @@ export default function Home() {
             >
               <Kbd>?</Kbd>
             </Button>
+            <AIAssistant 
+              onTaskCreated={(task) => {
+                fetchTasks()
+                setShowModal(false)
+              }}
+              onTasksQueried={() => {
+                // Could implement filtering based on AI query results
+              }}
+            />
             <Button
               variant="ghost"
               size="icon"
@@ -1021,6 +1042,7 @@ export default function Home() {
           <DialogPanel className="max-h-[calc(90vh-120px)]">
             <TaskForm
               task={editingTask}
+              tasks={tasks}
               projects={projects}
               labels={labels}
               onSave={saveTask}
@@ -1398,6 +1420,7 @@ export default function Home() {
         }}
       />
     </SidebarProvider>
+    </>
   )
 }
 
