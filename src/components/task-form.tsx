@@ -215,6 +215,7 @@ export function TaskForm({ task, tasks, projects, labels, onSave, onDelete, onCl
           content={description}
           onChange={setDescription}
           placeholder="Task description..."
+          tasks={tasks}
         />
       </div>
 
