@@ -430,6 +430,15 @@ export function RichTextEditor({
     },
   })
 
+  // TipTap editor is created asynchronously; avoid rendering toolbar/actions until ready.
+  if (!editor) {
+    return (
+      <div className={cn('rich-text-editor border border-input rounded-md overflow-hidden', className)}>
+        <div className="p-3 text-sm text-muted-foreground">Loading editor…</div>
+      </div>
+    )
+  }
+
   // Handle slash command execution
   useEffect(() => {
     if (!editor) return
@@ -446,7 +455,7 @@ export function RichTextEditor({
   }, [editor])
 
   return (
-    <div className="rich-text-editor border border-input rounded-md overflow-hidden">
+    <div className={cn('rich-text-editor border border-input rounded-md overflow-hidden', className)}>
       <div className="toolbar border-b border-border bg-muted/30 p-1.5 flex items-center gap-1">
         <button
           type="button"
