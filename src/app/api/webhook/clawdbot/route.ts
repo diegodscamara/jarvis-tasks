@@ -1,7 +1,7 @@
-import crypto from 'crypto'
+import crypto from 'node:crypto'
 import { type NextRequest, NextResponse } from 'next/server'
-import * as db from '@/lib/supabase/queries'
 import { processAICommand } from '@/lib/ai-assistant'
+import * as db from '@/lib/supabase/queries'
 
 // Webhook secret for verification (should be in environment variables)
 const WEBHOOK_SECRET = process.env.CLAWDBOT_WEBHOOK_SECRET || 'your-webhook-secret'
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
     // Parse the webhook payload
     const payload = JSON.parse(rawBody)
-    const { message, userId, channel, messageId, timestamp, metadata } = payload
+    const { message, userId, channel, _messageId, _timestamp, metadata } = payload
 
     // Log webhook receipt
     console.log(`[Clawdbot Webhook] Received from ${channel}/${userId}: ${message}`)

@@ -26,7 +26,7 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({ children, defaultTheme = 'linear-purple' }: ThemeProviderProps) {
   const [themeVariant, setThemeVariant] = React.useState<ThemeVariant>(defaultTheme)
-  const [isInitialized, setIsInitialized] = React.useState(false)
+  const [_isInitialized, setIsInitialized] = React.useState(false)
 
   const theme = React.useMemo(() => {
     return getThemeByVariant(themeVariant) || linearPurpleTheme

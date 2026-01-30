@@ -1,6 +1,6 @@
-import { createSupabaseServerClient } from '@/lib/supabase/server'
-import crypto from 'crypto'
+import crypto from 'node:crypto'
 import { type NextRequest, NextResponse } from 'next/server'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 // Extract task ID from branch name
 function extractTaskIdFromBranch(branch: string): string | null {
@@ -77,11 +77,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Check if task exists
-      const { data: task } = await supabase
-        .from('tasks')
-        .select('id')
-        .eq('id', taskId)
-        .single()
+      const { data: task } = await supabase.from('tasks').select('id').eq('id', taskId).single()
 
       if (!task) {
         console.log(`Task not found: ${taskId}`)

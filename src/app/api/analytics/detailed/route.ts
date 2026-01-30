@@ -1,4 +1,4 @@
-import { eachDayOfInterval, format, startOfDay, startOfWeek, subDays } from 'date-fns'
+import { eachDayOfInterval, format, startOfDay, subDays } from 'date-fns'
 import { NextResponse } from 'next/server'
 import * as db from '@/lib/supabase/queries'
 
@@ -32,14 +32,8 @@ export async function GET() {
     const byDayOfWeek = [0, 1, 2, 3, 4, 5, 6].map((dow) => {
       const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
       const completed = tasks.filter((t) => {
-        if (
-          t.status !== 'done' ||
-          !((t as any).updatedAt ?? (t as any).updated_at)
-        )
-          return false
-        return (
-          new Date(((t as any).updatedAt ?? (t as any).updated_at) as string).getDay() === dow
-        )
+        if (t.status !== 'done' || !((t as any).updatedAt ?? (t as any).updated_at)) return false
+        return new Date(((t as any).updatedAt ?? (t as any).updated_at) as string).getDay() === dow
       }).length
       return { day: dayNames[dow], completed }
     })

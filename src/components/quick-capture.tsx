@@ -1,15 +1,9 @@
 'use client'
 
-import { ArrowRight, Clock, Plus, Tag, Zap } from 'lucide-react'
-import { KeyboardEvent, useCallback, useEffect, useState } from 'react'
+import { ArrowRight, Clock, Plus, Zap } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -18,8 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { AGENTS, COLUMNS } from '@/lib/constants'
-import type { Agent, Priority, Status } from '@/types'
+import type { Agent, Priority } from '@/types'
 
 interface QuickCaptureProps {
   isOpen: boolean
@@ -33,7 +26,7 @@ export function QuickCapture({ isOpen, onClose, onTaskCreated }: QuickCapturePro
   const [priority, setPriority] = useState<Priority>('medium')
   const [assignee, setAssignee] = useState<Agent>('jarvis')
   const [dueDate, setDueDate] = useState('')
-  const [projectId, setProjectId] = useState('')
+  const [projectId, _setProjectId] = useState('')
 
   // Global keyboard shortcut: Cmd/Ctrl + K
   useEffect(() => {

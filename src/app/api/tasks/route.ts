@@ -1,6 +1,10 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import * as db from '@/lib/supabase/queries'
-import { canChangeTaskStatus, getTaskDependencies, getTaskDependents } from '@/lib/supabase/task-dependencies'
+import {
+  canChangeTaskStatus,
+  getTaskDependencies,
+  getTaskDependents,
+} from '@/lib/supabase/task-dependencies'
 import { notifyTaskEvent } from '@/lib/telegram-notifier'
 
 export async function GET() {

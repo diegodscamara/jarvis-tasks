@@ -2,7 +2,7 @@ import { OpenAPIRegistry } from '@asteasolutions/zod-to-openapi'
 import { z } from 'zod'
 
 // Create OpenAPI registry
-const registry = new OpenAPIRegistry()
+const _registry = new OpenAPIRegistry()
 
 // Common schemas
 const TaskStatusSchema = z.enum(['backlog', 'planning', 'todo', 'in_progress', 'review', 'done'])
@@ -19,7 +19,7 @@ const CommentSchema = z.object({
   isRead: z.boolean().optional(),
 })
 
-const TaskSchema = z.object({
+const _TaskSchema = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string(),

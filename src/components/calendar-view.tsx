@@ -50,7 +50,7 @@ export function CalendarView({
   const [currentDate, setCurrentDate] = useState(INITIAL_DATE)
   const [todayDate, setTodayDate] = useState<Date | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('month')
-  
+
   // Update to current date after hydration
   useEffect(() => {
     const now = new Date()

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from '@jest/globals'
+import { describe, expect, it } from '@jest/globals'
 
 describe('Task Dependencies - TDD', () => {
   describe('Dependency Management', () => {
@@ -24,7 +24,7 @@ describe('Task Dependencies - TDD', () => {
           if (depTask && !depTask.blockedBy) {
             depTask.blockedBy = []
           }
-          if (depTask && depTask.blockedBy && !depTask.blockedBy.includes(task.id)) {
+          if (depTask?.blockedBy && !depTask.blockedBy.includes(task.id)) {
             depTask.blockedBy.push(task.id)
           }
         })
@@ -110,7 +110,7 @@ describe('Task Dependencies - TDD', () => {
 
       const canChangeStatus = (
         taskId: string,
-        newStatus: string,
+        _newStatus: string,
         allTasks: typeof tasks
       ): { allowed: boolean } => {
         const task = allTasks.find((t) => t.id === taskId)

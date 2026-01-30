@@ -10,7 +10,7 @@ export interface SlashCommandItem {
   icon: React.ReactNode
 }
 
-const SLASH_COMMANDS: SlashCommandItem[] = [
+const _SLASH_COMMANDS: SlashCommandItem[] = [
   {
     title: 'Heading 1',
     command: '/h1',

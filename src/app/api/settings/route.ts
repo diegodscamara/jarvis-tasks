@@ -1,6 +1,6 @@
-import * as fs from 'fs'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 import { type NextRequest, NextResponse } from 'next/server'
-import * as path from 'path'
 
 const SETTINGS_FILE = path.join(process.cwd(), 'data', 'settings.json')
 

@@ -1,23 +1,23 @@
 'use client'
 
+import { Extension } from '@tiptap/core'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import Mention from '@tiptap/extension-mention'
 import Placeholder from '@tiptap/extension-placeholder'
 import TaskItem from '@tiptap/extension-task-item'
 import TaskList from '@tiptap/extension-task-list'
-import { Extension } from '@tiptap/core'
 import { EditorContent, ReactRenderer, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import suggestion from '@tiptap/suggestion'
 import { common, createLowlight } from 'lowlight'
-import React, { useCallback, useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import tippy from 'tippy.js'
 import { AGENTS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import type { Task } from '@/types'
-import { MentionItem, Mentions } from './rich-text-editor/mentions'
+import { Mentions } from './rich-text-editor/mentions'
 import { type SlashCommandItem, SlashCommands } from './rich-text-editor/slash-commands'
-import { TaskLinkItem, TaskLinks } from './rich-text-editor/task-links'
+import { TaskLinks } from './rich-text-editor/task-links'
 
 const lowlight = createLowlight(common)
 
@@ -436,14 +436,18 @@ export function RichTextEditor({
   // TipTap editor is created asynchronously; avoid rendering toolbar/actions until ready.
   if (!editor) {
     return (
-      <div className={cn('rich-text-editor border border-input rounded-md overflow-hidden', className)}>
+      <div
+        className={cn('rich-text-editor border border-input rounded-md overflow-hidden', className)}
+      >
         <div className="p-3 text-sm text-muted-foreground">Loading editor…</div>
       </div>
     )
   }
 
   return (
-    <div className={cn('rich-text-editor border border-input rounded-md overflow-hidden', className)}>
+    <div
+      className={cn('rich-text-editor border border-input rounded-md overflow-hidden', className)}
+    >
       <div className="toolbar border-b border-border bg-muted/30 p-1.5 flex items-center gap-1">
         <button
           type="button"

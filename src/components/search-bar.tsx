@@ -1,14 +1,11 @@
 'use client'
 
-import { Clock, Filter, Save, Search, Star, X } from 'lucide-react'
+import { Clock, Save, Search, Star, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
   CommandSeparator,

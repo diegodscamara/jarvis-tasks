@@ -1,25 +1,5 @@
-import { createClient } from '@supabase/supabase-js'
 import { type NextRequest, NextResponse } from 'next/server'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase configuration')
-}
-
-const supabase = createClient(supabaseUrl!, supabaseKey!)
-
-interface TaskLink {
-  id: string
-  task_id: string
-  url: string
-  title: string | null
-  type: string
-  icon: string | null
-  position: number
-  created_at: string
-}
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 // Detect link type from URL
 function detectLinkType(url: string): { type: string; icon: string } {
@@ -35,11 +15,9 @@ function detectLinkType(url: string): { type: string; icon: string } {
     return { type: 'figma', icon: '🎨' }
   }
   if (urlLower.includes('github.com')) {
-    // Check if it's a PR
     if (urlLower.includes('/pull/')) {
       return { type: 'github-pr', icon: '🔀' }
     }
-    // Check if it's an issue
     if (urlLower.includes('/issues/')) {
       return { type: 'github-issue', icon: '🐛' }
     }
@@ -59,10 +37,11 @@ function detectLinkType(url: string): { type: string; icon: string } {
 }
 
 // GET /api/tasks/[id]/links - Get all links for a task
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: taskId } = await params
 
   try {
+    const supabase = await createSupabaseServerClient()
     const { data: links, error } = await supabase
       .from('task_links')
       .select('*')
@@ -72,7 +51,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     if (error) {
       console.error('Error fetching links:', error)
-      return NextResponse.json({ error: 'Failed to fetch links', details: error.message }, { status: 500 })
+      return NextResponse.json(
+        { error: 'Failed to fetch links', details: error.message },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json({ links })
@@ -87,6 +69,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { id: taskId } = await params
 
   try {
+    const supabase = await createSupabaseServerClient()
     const body = await request.json()
     const { url, title } = body
 
@@ -105,7 +88,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .order('position', { ascending: false })
       .limit(1)
 
-    const maxPosition = existingLinks && existingLinks[0] ? existingLinks[0].position : -1
+    const maxPosition = existingLinks?.[0] ? existingLinks[0].position : -1
     const position = maxPosition + 1
 
     const { data: link, error } = await supabase
@@ -124,7 +107,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (error) {
       console.error('Error creating link:', error)
-      return NextResponse.json({ error: 'Failed to create link', details: error.message }, { status: 500 })
+      return NextResponse.json(
+        { error: 'Failed to create link', details: error.message },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json(link, { status: 201 })
@@ -135,11 +121,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 }
 
 // DELETE /api/tasks/[id]/links - Delete a link
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: NextRequest, _props: { params: Promise<{ id: string }> }) {
   try {
+    const supabase = await createSupabaseServerClient()
     const { searchParams } = new URL(request.url)
     const linkId = searchParams.get('linkId')
 
@@ -151,7 +135,10 @@ export async function DELETE(
 
     if (error) {
       console.error('Error deleting link:', error)
-      return NextResponse.json({ error: 'Failed to delete link', details: error.message }, { status: 500 })
+      return NextResponse.json(
+        { error: 'Failed to delete link', details: error.message },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json({ success: true })

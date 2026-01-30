@@ -22,7 +22,7 @@ const defaultThemes: { variant: ThemeVariant; name: string; icon: React.ReactNod
 export function ThemeSwitcher() {
   const { themeVariant, setTheme } = useTheme()
 
-  const allThemes = React.useMemo(() => {
+  const _allThemes = React.useMemo(() => {
     return [
       ...defaultThemes,
       ...themes.map((theme) => ({

@@ -1,4 +1,4 @@
-import { addDays, endOfWeek, isValid, parse, startOfWeek } from 'date-fns'
+import { addDays } from 'date-fns'
 import type { Priority, Status, Task } from '@/types'
 
 interface ParsedCommand {
@@ -84,7 +84,7 @@ function parseCreateCommand(input: string): ParsedCommand {
   if (tomorrow) {
     const date = addDays(new Date(), 1)
     if (timeMatch) {
-      let hour = parseInt(timeMatch[1])
+      let hour = parseInt(timeMatch[1], 10)
       if (timeMatch[2]?.toLowerCase() === 'pm' && hour < 12) hour += 12
       date.setHours(hour, 0, 0, 0)
     }
@@ -249,7 +249,7 @@ function isComplexTask(title: string): boolean {
 
 function generateTaskBreakdown(
   title: string,
-  description?: string
+  _description?: string
 ): Array<{ title: string; description?: string }> {
   const titleLower = title.toLowerCase()
   const breakdown = []
@@ -304,7 +304,7 @@ function generateTaskBreakdown(
 }
 
 function findSimilarTasks(newTask: Partial<Task>, existingTasks: Task[]): Task[] {
-  const keywords = extractKeywords(newTask.title + ' ' + (newTask.description || ''))
+  const keywords = extractKeywords(`${newTask.title} ${newTask.description || ''}`)
 
   return existingTasks
     .filter((task) => task.status === 'done')
@@ -312,7 +312,7 @@ function findSimilarTasks(newTask: Partial<Task>, existingTasks: Task[]): Task[]
       task,
       score: calculateSimilarity(
         keywords,
-        extractKeywords(task.title + ' ' + (task.description || ''))
+        extractKeywords(`${task.title} ${task.description || ''}`)
       ),
     }))
     .filter(({ score }) => score > 0.3)
@@ -390,7 +390,7 @@ function suggestDependencies(newTask: Partial<Task>, existingTasks: Task[]): str
 
 function suggestLabels(task: Partial<Task>): string[] {
   const labels: string[] = []
-  const text = ((task.title || '') + ' ' + (task.description || '')).toLowerCase()
+  const text = `${task.title || ''} ${task.description || ''}`.toLowerCase()
 
   // Technology labels
   if (text.match(/\b(react|vue|angular|frontend)\b/)) labels.push('frontend')
@@ -408,7 +408,7 @@ function suggestLabels(task: Partial<Task>): string[] {
 }
 
 function suggestPriority(task: Partial<Task>): Priority {
-  const text = ((task.title || '') + ' ' + (task.description || '')).toLowerCase()
+  const text = `${task.title || ''} ${task.description || ''}`.toLowerCase()
 
   // High priority indicators
   if (text.match(/\b(urgent|asap|critical|blocker|security|vulnerability)\b/)) {
@@ -425,7 +425,7 @@ function suggestPriority(task: Partial<Task>): Priority {
 }
 
 function estimateTaskTime(task: Partial<Task>): number {
-  const text = ((task.title || '') + ' ' + (task.description || '')).toLowerCase()
+  const text = `${task.title || ''} ${task.description || ''}`.toLowerCase()
 
   // Large tasks
   if (text.match(/\b(build|create|develop|implement).*(system|platform|application)\b/)) {

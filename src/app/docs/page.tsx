@@ -175,9 +175,7 @@ export default function DocsPage() {
                     onClick={() => setSelectedDoc(doc)}
                   >
                     <CardHeader className="p-3">
-                      <CardTitle className="text-sm font-medium truncate">
-                        {doc.title}
-                      </CardTitle>
+                      <CardTitle className="text-sm font-medium truncate">{doc.title}</CardTitle>
                       <CardDescription className="text-xs">
                         {formatDate(doc.updated_at)} · v{doc.version}
                       </CardDescription>
@@ -226,9 +224,7 @@ export default function DocsPage() {
 
               <ScrollArea className="h-[calc(100vh-200px)]">
                 <div className="prose prose-invert max-w-none">
-                  <pre className="whitespace-pre-wrap font-sans text-sm">
-                    {selectedDoc.content}
-                  </pre>
+                  <pre className="whitespace-pre-wrap font-sans text-sm">{selectedDoc.content}</pre>
                 </div>
               </ScrollArea>
             </div>

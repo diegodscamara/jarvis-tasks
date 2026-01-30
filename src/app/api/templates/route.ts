@@ -1,5 +1,5 @@
-import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { type NextRequest, NextResponse } from 'next/server'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 // GET /api/templates - List all templates
 export async function GET() {
@@ -16,16 +16,17 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    templates: templates?.map((t) => ({
-      id: t.id,
-      name: t.name,
-      description: t.description,
-      priority: t.priority,
-      assignee: t.assignee,
-      projectId: t.project_id,
-      estimate: t.estimate,
-      createdAt: t.created_at,
-    })) || [],
+    templates:
+      templates?.map((t) => ({
+        id: t.id,
+        name: t.name,
+        description: t.description,
+        priority: t.priority,
+        assignee: t.assignee,
+        projectId: t.project_id,
+        estimate: t.estimate,
+        createdAt: t.created_at,
+      })) || [],
   })
 }
 
@@ -58,16 +59,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to create template' }, { status: 500 })
   }
 
-  return NextResponse.json({
-    id: data.id,
-    name: data.name,
-    description: data.description,
-    priority: data.priority,
-    assignee: data.assignee,
-    projectId: data.project_id,
-    estimate: data.estimate,
-    createdAt: data.created_at,
-  }, { status: 201 })
+  return NextResponse.json(
+    {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      priority: data.priority,
+      assignee: data.assignee,
+      projectId: data.project_id,
+      estimate: data.estimate,
+      createdAt: data.created_at,
+    },
+    { status: 201 }
+  )
 }
 
 // DELETE /api/templates?id=xxx - Delete a template
@@ -80,10 +84,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Template ID is required' }, { status: 400 })
   }
 
-  const { error } = await supabase
-    .from('task_templates')
-    .delete()
-    .eq('id', id)
+  const { error } = await supabase.from('task_templates').delete().eq('id', id)
 
   if (error) {
     console.error('Error deleting template:', error)

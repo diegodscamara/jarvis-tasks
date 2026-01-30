@@ -1,5 +1,5 @@
-import { exec } from 'child_process'
-import { promisify } from 'util'
+import { exec } from 'node:child_process'
+import { promisify } from 'node:util'
 import { createSupabaseServerClient } from './supabase/server'
 
 const execAsync = promisify(exec)
@@ -40,202 +40,72 @@ export async function scanAndLinkPRs(repoSlug?: string) {
     errors: 0,
     details: [] as { taskId: string; prNumber: number; branch: string; title: string }[],
   }
+  // Get list of repositories to scan
+  let repos: string[] = []
 
-  try {
-    // Get list of repositories to scan
-    let repos: string[] = []
+  if (repoSlug) {
+    repos = [repoSlug]
+  } else {
+    // Try to infer from existing GitHub links
+    const { data: existingLinks } = await supabase
+      .from('task_links')
+      .select('url')
+      .in('type', ['github', 'github-pr', 'github-issue'])
 
-    if (repoSlug) {
-      repos = [repoSlug]
-    } else {
-      // Try to infer from existing GitHub links
-      const { data: existingLinks } = await supabase
-        .from('task_links')
-        .select('url')
-        .in('type', ['github', 'github-pr', 'github-issue'])
-
-      const repoSet = new Set<string>()
-      for (const link of existingLinks || []) {
-        const match = link.url.match(/github\.com\/([^/]+\/[^/]+)/)
-        if (match) {
-          repoSet.add(match[1])
-        }
-      }
-
-      repos = Array.from(repoSet)
-
-      // If no repos found, try current directory
-      if (repos.length === 0) {
-        try {
-          const { stdout: remote } = await execAsync('git remote get-url origin')
-          const match = remote.match(/github\.com[:/]([^/]+\/[^/.]+)/)
-          if (match) {
-            repos = [match[1]]
-          }
-        } catch {
-          // Not a git repo or no origin, that's fine
-        }
+    const repoSet = new Set<string>()
+    for (const link of existingLinks || []) {
+      const match = link.url.match(/github\.com\/([^/]+\/[^/]+)/)
+      if (match) {
+        repoSet.add(match[1])
       }
     }
 
+    repos = Array.from(repoSet)
+
+    // If no repos found, try current directory
     if (repos.length === 0) {
-      return {
-        ...results,
-        error: 'No repositories found to scan',
-      }
-    }
-
-    // Scan each repository
-    for (const repo of repos) {
       try {
-        console.log(`Scanning repository: ${repo}`)
-
-        // Get all open PRs
-        const { stdout } = await execAsync(
-          `gh pr list --repo ${repo} --state open --json number,title,url,headRefName,state --limit 100`
-        )
-
-        const prs: PR[] = JSON.parse(stdout)
-        results.scanned += prs.length
-
-        for (const pr of prs) {
-          // Extract task ID from branch name
-          const taskId = extractTaskIdFromBranch(pr.headRefName)
-
-          if (taskId) {
-            // Check if task exists
-            const { data: task } = await supabase
-              .from('tasks')
-              .select('id')
-              .eq('id', taskId)
-              .single()
-
-            if (task) {
-              // Check if PR is already linked
-              const { data: existingLink } = await supabase
-                .from('task_links')
-                .select('id')
-                .eq('task_id', taskId)
-                .eq('url', pr.url)
-                .single()
-
-              if (!existingLink) {
-                // Get max position
-                const { data: maxPosData } = await supabase
-                  .from('task_links')
-                  .select('position')
-                  .eq('task_id', taskId)
-                  .order('position', { ascending: false })
-                  .limit(1)
-                  .single()
-
-                const position = (maxPosData?.position ?? -1) + 1
-                const title = `PR #${pr.number}: ${pr.title}`
-
-                // Add the link
-                await supabase.from('task_links').insert({
-                  task_id: taskId,
-                  url: pr.url,
-                  title,
-                  type: 'github-pr',
-                  icon: '🔀',
-                  position,
-                })
-
-                results.linked++
-                results.details.push({
-                  taskId,
-                  prNumber: pr.number,
-                  branch: pr.headRefName,
-                  title: pr.title,
-                })
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.error(`Error scanning repo ${repo}:`, error)
-        results.errors++
-      }
-    }
-
-    return results
-  } catch (error) {
-    throw error
-  }
-}
-
-// Scan for a specific task
-export async function scanPRsForTask(taskId: string, repoSlug?: string) {
-  const supabase = await createSupabaseServerClient()
-  const results = {
-    found: 0,
-    linked: 0,
-    prs: [] as { number: number; title: string; url: string; branch: string; state: string; alreadyLinked: boolean }[],
-  }
-
-  try {
-    // Determine repos to scan
-    let repos: string[] = []
-
-    if (repoSlug) {
-      repos = [repoSlug]
-    } else {
-      // Try to infer from task's existing links
-      const { data: existingLinks } = await supabase
-        .from('task_links')
-        .select('url')
-        .eq('task_id', taskId)
-        .in('type', ['github', 'github-pr', 'github-issue'])
-
-      const repoSet = new Set<string>()
-      for (const link of existingLinks || []) {
-        const match = link.url.match(/github\.com\/([^/]+\/[^/]+)/)
+        const { stdout: remote } = await execAsync('git remote get-url origin')
+        const match = remote.match(/github\.com[:/]([^/]+\/[^/.]+)/)
         if (match) {
-          repoSet.add(match[1])
+          repos = [match[1]]
         }
-      }
-
-      repos = Array.from(repoSet)
-
-      // Default to current repo if none found
-      if (repos.length === 0) {
-        try {
-          const { stdout: remote } = await execAsync('git remote get-url origin')
-          const match = remote.match(/github\.com[:/]([^/]+\/[^/.]+)/)
-          if (match) {
-            repos = [match[1]]
-          }
-        } catch {
-          // Not a git repo, that's fine
-        }
+      } catch {
+        // Not a git repo or no origin, that's fine
       }
     }
+  }
 
-    // Search for PRs mentioning the task ID in branch name or title
-    for (const repo of repos) {
-      try {
-        // Search in open PRs
-        const { stdout: openPRs } = await execAsync(
-          `gh pr list --repo ${repo} --state open --search "${taskId}" --json number,title,url,headRefName,state --limit 50`
-        )
+  if (repos.length === 0) {
+    return {
+      ...results,
+      error: 'No repositories found to scan',
+    }
+  }
 
-        // Also search in recently closed PRs
-        const { stdout: closedPRs } = await execAsync(
-          `gh pr list --repo ${repo} --state closed --search "${taskId}" --json number,title,url,headRefName,state --limit 20`
-        )
+  // Scan each repository
+  for (const repo of repos) {
+    try {
+      console.log(`Scanning repository: ${repo}`)
 
-        const allPRs = [...JSON.parse(openPRs), ...JSON.parse(closedPRs)]
+      // Get all open PRs
+      const { stdout } = await execAsync(
+        `gh pr list --repo ${repo} --state open --json number,title,url,headRefName,state --limit 100`
+      )
 
-        for (const pr of allPRs) {
-          // Check if PR matches task (in branch or title)
-          const branchTaskId = extractTaskIdFromBranch(pr.headRefName)
-          const titleMatch = pr.title.toLowerCase().includes(taskId.toLowerCase())
+      const prs: PR[] = JSON.parse(stdout)
+      results.scanned += prs.length
 
-          if (branchTaskId === taskId || titleMatch) {
-            results.found++
+      for (const pr of prs) {
+        // Extract task ID from branch name
+        const taskId = extractTaskIdFromBranch(pr.headRefName)
 
-            // Check if already linked
+        if (taskId) {
+          // Check if task exists
+          const { data: task } = await supabase.from('tasks').select('id').eq('id', taskId).single()
+
+          if (task) {
+            // Check if PR is already linked
             const { data: existingLink } = await supabase
               .from('task_links')
               .select('id')
@@ -267,25 +137,148 @@ export async function scanPRsForTask(taskId: string, repoSlug?: string) {
               })
 
               results.linked++
+              results.details.push({
+                taskId,
+                prNumber: pr.number,
+                branch: pr.headRefName,
+                title: pr.title,
+              })
             }
-
-            results.prs.push({
-              number: pr.number,
-              title: pr.title,
-              url: pr.url,
-              branch: pr.headRefName,
-              state: pr.state,
-              alreadyLinked: !!existingLink,
-            })
           }
         }
-      } catch (error) {
-        console.error(`Error searching in repo ${repo}:`, error)
+      }
+    } catch (error) {
+      console.error(`Error scanning repo ${repo}:`, error)
+      results.errors++
+    }
+  }
+
+  return results
+}
+
+// Scan for a specific task
+export async function scanPRsForTask(taskId: string, repoSlug?: string) {
+  const supabase = await createSupabaseServerClient()
+  const results = {
+    found: 0,
+    linked: 0,
+    prs: [] as {
+      number: number
+      title: string
+      url: string
+      branch: string
+      state: string
+      alreadyLinked: boolean
+    }[],
+  }
+  // Determine repos to scan
+  let repos: string[] = []
+
+  if (repoSlug) {
+    repos = [repoSlug]
+  } else {
+    // Try to infer from task's existing links
+    const { data: existingLinks } = await supabase
+      .from('task_links')
+      .select('url')
+      .eq('task_id', taskId)
+      .in('type', ['github', 'github-pr', 'github-issue'])
+
+    const repoSet = new Set<string>()
+    for (const link of existingLinks || []) {
+      const match = link.url.match(/github\.com\/([^/]+\/[^/]+)/)
+      if (match) {
+        repoSet.add(match[1])
       }
     }
 
-    return results
-  } catch (error) {
-    throw error
+    repos = Array.from(repoSet)
+
+    // Default to current repo if none found
+    if (repos.length === 0) {
+      try {
+        const { stdout: remote } = await execAsync('git remote get-url origin')
+        const match = remote.match(/github\.com[:/]([^/]+\/[^/.]+)/)
+        if (match) {
+          repos = [match[1]]
+        }
+      } catch {
+        // Not a git repo, that's fine
+      }
+    }
   }
+
+  // Search for PRs mentioning the task ID in branch name or title
+  for (const repo of repos) {
+    try {
+      // Search in open PRs
+      const { stdout: openPRs } = await execAsync(
+        `gh pr list --repo ${repo} --state open --search "${taskId}" --json number,title,url,headRefName,state --limit 50`
+      )
+
+      // Also search in recently closed PRs
+      const { stdout: closedPRs } = await execAsync(
+        `gh pr list --repo ${repo} --state closed --search "${taskId}" --json number,title,url,headRefName,state --limit 20`
+      )
+
+      const allPRs = [...JSON.parse(openPRs), ...JSON.parse(closedPRs)]
+
+      for (const pr of allPRs) {
+        // Check if PR matches task (in branch or title)
+        const branchTaskId = extractTaskIdFromBranch(pr.headRefName)
+        const titleMatch = pr.title.toLowerCase().includes(taskId.toLowerCase())
+
+        if (branchTaskId === taskId || titleMatch) {
+          results.found++
+
+          // Check if already linked
+          const { data: existingLink } = await supabase
+            .from('task_links')
+            .select('id')
+            .eq('task_id', taskId)
+            .eq('url', pr.url)
+            .single()
+
+          if (!existingLink) {
+            // Get max position
+            const { data: maxPosData } = await supabase
+              .from('task_links')
+              .select('position')
+              .eq('task_id', taskId)
+              .order('position', { ascending: false })
+              .limit(1)
+              .single()
+
+            const position = (maxPosData?.position ?? -1) + 1
+            const title = `PR #${pr.number}: ${pr.title}`
+
+            // Add the link
+            await supabase.from('task_links').insert({
+              task_id: taskId,
+              url: pr.url,
+              title,
+              type: 'github-pr',
+              icon: '🔀',
+              position,
+            })
+
+            results.linked++
+          }
+
+          results.prs.push({
+            number: pr.number,
+            title: pr.title,
+            url: pr.url,
+            branch: pr.headRefName,
+            state: pr.state,
+            alreadyLinked: !!existingLink,
+          })
+        }
+      }
+    } catch (error) {
+      console.error(`Error searching in repo ${repo}:`, error)
+    }
+  }
+
+  return results
 }

@@ -302,9 +302,7 @@ export default function LogsPage() {
                                 <Clock className="h-3 w-3" />
                                 {formatTime(log.created_at)}
                               </span>
-                              {log.duration_ms && (
-                                <span>{formatDuration(log.duration_ms)}</span>
-                              )}
+                              {log.duration_ms && <span>{formatDuration(log.duration_ms)}</span>}
                             </div>
                           </div>
                         </div>

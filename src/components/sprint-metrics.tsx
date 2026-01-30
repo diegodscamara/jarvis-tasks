@@ -113,10 +113,7 @@ export function SprintMetrics({
             <div className="mt-4 text-xs">
               <p className="text-muted-foreground">Based on current velocity</p>
               <p className="text-muted-foreground">
-                {Math.ceil(
-                  (completionDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
-                )}{' '}
-                days
+                {Math.ceil((completionDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days
               </p>
             </div>
           )}

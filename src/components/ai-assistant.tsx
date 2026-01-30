@@ -71,7 +71,7 @@ export function AIAssistant({ onTaskCreated, onTasksQueried }: AIAssistantProps)
           message: data.error || 'Failed to process command',
         })
       }
-    } catch (error) {
+    } catch (_error) {
       setResponse({
         message: 'Error: Failed to connect to AI assistant',
       })
