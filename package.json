@@ -11,11 +11,10 @@
     "format": "biome format --write src",
     "typecheck": "tsc --noEmit",
     "check": "biome check --write src && tsc --noEmit && next build",
-    "db:generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push",
-    "db:migrate": "npx tsx scripts/migrate.ts",
-    "db:studio": "drizzle-kit studio",
-    "migrate:supabase": "npx tsx scripts/migrate-to-supabase.ts"
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:api": "playwright test api.spec.ts"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^8.4.0",
