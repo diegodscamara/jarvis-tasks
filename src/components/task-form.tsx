@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { RichTextEditor } from '@/components/rich-text-editor'
+import { LinkItem } from '@/components/link-item'
 import { AGENTS, COLUMNS } from '@/lib/constants'
 import type {
   Agent,
@@ -371,25 +372,7 @@ export function TaskForm({ task, projects, labels, onSave, onDelete, onClose }: 
           {links.length > 0 ? (
             <div className="space-y-1">
               {links.map(link => (
-                <div key={link.id} className="flex items-center gap-2 p-2 rounded bg-muted/30 group">
-                  <span>{link.icon || '🔗'}</span>
-                  <a 
-                    href={link.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex-1 text-sm text-primary hover:underline truncate"
-                  >
-                    {link.title || link.url}
-                  </a>
-                  <span className="text-xs text-muted-foreground">{link.type}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveLink(link.id)}
-                    className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
-                  >
-                    ×
-                  </button>
-                </div>
+                <LinkItem key={link.id} link={link} onRemove={handleRemoveLink} />
               ))}
             </div>
           ) : (
