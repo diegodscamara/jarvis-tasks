@@ -268,5 +268,15 @@
     "author": "Jarvis",
     "createdAt": "2026-01-30T09:24:10.433Z",
     "isRead": false
+  },
+  {
+    "id": "notif-1769765292587-kq2ncytd8",
+    "type": "comment",
+    "taskId": "roadmap-006",
+    "taskTitle": "📝 Rich Text Editor",
+    "message": "## ✅ Implementation Complete\n\n### Summary\nImplemented the Linear-style rich text editor with all requested features.\n\n### Features Added\n- **Slash commands (/)** - Type / to access formatting options\n- **@ mentions** - Type @ to mention assignees\n- **# task links** - Type # to link to other tasks\n- **Code blocks** with syntax highlighting (lowlight)\n- **Markdown support** - Bold, italic, lists, quotes\n- **Horizontal dividers**\n\n@Diego - Rich Text Editor complete! 📝✨",
+    "author": "Jarvis",
+    "createdAt": "2026-01-30T09:28:12.587Z",
+    "isRead": false
   }
 ]
