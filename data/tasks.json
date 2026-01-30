@@ -1,105 +1,6 @@
 {
   "tasks": [
     {
-      "id": "task-1",
-      "title": "Set up daily security audits",
-      "description": "Configure automated security scans for AdPilotPro and report vulnerabilities",
-      "priority": "high",
-      "status": "done",
-      "assignee": "jarvis",
-      "project": "jarvis",
-      "createdAt": "2026-01-29T14:00:00Z",
-      "updatedAt": "2026-01-29T16:00:00Z"
-    },
-    {
-      "id": "task-2",
-      "title": "Monitor Luxor PRs",
-      "description": "Check for PR review requests every 15 minutes and provide code review summaries",
-      "priority": "medium",
-      "status": "in_progress",
-      "assignee": "jarvis",
-      "project": "luxor",
-      "createdAt": "2026-01-29T14:20:00Z",
-      "updatedAt": "2026-01-29T14:20:00Z"
-    },
-    {
-      "id": "vuln-001",
-      "title": "[SEC] Update pnpm to >=10.28.2",
-      "description": "Fix 6 high + 2 moderate vulnerabilities:\n- Command injection via environment variable substitution\n- Lockfile integrity bypass\n- Lifecycle scripts bypass\n- Scoped bin name path traversal\n- Symlink traversal in file:/git dependencies\n- Illegal tarball traversal vulnerability\n\nRun: `npm install -g pnpm@latest` or use corepack",
-      "priority": "high",
-      "status": "todo",
-      "assignee": "diego",
-      "project": "adpilotpro",
-      "createdAt": "2026-01-29T17:15:00Z",
-      "updatedAt": "2026-01-29T17:15:00Z"
-    },
-    {
-      "id": "vuln-002",
-      "title": "[SEC] Update @modelcontextprotocol/sdk to >=1.25.2",
-      "description": "Fix 2 high vulnerabilities in amazon-ads-mcp package:\n- DNS rebinding protection not enabled by default\n- ReDoS vulnerability\n\nPath: packages/amazon-ads-mcp\nRun: `pnpm update @modelcontextprotocol/sdk`",
-      "priority": "high",
-      "status": "todo",
-      "assignee": "jarvis",
-      "project": "adpilotpro",
-      "createdAt": "2026-01-29T17:15:00Z",
-      "updatedAt": "2026-01-29T17:15:00Z"
-    },
-    {
-      "id": "vuln-003",
-      "title": "[SEC] Update glob to >=10.5.0",
-      "description": "Fix high vulnerability:\n- Command injection via -c/--cmd executes matches with shell:true\n\nPath: packages/amazon-ads-mcp > tsup > sucrase > glob\nMay need to update tsup or override the dependency",
-      "priority": "high",
-      "status": "todo",
-      "assignee": "jarvis",
-      "project": "adpilotpro",
-      "createdAt": "2026-01-29T17:15:00Z",
-      "updatedAt": "2026-01-29T17:15:00Z"
-    },
-    {
-      "id": "vuln-004",
-      "title": "[SEC] Update stripe (qs dependency) to fix DoS",
-      "description": "Fix high vulnerability:\n- qs arrayLimit bypass allows DoS via memory exhaustion\n\nPath: stripe > qs\nRun: `pnpm update stripe` or wait for stripe to update their qs dependency",
-      "priority": "high",
-      "status": "todo",
-      "assignee": "jarvis",
-      "project": "adpilotpro",
-      "createdAt": "2026-01-29T17:15:00Z",
-      "updatedAt": "2026-01-29T17:15:00Z"
-    },
-    {
-      "id": "vuln-005",
-      "title": "[SEC] Update @tanstack/react-form (devalue) to fix DoS",
-      "description": "Fix 2 high vulnerabilities:\n- Memory/CPU exhaustion in devalue.parse\n- Memory exhaustion in devalue.parse\n\nPath: @tanstack/react-form > devalue\nRun: `pnpm update @tanstack/react-form`",
-      "priority": "high",
-      "status": "todo",
-      "assignee": "jarvis",
-      "project": "adpilotpro",
-      "createdAt": "2026-01-29T17:15:00Z",
-      "updatedAt": "2026-01-29T17:15:00Z"
-    },
-    {
-      "id": "vuln-006",
-      "title": "[SEC] Update tar to >=7.5.4",
-      "description": "Fix 2 high vulnerabilities:\n- Arbitrary file overwrite and symlink poisoning\n- Race condition via Unicode ligature collisions on macOS APFS\n\nPath: @tailwindcss/postcss > @tailwindcss/oxide > tar\nMay need to override or wait for tailwindcss update",
-      "priority": "high",
-      "status": "todo",
-      "assignee": "jarvis",
-      "project": "adpilotpro",
-      "createdAt": "2026-01-29T17:15:00Z",
-      "updatedAt": "2026-01-29T17:15:00Z"
-    },
-    {
-      "id": "vuln-007",
-      "title": "[SEC] Update diff (shadcn) to >=8.0.3",
-      "description": "Fix low vulnerability:\n- DoS in parsePatch and applyPatch\n\nPath: shadcn > diff\nRun: `pnpm update shadcn` or add override",
-      "priority": "low",
-      "status": "backlog",
-      "assignee": "jarvis",
-      "project": "adpilotpro",
-      "createdAt": "2026-01-29T17:15:00Z",
-      "updatedAt": "2026-01-29T17:15:00Z"
-    },
-    {
       "id": "roadmap-001",
       "title": "🎨 Linear Theme System",
       "description": "Research and implement Linear's design system:\n- Dark theme as primary (like Linear)\n- Color tokens: primary (#5E6AD2), background (#0D0D0D), surface (#1A1A1A), text (#ECECEC)\n- Typography: Inter font, proper weights\n- Border radius: 6px (Linear's standard)\n- Shadows and depth system\n- Status colors matching Linear\n\nResources:\n- Inspect Linear's app CSS\n- Their UI is consistent across web/desktop",
@@ -358,6 +259,39 @@
       "updatedAt": "2026-01-29T17:20:00Z"
     },
     {
+      "id": "roadmap-018",
+      "title": "📚 Docs Page (Guidelines + Orchestration Playbooks)",
+      "description": "Add an in-app Docs section for guidelines, guardrails, orchestration playbooks, memory system notes, daily/weekly summaries.",
+      "priority": "high",
+      "status": "todo",
+      "assignee": "jarvis",
+      "project": "jarvis",
+      "createdAt": "2026-01-30T13:33:48Z",
+      "updatedAt": "2026-01-30T13:33:48Z"
+    },
+    {
+      "id": "roadmap-019",
+      "title": "🪵 Logs Page (Real-time Orchestration Timeline)",
+      "description": "Add an in-app Logs page showing a timeline of agent activity, dispatches, progress events, and errors in near-real-time.",
+      "priority": "high",
+      "status": "todo",
+      "assignee": "jarvis",
+      "project": "jarvis",
+      "createdAt": "2026-01-30T13:33:48Z",
+      "updatedAt": "2026-01-30T13:33:48Z"
+    },
+    {
+      "id": "task-1",
+      "title": "Set up daily security audits",
+      "description": "Configure automated security scans for AdPilotPro and report vulnerabilities",
+      "priority": "high",
+      "status": "done",
+      "assignee": "jarvis",
+      "project": "jarvis",
+      "createdAt": "2026-01-29T14:00:00Z",
+      "updatedAt": "2026-01-29T16:00:00Z"
+    },
+    {
       "id": "task-1769731030019-8npikzf37y5",
       "title": "Implement keyboard shortcuts for task management",
       "description": "Add j/k navigation, c for create task, ? for help, and Cmd+K for command palette",
@@ -367,6 +301,94 @@
       "project": "jarvis",
       "createdAt": "2026-01-30T09:00:00Z",
       "updatedAt": "2026-01-30T09:30:00Z"
+    },
+    {
+      "id": "task-2",
+      "title": "Monitor Luxor PRs",
+      "description": "Check for PR review requests every 15 minutes and provide code review summaries",
+      "priority": "medium",
+      "status": "in_progress",
+      "assignee": "jarvis",
+      "project": "luxor",
+      "createdAt": "2026-01-29T14:20:00Z",
+      "updatedAt": "2026-01-29T14:20:00Z"
+    },
+    {
+      "id": "vuln-001",
+      "title": "[SEC] Update pnpm to >=10.28.2",
+      "description": "Fix 6 high + 2 moderate vulnerabilities:\n- Command injection via environment variable substitution\n- Lockfile integrity bypass\n- Lifecycle scripts bypass\n- Scoped bin name path traversal\n- Symlink traversal in file:/git dependencies\n- Illegal tarball traversal vulnerability\n\nRun: `npm install -g pnpm@latest` or use corepack",
+      "priority": "high",
+      "status": "todo",
+      "assignee": "diego",
+      "project": "adpilotpro",
+      "createdAt": "2026-01-29T17:15:00Z",
+      "updatedAt": "2026-01-29T17:15:00Z"
+    },
+    {
+      "id": "vuln-002",
+      "title": "[SEC] Update @modelcontextprotocol/sdk to >=1.25.2",
+      "description": "Fix 2 high vulnerabilities in amazon-ads-mcp package:\n- DNS rebinding protection not enabled by default\n- ReDoS vulnerability\n\nPath: packages/amazon-ads-mcp\nRun: `pnpm update @modelcontextprotocol/sdk`",
+      "priority": "high",
+      "status": "todo",
+      "assignee": "jarvis",
+      "project": "adpilotpro",
+      "createdAt": "2026-01-29T17:15:00Z",
+      "updatedAt": "2026-01-29T17:15:00Z"
+    },
+    {
+      "id": "vuln-003",
+      "title": "[SEC] Update glob to >=10.5.0",
+      "description": "Fix high vulnerability:\n- Command injection via -c/--cmd executes matches with shell:true\n\nPath: packages/amazon-ads-mcp > tsup > sucrase > glob\nMay need to update tsup or override the dependency",
+      "priority": "high",
+      "status": "todo",
+      "assignee": "jarvis",
+      "project": "adpilotpro",
+      "createdAt": "2026-01-29T17:15:00Z",
+      "updatedAt": "2026-01-29T17:15:00Z"
+    },
+    {
+      "id": "vuln-004",
+      "title": "[SEC] Update stripe (qs dependency) to fix DoS",
+      "description": "Fix high vulnerability:\n- qs arrayLimit bypass allows DoS via memory exhaustion\n\nPath: stripe > qs\nRun: `pnpm update stripe` or wait for stripe to update their qs dependency",
+      "priority": "high",
+      "status": "todo",
+      "assignee": "jarvis",
+      "project": "adpilotpro",
+      "createdAt": "2026-01-29T17:15:00Z",
+      "updatedAt": "2026-01-29T17:15:00Z"
+    },
+    {
+      "id": "vuln-005",
+      "title": "[SEC] Update @tanstack/react-form (devalue) to fix DoS",
+      "description": "Fix 2 high vulnerabilities:\n- Memory/CPU exhaustion in devalue.parse\n- Memory exhaustion in devalue.parse\n\nPath: @tanstack/react-form > devalue\nRun: `pnpm update @tanstack/react-form`",
+      "priority": "high",
+      "status": "todo",
+      "assignee": "jarvis",
+      "project": "adpilotpro",
+      "createdAt": "2026-01-29T17:15:00Z",
+      "updatedAt": "2026-01-29T17:15:00Z"
+    },
+    {
+      "id": "vuln-006",
+      "title": "[SEC] Update tar to >=7.5.4",
+      "description": "Fix 2 high vulnerabilities:\n- Arbitrary file overwrite and symlink poisoning\n- Race condition via Unicode ligature collisions on macOS APFS\n\nPath: @tailwindcss/postcss > @tailwindcss/oxide > tar\nMay need to override or wait for tailwindcss update",
+      "priority": "high",
+      "status": "todo",
+      "assignee": "jarvis",
+      "project": "adpilotpro",
+      "createdAt": "2026-01-29T17:15:00Z",
+      "updatedAt": "2026-01-29T17:15:00Z"
+    },
+    {
+      "id": "vuln-007",
+      "title": "[SEC] Update diff (shadcn) to >=8.0.3",
+      "description": "Fix low vulnerability:\n- DoS in parsePatch and applyPatch\n\nPath: shadcn > diff\nRun: `pnpm update shadcn` or add override",
+      "priority": "low",
+      "status": "backlog",
+      "assignee": "jarvis",
+      "project": "adpilotpro",
+      "createdAt": "2026-01-29T17:15:00Z",
+      "updatedAt": "2026-01-29T17:15:00Z"
     }
   ]
 }
