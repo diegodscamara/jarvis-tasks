@@ -64,6 +64,7 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { Toggle } from '@/components/ui/toggle'
 import { StatsWidget } from '@/components/stats-widget'
+import { AIAssistant } from '@/components/ai-assistant'
 import { ACCENT_COLORS, AGENTS, COLUMNS, DEFAULT_SETTINGS, STORAGE_KEYS } from '@/lib/constants'
 import type {
   Agent,
@@ -884,6 +885,15 @@ export default function Home() {
             >
               <Kbd>?</Kbd>
             </Button>
+            <AIAssistant 
+              onTaskCreated={(task) => {
+                fetchTasks()
+                setShowModal(false)
+              }}
+              onTasksQueried={() => {
+                // Could implement filtering based on AI query results
+              }}
+            />
             <Button
               variant="ghost"
               size="icon"
