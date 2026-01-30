@@ -99,7 +99,7 @@ importers:
         specifier: ^1.2.8
         version: 1.2.8(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@tiptap/extension-placeholder':
-        specifier: ^3.18.0
+        specifier: 3.18.0
         version: 3.18.0(@tiptap/extensions@3.18.0(@tiptap/core@3.18.0(@tiptap/pm@3.18.0))(@tiptap/pm@3.18.0))
       '@tiptap/extension-task-item':
         specifier: ^3.18.0
@@ -107,11 +107,14 @@ importers:
       '@tiptap/extension-task-list':
         specifier: ^3.18.0
         version: 3.18.0(@tiptap/extension-list@3.18.0(@tiptap/core@3.18.0(@tiptap/pm@3.18.0))(@tiptap/pm@3.18.0))
-      '@tiptap/react':
+      '@tiptap/pm':
         specifier: ^3.18.0
+        version: 3.18.0
+      '@tiptap/react':
+        specifier: 3.18.0
         version: 3.18.0(@floating-ui/dom@1.7.5)(@tiptap/core@3.18.0(@tiptap/pm@3.18.0))(@tiptap/pm@3.18.0)(@types/react-dom@19.2.3(@types/react@19.2.10))(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@tiptap/starter-kit':
-        specifier: ^3.18.0
+        specifier: 3.18.0
         version: 3.18.0
       better-sqlite3:
         specifier: ^12.6.2
