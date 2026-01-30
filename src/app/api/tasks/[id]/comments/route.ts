@@ -22,7 +22,7 @@ export async function POST(request: NextRequest, props: RouteParams) {
   const { id: taskId } = params
   try {
     const body = await request.json()
-    const id = body.id || `comment-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    const id = body.id || crypto.randomUUID()
 
     const comment = await db.createComment({
       id,
