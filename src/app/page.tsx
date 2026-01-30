@@ -83,7 +83,7 @@ export default function Home() {
   const [showModal, setShowModal] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [draggedTask, setDraggedTask] = useState<Task | null>(null)
-  const [activeView, setActiveView] = useState<'all' | Status>('all')
+  const [activeView, setActiveView] = useState<'all' | 'due_today' | 'overdue' | Status>('all')
   const [activeProject, setActiveProject] = useState<string | null>(null)
   const [activeLabel, setActiveLabel] = useState<string | null>(null)
   const [showShortcuts, setShowShortcuts] = useState(false)
@@ -380,7 +380,21 @@ export default function Home() {
     if (activeView === 'all') {
       return getFilteredTasks()
     }
-    return getFilteredTasks(activeView)
+    if (activeView === 'due_today') {
+      const today = new Date().toISOString().split('T')[0]
+      return getFilteredTasks().filter((t) => {
+        if (!t.dueDate || t.status === 'done') return false
+        return t.dueDate.split('T')[0] === today
+      })
+    }
+    if (activeView === 'overdue') {
+      const today = new Date(new Date().toISOString().split('T')[0])
+      return getFilteredTasks().filter((t) => {
+        if (!t.dueDate || t.status === 'done') return false
+        return new Date(t.dueDate) < today
+      })
+    }
+    return getFilteredTasks(activeView as Status)
   })()
 
   const getProjectTaskCount = (projectId: string) =>
@@ -441,6 +455,49 @@ export default function Home() {
                   <AllIssuesIcon size={14} />
                   <span>All Issues</span>
                   <span className="ml-auto text-xs text-muted-foreground">{tasks.length}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={activeView === 'due_today' && !activeProject && !activeLabel}
+                  onClick={() => {
+                    setActiveView('due_today')
+                    setActiveProject(null)
+                    setActiveLabel(null)
+                  }}
+                >
+                  <CalendarIcon size={14} />
+                  <span>Due Today</span>
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {tasks.filter((t) => {
+                      if (!t.dueDate || t.status === 'done') return false
+                      const today = new Date().toISOString().split('T')[0]
+                      return t.dueDate.split('T')[0] === today
+                    }).length}
+                  </span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={activeView === 'overdue' && !activeProject && !activeLabel}
+                  onClick={() => {
+                    setActiveView('overdue')
+                    setActiveProject(null)
+                    setActiveLabel(null)
+                  }}
+                  className={tasks.filter((t) => {
+                    if (!t.dueDate || t.status === 'done') return false
+                    return new Date(t.dueDate) < new Date(new Date().toISOString().split('T')[0])
+                  }).length > 0 ? 'text-red-400' : ''}
+                >
+                  <CloseIcon size={14} className="text-red-400" />
+                  <span>Overdue</span>
+                  <span className="ml-auto text-xs px-1.5 rounded bg-red-500/20 text-red-400">
+                    {tasks.filter((t) => {
+                      if (!t.dueDate || t.status === 'done') return false
+                      return new Date(t.dueDate) < new Date(new Date().toISOString().split('T')[0])
+                    }).length}
+                  </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
@@ -642,7 +699,11 @@ export default function Home() {
                   ? projects.find((p) => p.id === activeProject)?.name || 'Project'
                   : activeView === 'all'
                     ? 'All Issues'
-                    : COLUMNS.find((c) => c.id === activeView)?.title || 'Tasks'}
+                    : activeView === 'due_today'
+                      ? 'Due Today'
+                      : activeView === 'overdue'
+                        ? 'Overdue'
+                        : COLUMNS.find((c) => c.id === activeView)?.title || 'Tasks'}
             </h1>
             {activeProject && (
               <span
