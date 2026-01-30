@@ -110,6 +110,7 @@ describe('AI Assistant Integration', () => {
         {
           id: '3',
           title: 'Write deployment scripts',
+          description: '',
           status: 'todo' as const,
           priority: 'medium' as const,
           assignee: 'jarvis' as const,

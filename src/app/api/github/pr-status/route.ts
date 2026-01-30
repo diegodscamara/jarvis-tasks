@@ -1,27 +1,21 @@
 import { type NextRequest, NextResponse } from 'next/server'
+import { exec } from 'child_process'
+import { promisify } from 'util'
 
-interface PullRequest {
-  state: 'open' | 'closed' | 'merged'
-  draft: boolean
-  mergeable?: boolean | null
-  mergeable_state?: string
+const execAsync = promisify(exec)
+
+interface PRData {
   number: number
   title: string
-  head: {
-    ref: string
-  }
-  base: {
-    ref: string
-  }
-  merged_at: string | null
-  created_at: string
-  updated_at: string
-}
-
-interface CheckRun {
-  conclusion: string | null
-  status: string
-  name: string
+  state: string
+  isDraft: boolean
+  statusCheckRollup: string | null
+  headRefName: string
+  baseRefName: string
+  url: string
+  createdAt: string
+  updatedAt: string
+  mergedAt: string | null
 }
 
 // Parse GitHub PR URL to extract owner, repo, and PR number
@@ -51,47 +45,30 @@ export async function GET(request: NextRequest) {
   }
   
   const { owner, repo, number } = parsed
-  
-  // Use GitHub API token if available (from env or config)
-  const headers: HeadersInit = {
-    'Accept': 'application/vnd.github.v3+json',
-    'User-Agent': 'Jarvis-Tasks'
-  }
-  
-  if (process.env.GITHUB_TOKEN) {
-    headers['Authorization'] = `Bearer ${process.env.GITHUB_TOKEN}`
-  }
+  const repoSlug = `${owner}/${repo}`
   
   try {
-    // Fetch PR details
-    const prResponse = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/pulls/${number}`,
-      { headers }
+    // Use GitHub CLI to get PR details (more reliable and uses existing auth)
+    const { stdout } = await execAsync(
+      `gh pr view ${number} --repo ${repoSlug} --json number,title,state,isDraft,statusCheckRollup,headRefName,baseRefName,url,createdAt,updatedAt,mergedAt`
     )
     
-    if (!prResponse.ok) {
-      return NextResponse.json({ 
-        error: 'Failed to fetch PR', 
-        details: await prResponse.text() 
-      }, { status: prResponse.status })
-    }
+    const prData: PRData = JSON.parse(stdout)
     
-    const pr: PullRequest = await prResponse.json()
-    
-    // Determine PR status
+    // Determine status and styling
     let status: string
     let statusIcon: string
     let statusColor: string
     
-    if (pr.merged_at) {
+    if (prData.mergedAt) {
       status = 'merged'
       statusIcon = '🟣'
       statusColor = '#8b5cf6'
-    } else if (pr.state === 'closed') {
+    } else if (prData.state === 'CLOSED') {
       status = 'closed'
       statusIcon = '🔴'
       statusColor = '#ef4444'
-    } else if (pr.draft) {
+    } else if (prData.isDraft) {
       status = 'draft'
       statusIcon = '⚪'
       statusColor = '#6b7280'
@@ -101,60 +78,45 @@ export async function GET(request: NextRequest) {
       statusColor = '#10b981'
     }
     
-    // Try to fetch checks status (CI)
+    // Determine checks status
     let checksStatus = 'unknown'
     let checksIcon = '⚪'
     
-    try {
-      const checksResponse = await fetch(
-        `https://api.github.com/repos/${owner}/${repo}/pulls/${number}/checks`,
-        { headers }
-      )
-      
-      if (checksResponse.ok) {
-        const checks = await checksResponse.json()
-        if (checks.check_runs && checks.check_runs.length > 0) {
-          const allSuccess = checks.check_runs.every((run: CheckRun) => 
-            run.conclusion === 'success' || run.status === 'completed'
-          )
-          const anyFailure = checks.check_runs.some((run: CheckRun) => 
-            run.conclusion === 'failure' || run.conclusion === 'error'
-          )
-          const anyPending = checks.check_runs.some((run: CheckRun) => 
-            run.status === 'queued' || run.status === 'in_progress'
-          )
-          
-          if (anyFailure) {
-            checksStatus = 'failed'
-            checksIcon = '❌'
-          } else if (anyPending) {
-            checksStatus = 'pending'
-            checksIcon = '🟡'
-          } else if (allSuccess) {
-            checksStatus = 'passed'
-            checksIcon = '✅'
-          }
-        }
+    if (prData.statusCheckRollup) {
+      switch (prData.statusCheckRollup.toUpperCase()) {
+        case 'SUCCESS':
+          checksStatus = 'passed'
+          checksIcon = '✅'
+          break
+        case 'FAILURE':
+        case 'ERROR':
+          checksStatus = 'failed'
+          checksIcon = '❌'
+          break
+        case 'PENDING':
+        case 'QUEUED':
+        case 'IN_PROGRESS':
+          checksStatus = 'pending'
+          checksIcon = '🟡'
+          break
       }
-    } catch (error) {
-      // Checks API might not be accessible, ignore
     }
     
     return NextResponse.json({
-      number: pr.number,
-      title: pr.title,
+      number: prData.number,
+      title: prData.title,
       status,
       statusIcon,
       statusColor,
       checksStatus,
       checksIcon,
-      draft: pr.draft,
-      branch: pr.head.ref,
-      targetBranch: pr.base.ref,
-      url,
-      createdAt: pr.created_at,
-      updatedAt: pr.updated_at,
-      mergedAt: pr.merged_at
+      draft: prData.isDraft,
+      branch: prData.headRefName,
+      targetBranch: prData.baseRefName,
+      url: prData.url,
+      createdAt: prData.createdAt,
+      updatedAt: prData.updatedAt,
+      mergedAt: prData.mergedAt
     })
   } catch (error) {
     console.error('Error fetching PR status:', error)

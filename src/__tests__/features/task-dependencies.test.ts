@@ -24,7 +24,7 @@ describe('Task Dependencies - TDD', () => {
           if (depTask && !depTask.blockedBy) {
             depTask.blockedBy = []
           }
-          if (depTask && !depTask.blockedBy.includes(task.id)) {
+          if (depTask && depTask.blockedBy && !depTask.blockedBy.includes(task.id)) {
             depTask.blockedBy.push(task.id)
           }
         })

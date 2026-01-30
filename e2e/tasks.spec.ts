@@ -237,7 +237,7 @@ test.describe('Jarvis Tasks E2E Tests', () => {
     for (let i = 0; i < tasksToCreate; i++) {
       await page.click('[data-testid="quick-add-button"]')
       await page.fill('[data-testid="quick-task-input"]', `Performance Test Task ${i}`)
-      await page.press('Enter')
+      await page.press('[data-testid="quick-task-input"]', 'Enter')
     }
     
     // Verify all tasks exist

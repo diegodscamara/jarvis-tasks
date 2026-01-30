@@ -382,13 +382,47 @@ export function TaskForm({ task, tasks, projects, labels, onSave, onDelete, onCl
         <div className="space-y-3 pt-4 border-t border-border">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium">🔗 Links & Resources</h3>
-            <button 
-              type="button"
-              onClick={() => setShowAddLink(!showAddLink)}
-              className="text-xs text-primary hover:underline"
-            >
-              + Add
-            </button>
+            <div className="flex items-center gap-2">
+              <button 
+                type="button"
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/github/scan-prs', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ taskId: task.id })
+                    })
+                    const result = await res.json()
+                    if (result.linked > 0) {
+                      // Refresh links
+                      fetch(`/api/tasks/${task.id}/links`)
+                        .then(res => res.json())
+                        .then(data => setLinks(data.links || []))
+                        .catch(console.error)
+                      alert(`Found and linked ${result.linked} GitHub PR(s)!`)
+                    } else if (result.found > 0) {
+                      alert(`Found ${result.found} PR(s) but they were already linked.`)
+                    } else {
+                      alert('No matching PRs found.')
+                    }
+                  } catch (error) {
+                    console.error('Error scanning PRs:', error)
+                    alert('Failed to scan for PRs')
+                  }
+                }}
+                className="text-xs text-muted-foreground hover:text-primary"
+                title="Scan GitHub for PRs related to this task"
+              >
+                🔍 Scan PRs
+              </button>
+              <button 
+                type="button"
+                onClick={() => setShowAddLink(!showAddLink)}
+                className="text-xs text-primary hover:underline"
+              >
+                + Add
+              </button>
+            </div>
           </div>
           {showAddLink && (
             <div className="flex gap-2">
