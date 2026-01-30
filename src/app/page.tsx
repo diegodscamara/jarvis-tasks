@@ -1,3 +1,5 @@
+'use client'
+
 import { QuickCapture } from '@/components/quick-capture'
 
 import { useCallback, useEffect, useState } from 'react'
@@ -1418,6 +1420,7 @@ export default function Home() {
         }}
       />
     </SidebarProvider>
+    </>
   )
 }
 

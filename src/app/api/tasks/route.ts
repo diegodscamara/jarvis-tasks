@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import * as db from '@/db/queries'
 import { notifyTaskEvent } from '@/lib/telegram-notifier'
-import { getTaskDependencies, getTaskDependents } from '@/lib/task-dependencies'
 import { canChangeTaskStatus, getTaskDependencies, getTaskDependents } from '@/lib/task-dependencies'
 
 export async function GET() {
@@ -30,7 +29,7 @@ export async function GET() {
       comments: task.comments?.map((c) => ({
         id: c.id,
         author: c.author,
-        content: c.content,
+        text: c.content,  // Map content to text for frontend compatibility
         createdAt: c.created_at,
       })),
     }))

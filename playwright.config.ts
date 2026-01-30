@@ -1,5 +1,4 @@
 import { defineConfig, devices } from '@playwright/test'
-import { npx as npxCommand } from '@playwright/test'
 
 export default defineConfig({
   testDir: './e2e',

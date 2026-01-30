@@ -1,5 +1,3 @@
-import { message } from '@/app/api/notifications/telegram'
-
 interface TelegramNotification {
   type: 'task_created' | 'task_updated' | 'task_completed' | 'task_assigned' | 'due_reminder'
   taskId: string

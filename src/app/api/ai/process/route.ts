@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       
       // Generate AI suggestions for the new task
       const allTasks = db.getAllTasks()
-      const suggestions = generateSuggestions(createdTask, allTasks)
+      const suggestions = generateSuggestions(createdTask as any, allTasks as any)
       
       return NextResponse.json({
         success: true,

@@ -65,12 +65,30 @@ export function TaskForm({ task, tasks, projects, labels, onSave, onDelete, onCl
   const [showAddLink, setShowAddLink] = useState(false)
   const [selectedDependencies, setSelectedDependencies] = useState<string[]>(task?.dependsOn || [])
 
-  // Fetch links when task changes
+  // Fetch links and comments when task changes
   useEffect(() => {
     if (task?.id) {
+      // Fetch links
       fetch(`/api/tasks/${task.id}/links`)
         .then(res => res.json())
         .then(data => setLinks(data.links || []))
+        .catch(console.error)
+      
+      // Fetch comments
+      fetch(`/api/tasks/${task.id}/comments`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.comments) {
+            // Map the backend format to frontend format
+            const formattedComments = data.comments.map((c: any) => ({
+              id: c.id,
+              text: c.content || c.text,  // Support both formats
+              author: c.author,
+              createdAt: c.createdAt,
+            }))
+            setComments(formattedComments)
+          }
+        })
         .catch(console.error)
     }
   }, [task?.id])
@@ -141,21 +159,32 @@ export function TaskForm({ task, tasks, projects, labels, onSave, onDelete, onCl
   const handleAddComment = async () => {
     if (!newComment.trim() || !task?.id) return
 
-    const comment: Comment = {
-      id: Date.now().toString(),
-      text: newComment,
-      author: 'diego',
-      createdAt: new Date().toISOString(),
+    try {
+      const response = await fetch(`/api/tasks/${task.id}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: newComment,
+          author: 'diego', // TODO: Get from current user context
+        }),
+      })
+
+      if (response.ok) {
+        const savedComment = await response.json()
+        // Use the response from server which has the correct format
+        setComments([...comments, {
+          id: savedComment.id,
+          text: savedComment.content, // Map content to text for UI
+          author: savedComment.author,
+          createdAt: savedComment.createdAt,
+        }])
+        setNewComment('')
+      } else {
+        console.error('Failed to add comment')
+      }
+    } catch (error) {
+      console.error('Error adding comment:', error)
     }
-
-    await fetch(`/api/tasks/${task.id}/comments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(comment),
-    })
-
-    setComments([...comments, comment])
-    setNewComment('')
   }
 
   const labelGroups = labels.reduce(
