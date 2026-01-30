@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import * as db from '@/db/queries'
+import * as db from '@/lib/supabase/queries'
 
 export async function GET() {
   try {
@@ -29,14 +29,21 @@ export async function GET() {
       name: project.name,
       icon: project.icon,
       color: project.color,
-      total: tasks.filter((t) => t.projectId === project.id).length,
-      done: tasks.filter((t) => t.projectId === project.id && t.status === 'done').length,
-      inProgress: tasks.filter((t) => t.projectId === project.id && t.status === 'in_progress')
-        .length,
+      total: tasks.filter((t) => ((t as any).projectId ?? (t as any).project_id) === project.id).length,
+      done: tasks.filter(
+        (t) =>
+          ((t as any).projectId ?? (t as any).project_id) === project.id && t.status === 'done'
+      ).length,
+      inProgress: tasks.filter(
+        (t) =>
+          ((t as any).projectId ?? (t as any).project_id) === project.id && t.status === 'in_progress'
+      ).length,
     }))
 
     // Tasks without project
-    const unassignedTasks = tasks.filter((t) => !t.projectId).length
+    const unassignedTasks = tasks.filter(
+      (t) => !((t as any).projectId ?? (t as any).project_id)
+    ).length
 
     // Label usage
     const labelStats = labels
@@ -65,16 +72,22 @@ export async function GET() {
       tasks.length > 0 ? Math.round((statusCounts.done / tasks.length) * 100) : 0
 
     // Tasks with due dates
-    const tasksWithDueDate = tasks.filter((t) => t.dueDate)
+    const tasksWithDueDate = tasks.filter(
+      (t) => ((t as any).dueDate ?? (t as any).due_date) as string | null
+    )
     const overdueTasks = tasksWithDueDate.filter(
-      (t) => t.status !== 'done' && new Date(t.dueDate!) < new Date()
+      (t) =>
+        t.status !== 'done' &&
+        new Date(((t as any).dueDate ?? (t as any).due_date) as string) < new Date()
     ).length
 
     // Recently completed (last 7 days)
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
     const recentlyCompleted = tasks.filter(
-      (t) => t.status === 'done' && new Date(t.updatedAt) > sevenDaysAgo
+      (t) =>
+        t.status === 'done' &&
+        new Date(((t as any).updatedAt ?? (t as any).updated_at) as string) > sevenDaysAgo
     ).length
 
     return NextResponse.json({

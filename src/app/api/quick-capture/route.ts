@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import * as db from '@/db/queries'
+import * as db from '@/lib/supabase/queries'
 
 // Simple NLP for task parsing
 async function parseTaskInput(input: string) {
@@ -66,8 +66,8 @@ export async function POST(request: NextRequest) {
 
     const parsed = await parseTaskInput(input)
 
+    // NOTE: Supabase uses UUID primary keys; do not pass legacy string ids here.
     const task = await db.createTask({
-      id: `task-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       title: parsed.title,
       description: '',
       priority: parsed.priority,

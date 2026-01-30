@@ -1,6 +1,6 @@
 import { eachDayOfInterval, format, startOfDay, startOfWeek, subDays } from 'date-fns'
 import { NextResponse } from 'next/server'
-import * as db from '@/db/queries'
+import * as db from '@/lib/supabase/queries'
 
 export async function GET() {
   try {
@@ -17,9 +17,9 @@ export async function GET() {
       const completed = tasks.filter(
         (t) =>
           t.status === 'done' &&
-          t.updatedAt &&
-          new Date(t.updatedAt) >= dayStart &&
-          new Date(t.updatedAt) <= dayEnd
+          ((t as any).updatedAt ?? (t as any).updated_at) &&
+          new Date(((t as any).updatedAt ?? (t as any).updated_at) as string) >= dayStart &&
+          new Date(((t as any).updatedAt ?? (t as any).updated_at) as string) <= dayEnd
       ).length
 
       return {
@@ -32,19 +32,34 @@ export async function GET() {
     const byDayOfWeek = [0, 1, 2, 3, 4, 5, 6].map((dow) => {
       const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
       const completed = tasks.filter((t) => {
-        if (t.status !== 'done' || !t.updatedAt) return false
-        return new Date(t.updatedAt).getDay() === dow
+        if (
+          t.status !== 'done' ||
+          !((t as any).updatedAt ?? (t as any).updated_at)
+        )
+          return false
+        return (
+          new Date(((t as any).updatedAt ?? (t as any).updated_at) as string).getDay() === dow
+        )
       }).length
       return { day: dayNames[dow], completed }
     })
 
     // Time to completion (for tasks with createdAt and done)
-    const completedTasks = tasks.filter((t) => t.status === 'done' && t.createdAt && t.updatedAt)
+    const completedTasks = tasks.filter(
+      (t) =>
+        t.status === 'done' &&
+        ((t as any).createdAt ?? (t as any).created_at) &&
+        ((t as any).updatedAt ?? (t as any).updated_at)
+    )
     const avgCompletionTime =
       completedTasks.length > 0
         ? completedTasks.reduce((sum, t) => {
-            const created = new Date(t.createdAt).getTime()
-            const completed = new Date(t.updatedAt).getTime()
+            const created = new Date(
+              ((t as any).createdAt ?? (t as any).created_at) as string
+            ).getTime()
+            const completed = new Date(
+              ((t as any).updatedAt ?? (t as any).updated_at) as string
+            ).getTime()
             return sum + (completed - created)
           }, 0) /
           completedTasks.length /
@@ -69,8 +84,9 @@ export async function GET() {
     // Top projects by task count
     const projectCounts: Record<string, number> = {}
     tasks.forEach((t) => {
-      if (t.projectId) {
-        projectCounts[t.projectId] = (projectCounts[t.projectId] || 0) + 1
+      const pid = (t as any).projectId ?? (t as any).project_id
+      if (pid) {
+        projectCounts[pid] = (projectCounts[pid] || 0) + 1
       }
     })
     const topProjects = Object.entries(projectCounts)

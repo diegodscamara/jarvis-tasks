@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import * as db from '@/db/queries'
+import * as db from '@/lib/supabase/queries'
 import type { SavedSearch } from '@/lib/search'
 import { filterTasks, parseSearchQuery, rankSearchResults } from '@/lib/search'
 

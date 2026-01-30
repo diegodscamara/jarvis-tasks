@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import * as db from '@/db/queries'
+import * as db from '@/lib/supabase/queries'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest, props: RouteParams) {
       id: comment.id,
       author: comment.author,
       text: comment.content,
-      createdAt: comment.createdAt,
+      createdAt: (comment as any).createdAt ?? (comment as any).created_at,
     })
   } catch (error) {
     console.error('Error creating comment:', error)

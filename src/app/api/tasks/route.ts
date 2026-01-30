@@ -1,12 +1,13 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import * as db from '@/db/queries'
-import { canChangeTaskStatus, getTaskDependencies, getTaskDependents } from '@/db/task-dependencies'
+import * as db from '@/lib/supabase/queries'
+import { canChangeTaskStatus, getTaskDependencies, getTaskDependents } from '@/lib/supabase/task-dependencies'
 import { notifyTaskEvent } from '@/lib/telegram-notifier'
 
 export async function GET() {
   try {
     const tasks = await db.getAllTasks()
-    // Transform to match expected frontend format
+
+    // Transform to match expected frontend format (camelCase)
     const formattedTasks = await Promise.all(
       tasks.map(async (task) => ({
         id: task.id,
@@ -15,16 +16,17 @@ export async function GET() {
         priority: task.priority,
         status: task.status,
         assignee: task.assignee,
-        projectId: task.projectId,
-        dueDate: task.dueDate,
-        estimate: task.estimate,
-        createdAt: task.createdAt,
-        updatedAt: task.updatedAt,
+        projectId: (task as any).projectId ?? (task as any).project_id ?? null,
+        dueDate: (task as any).dueDate ?? (task as any).due_date ?? null,
+        estimate: task.estimate ?? null,
+        createdAt: (task as any).createdAt ?? (task as any).created_at,
+        updatedAt: (task as any).updatedAt ?? (task as any).updated_at,
         // Add dependencies information
         dependsOn: await getTaskDependencies(task.id),
         blockedBy: await getTaskDependents(task.id),
       }))
     )
+
     return NextResponse.json({ tasks: formattedTasks })
   } catch (error) {
     console.error('Error fetching tasks:', error)
@@ -35,10 +37,9 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const id = body.id || `task-${Date.now()}-${Math.random().toString(36).slice(2)}`
 
+    // NOTE: Supabase uses UUID primary keys; do not accept/emit legacy string ids here.
     const task = await db.createTask({
-      id,
       title: body.title,
       description: body.description || '',
       priority: body.priority || 'medium',
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
       task.title,
       task.status,
       task.assignee,
-      task.dueDate ?? undefined,
+      (task as any).dueDate ?? (task as any).due_date ?? undefined,
       body.telegramChannel
     )
 
@@ -67,11 +68,11 @@ export async function POST(request: NextRequest) {
       priority: task.priority,
       status: task.status,
       assignee: task.assignee,
-      projectId: task.projectId,
-      dueDate: task.dueDate,
-      estimate: task.estimate,
-      createdAt: task.createdAt,
-      updatedAt: task.updatedAt,
+      projectId: (task as any).projectId ?? (task as any).project_id ?? null,
+      dueDate: (task as any).dueDate ?? (task as any).due_date ?? null,
+      estimate: task.estimate ?? null,
+      createdAt: (task as any).createdAt ?? (task as any).created_at,
+      updatedAt: (task as any).updatedAt ?? (task as any).updated_at,
     })
   } catch (error) {
     console.error('Error creating task:', error)
@@ -89,7 +90,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Get current task for notifications
-    const currentTask = await db.getTask(id)
+    const currentTask = await db.getTaskById(id)
 
     // Check if status is being changed and validate dependencies
     if (updates.status) {
@@ -120,7 +121,7 @@ export async function PUT(request: NextRequest) {
         currentTask.title,
         updates.status,
         currentTask.assignee,
-        currentTask.dueDate ?? undefined,
+        (currentTask as any).dueDate ?? (currentTask as any).due_date ?? undefined,
         body.telegramChannel
       )
     } else if (currentTask && updates.status && currentTask.status !== updates.status) {
@@ -130,7 +131,7 @@ export async function PUT(request: NextRequest) {
         currentTask.title,
         updates.status,
         currentTask.assignee,
-        currentTask.dueDate ?? undefined,
+        (currentTask as any).dueDate ?? (currentTask as any).due_date ?? undefined,
         body.telegramChannel
       )
     }
@@ -157,11 +158,11 @@ export async function PUT(request: NextRequest) {
       priority: task.priority,
       status: task.status,
       assignee: task.assignee,
-      projectId: task.projectId,
-      dueDate: task.dueDate,
-      estimate: task.estimate,
-      createdAt: task.createdAt,
-      updatedAt: task.updatedAt,
+      projectId: (task as any).projectId ?? (task as any).project_id ?? null,
+      dueDate: (task as any).dueDate ?? (task as any).due_date ?? null,
+      estimate: task.estimate ?? null,
+      createdAt: (task as any).createdAt ?? (task as any).created_at,
+      updatedAt: (task as any).updatedAt ?? (task as any).updated_at,
     })
   } catch (error) {
     console.error('Error updating task:', error)

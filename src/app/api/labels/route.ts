@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import * as db from '@/db/queries'
+import * as db from '@/lib/supabase/queries'
 
 export async function GET() {
   try {
@@ -14,14 +14,12 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const id = body.id || `label-${Date.now()}-${Math.random().toString(36).slice(2)}`
 
     const label = await db.createLabel({
-      id,
       name: body.name,
       color: body.color || '#000000',
       group: body.group,
-    })
+    } as any)
 
     return NextResponse.json(label)
   } catch (error) {

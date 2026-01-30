@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import * as db from '@/db/queries'
+import * as db from '@/lib/supabase/queries'
 
 // Notification templates
 const templates = {
@@ -23,14 +23,17 @@ export async function GET(request: NextRequest) {
 
     if (type === 'overdue') {
       const overdueTasks = tasks.filter(
-        (t) => t.status !== 'done' && t.dueDate && new Date(t.dueDate) < today
+        (t) =>
+          t.status !== 'done' &&
+          (((t as any).dueDate ?? (t as any).due_date) as string | null) &&
+          new Date(((t as any).dueDate ?? (t as any).due_date) as string) < today
       )
       return NextResponse.json({
         count: overdueTasks.length,
         tasks: overdueTasks.slice(0, 5).map((t) => ({
           id: t.id,
           title: t.title,
-          dueDate: t.dueDate,
+          dueDate: ((t as any).dueDate ?? (t as any).due_date) as string | null,
           message: templates.taskOverdue(t),
         })),
       })
@@ -41,16 +44,16 @@ export async function GET(request: NextRequest) {
       const dueSoon = tasks.filter(
         (t) =>
           t.status !== 'done' &&
-          t.dueDate &&
-          new Date(t.dueDate) >= today &&
-          new Date(t.dueDate) <= tomorrow
+          (((t as any).dueDate ?? (t as any).due_date) as string | null) &&
+          new Date(((t as any).dueDate ?? (t as any).due_date) as string) >= today &&
+          new Date(((t as any).dueDate ?? (t as any).due_date) as string) <= tomorrow
       )
       return NextResponse.json({
         count: dueSoon.length,
         tasks: dueSoon.map((t) => ({
           id: t.id,
           title: t.title,
-          dueDate: t.dueDate,
+          dueDate: ((t as any).dueDate ?? (t as any).due_date) as string | null,
           message: templates.taskDue(t),
         })),
       })
@@ -58,21 +61,27 @@ export async function GET(request: NextRequest) {
 
     // Default: daily summary
     const completedToday = tasks.filter(
-      (t) => t.status === 'done' && t.updatedAt && new Date(t.updatedAt) >= today
+      (t) =>
+        t.status === 'done' &&
+        (((t as any).updatedAt ?? (t as any).updated_at) as string | null) &&
+        new Date(((t as any).updatedAt ?? (t as any).updated_at) as string) >= today
     ).length
 
     const inProgress = tasks.filter((t) => t.status === 'in_progress').length
 
     const overdue = tasks.filter(
-      (t) => t.status !== 'done' && t.dueDate && new Date(t.dueDate) < today
+      (t) =>
+        t.status !== 'done' &&
+        (((t as any).dueDate ?? (t as any).due_date) as string | null) &&
+        new Date(((t as any).dueDate ?? (t as any).due_date) as string) < today
     ).length
 
     const dueThisWeek = tasks.filter(
       (t) =>
         t.status !== 'done' &&
-        t.dueDate &&
-        new Date(t.dueDate) >= today &&
-        new Date(t.dueDate) <= weekEnd
+        (((t as any).dueDate ?? (t as any).due_date) as string | null) &&
+        new Date(((t as any).dueDate ?? (t as any).due_date) as string) >= today &&
+        new Date(((t as any).dueDate ?? (t as any).due_date) as string) <= weekEnd
     ).length
 
     const stats = { completedToday, inProgress, overdue, dueThisWeek }

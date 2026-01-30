@@ -1,12 +1,12 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { getTaskById } from '@/db/queries'
+import { getTaskById } from '@/lib/supabase/queries'
 import {
   addTaskDependency,
   getTaskDependencies,
   getTaskDependents,
   removeTaskDependency,
   validateDependency,
-} from '@/db/task-dependencies'
+} from '@/lib/supabase/task-dependencies'
 
 // GET /api/tasks/[id]/dependencies - Get task dependencies and dependents
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

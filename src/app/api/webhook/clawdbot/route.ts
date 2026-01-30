@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 import { type NextRequest, NextResponse } from 'next/server'
-import * as db from '@/db/queries'
+import * as db from '@/lib/supabase/queries'
 import { processAICommand } from '@/lib/ai-assistant'
 
 // Webhook secret for verification (should be in environment variables)
@@ -57,8 +57,8 @@ export async function POST(request: NextRequest) {
               status = 'todo'
             }
 
+            // NOTE: Supabase uses UUID primary keys; do not pass legacy string ids here.
             const task = await db.createTask({
-              id: `task-${Date.now()}-${Math.random().toString(36).slice(2)}`,
               title: result.task.title!,
               description: result.task.description || '',
               priority: result.task.priority || 'medium',
@@ -69,14 +69,16 @@ export async function POST(request: NextRequest) {
               estimate: result.task.estimate,
             })
 
+            // After creation, read back to handle camelCase conversion.
+            const displayDueDate = (task as any).dueDate ?? (task as any).due_date
             responseMessage = `✅ Created task: **${task.title}**
 - ID: \`${task.id}\`
 - Priority: ${task.priority}
 - Status: ${task.status}
 - Assignee: ${task.assignee}`
 
-            if (task.dueDate) {
-              responseMessage += `\n- Due: ${new Date(task.dueDate).toLocaleDateString()}`
+            if (displayDueDate) {
+              responseMessage += `\n- Due: ${new Date(displayDueDate).toLocaleDateString()}`
             }
           }
           break
