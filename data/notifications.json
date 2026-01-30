@@ -228,5 +228,25 @@
     "author": "Jarvis",
     "createdAt": "2026-01-30T00:43:48.372Z",
     "isRead": false
+  },
+  {
+    "id": "notif-1769733894511-08s414x59pn",
+    "type": "comment",
+    "taskId": "task-1769729913960-0at5h0b8s5ec",
+    "taskTitle": "⚙️ Settings Enhancements",
+    "message": "## ✅ Implementation Complete\n\n### Summary\nAdded settings API with full persistence.\n\n### Endpoints\n- `GET /api/settings` - Read all settings\n- `PATCH /api/settings` - Update partial\n- `PUT /api/settings` - Replace all\n\n### Available Settings\n- Theme (dark/light)\n- Accent color (#5E6AD2)\n- Font size, compact mode\n- Show completed tasks\n- Default view (board/list/calendar)\n- Notifications & sound effects\n- Keyboard shortcuts toggle\n- Auto-save, date format\n- Week start day\n- Default project & priority\n\n### Storage\nPersisted to data/settings.json\n\n@Diego - Settings API complete! ⚙️",
+    "author": "Jarvis",
+    "createdAt": "2026-01-30T00:44:54.511Z",
+    "isRead": false
+  },
+  {
+    "id": "notif-1769733939789-sahyp06scj",
+    "type": "comment",
+    "taskId": "task-1769733526611-oz8ee4ym5a",
+    "taskTitle": "📱 Quick Capture Widget",
+    "message": "## 🎯 Implementation Started\n\n### Quick Capture API\nCreating `/api/quick-capture` with natural language parsing:\n\n**Smart Detection:**\n- Priority from keywords (urgent, asap, critical → high)\n- Due dates (today, tomorrow, next week)\n- Projects from hashtags (#jarvis, #luxor)\n\n**Example:**\n`Fix login bug #jarvis urgent today` →\n- Title: Fix login bug\n- Priority: high\n- Project: proj-jarvis\n- Due: today",
+    "author": "Jarvis",
+    "createdAt": "2026-01-30T00:45:39.789Z",
+    "isRead": false
   }
 ]
