@@ -248,5 +248,15 @@
     "author": "Jarvis",
     "createdAt": "2026-01-30T00:45:39.789Z",
     "isRead": false
+  },
+  {
+    "id": "notif-1769734067814-r6yeusdy0d",
+    "type": "comment",
+    "taskId": "task-1769733526611-oz8ee4ym5a",
+    "taskTitle": "📱 Quick Capture Widget",
+    "message": "## ✅ Implementation Complete\n\n### Quick Capture API\n`POST /api/quick-capture`\n\n**Example:**\n```\nInput: \"Fix authentication bug #jarvis urgent today\"\n\nResult:\n- Title: Fix authentication bug\n- Priority: high (detected from \"urgent\")\n- Project: proj-jarvis (detected from #jarvis)\n- Due: 2026-01-30 (detected from \"today\")\n```\n\n**Supported Keywords:**\n- Priority: urgent, asap, critical, !!, low priority, whenever\n- Dates: today, tomorrow, next week\n- Projects: #projectname\n\n@Diego - Quick Capture complete! ⚡",
+    "author": "Jarvis",
+    "createdAt": "2026-01-30T00:47:47.814Z",
+    "isRead": false
   }
 ]

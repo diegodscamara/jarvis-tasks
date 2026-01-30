@@ -25,7 +25,7 @@ import {
 } from '@/components/icons'
 import { CalendarView } from '@/components/calendar-view'
 import { CommandPalette } from '@/components/command-palette'
-import { ThemeToggle } from '@/components/theme-toggle'
+import { ThemeSwitcher } from '@/components/theme-switcher'
 import { ShortcutRow } from '@/components/shortcut-row'
 import { TaskCard } from '@/components/task-card'
 import { TaskForm } from '@/components/task-form'
@@ -865,7 +865,7 @@ export default function Home() {
                 </span>
               )}
             </Button>
-            <ThemeToggle />
+            <ThemeSwitcher />
             <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
               <span className="w-2 h-2 rounded-full bg-green-500"></span>
               <span>System Online</span>

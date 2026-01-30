@@ -6,7 +6,7 @@
 :root {
   --radius: 0.5rem;
 
-  /* shadcn/ui Dark Theme (Neutral) - Using HSL for compatibility */
+  /* Default Dark Theme */
   --background: 0 0% 3.9%;
   --foreground: 0 0% 98%;
   --card: 0 0% 3.9%;
@@ -26,6 +26,14 @@
   --border: 0 0% 14.9%;
   --input: 0 0% 14.9%;
   --ring: 0 0% 83.1%;
+  
+  /* Linear Theme Extensions */
+  --highlight: 0 0% 98%;
+  --highlight-foreground: 0 0% 9%;
+  --selection: 0 0% 20%;
+  --selection-foreground: 0 0% 98%;
+  --brand: 0 0% 98%;
+  --brand-foreground: 0 0% 9%;
   --chart-1: 220 70% 50%;
   --chart-2: 160 60% 45%;
   --chart-3: 30 80% 55%;
@@ -69,6 +77,123 @@
   --sidebar-accent-foreground: 0 0% 9%;
   --sidebar-border: 0 0% 89.8%;
   --sidebar-ring: 0 0% 3.9%;
+  --highlight: 0 0% 9%;
+  --highlight-foreground: 0 0% 98%;
+  --selection: 0 0% 85%;
+  --selection-foreground: 0 0% 9%;
+  --brand: 0 0% 9%;
+  --brand-foreground: 0 0% 98%;
+}
+
+/* Linear Purple Theme */
+.linear-purple {
+  --background: 249 52% 6%;
+  --foreground: 237 23% 93%;
+  --card: 249 52% 8%;
+  --card-foreground: 237 23% 93%;
+  --popover: 249 52% 10%;
+  --popover-foreground: 237 23% 93%;
+  --primary: 252 87% 57%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 247 47% 15%;
+  --secondary-foreground: 237 23% 93%;
+  --muted: 247 47% 15%;
+  --muted-foreground: 237 13% 63%;
+  --accent: 252 87% 57%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 247 47% 12%;
+  --input: 247 47% 15%;
+  --ring: 252 87% 57%;
+  --highlight: 252 87% 57%;
+  --highlight-foreground: 0 0% 100%;
+  --selection: 252 87% 20%;
+  --selection-foreground: 252 87% 80%;
+  --brand: 252 87% 57%;
+  --brand-foreground: 0 0% 100%;
+  --sidebar: 249 52% 6%;
+  --sidebar-foreground: 237 23% 93%;
+  --sidebar-primary: 252 87% 57%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 247 47% 15%;
+  --sidebar-accent-foreground: 237 23% 93%;
+  --sidebar-border: 247 47% 12%;
+  --sidebar-ring: 252 87% 57%;
+}
+
+/* Linear Blue Theme */
+.linear-blue {
+  --background: 216 50% 6%;
+  --foreground: 213 27% 93%;
+  --card: 216 50% 8%;
+  --card-foreground: 213 27% 93%;
+  --popover: 216 50% 10%;
+  --popover-foreground: 213 27% 93%;
+  --primary: 206 100% 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 215 48% 15%;
+  --secondary-foreground: 213 27% 93%;
+  --muted: 215 48% 15%;
+  --muted-foreground: 215 13% 63%;
+  --accent: 206 100% 50%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 215 48% 12%;
+  --input: 215 48% 15%;
+  --ring: 206 100% 50%;
+  --highlight: 206 100% 50%;
+  --highlight-foreground: 0 0% 100%;
+  --selection: 206 100% 20%;
+  --selection-foreground: 206 100% 80%;
+  --brand: 206 100% 50%;
+  --brand-foreground: 0 0% 100%;
+  --sidebar: 216 50% 6%;
+  --sidebar-foreground: 213 27% 93%;
+  --sidebar-primary: 206 100% 50%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 215 48% 15%;
+  --sidebar-accent-foreground: 213 27% 93%;
+  --sidebar-border: 215 48% 12%;
+  --sidebar-ring: 206 100% 50%;
+}
+
+/* Midnight Theme */
+.midnight {
+  --background: 240 10% 3%;
+  --foreground: 0 0% 95%;
+  --card: 240 10% 5%;
+  --card-foreground: 0 0% 95%;
+  --popover: 240 10% 7%;
+  --popover-foreground: 0 0% 95%;
+  --primary: 0 0% 95%;
+  --primary-foreground: 240 10% 3%;
+  --secondary: 240 5% 12%;
+  --secondary-foreground: 0 0% 95%;
+  --muted: 240 5% 12%;
+  --muted-foreground: 240 5% 60%;
+  --accent: 240 5% 15%;
+  --accent-foreground: 0 0% 95%;
+  --destructive: 0 62% 30%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 5% 10%;
+  --input: 240 5% 12%;
+  --ring: 240 5% 60%;
+  --highlight: 240 5% 20%;
+  --highlight-foreground: 0 0% 95%;
+  --selection: 240 20% 15%;
+  --selection-foreground: 0 0% 95%;
+  --brand: 0 0% 95%;
+  --brand-foreground: 240 10% 3%;
+  --sidebar: 240 10% 3%;
+  --sidebar-foreground: 0 0% 95%;
+  --sidebar-primary: 0 0% 95%;
+  --sidebar-primary-foreground: 240 10% 3%;
+  --sidebar-accent: 240 5% 12%;
+  --sidebar-accent-foreground: 0 0% 95%;
+  --sidebar-border: 240 5% 10%;
+  --sidebar-ring: 240 5% 60%;
 }
 
 @theme inline {
@@ -109,6 +234,12 @@
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --color-highlight: hsl(var(--highlight));
+  --color-highlight-foreground: hsl(var(--highlight-foreground));
+  --color-selection: hsl(var(--selection));
+  --color-selection-foreground: hsl(var(--selection-foreground));
+  --color-brand: hsl(var(--brand));
+  --color-brand-foreground: hsl(var(--brand-foreground));
 }
 
 @layer base {
@@ -117,7 +248,62 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+}
+
+/* Linear-style animations */
+@keyframes slideIn {
+  from {
+    transform: translateX(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Linear-style hover effects */
+.linear-hover {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.linear-hover::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.2), transparent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.linear-hover:hover::before {
+  opacity: 1;
+}
+
+/* Linear-style focus rings */
+.linear-focus:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* Linear-style selection */
+::selection {
+  background-color: hsl(var(--selection));
+  color: hsl(var(--selection-foreground));
 }
 
 /* TipTap Editor Styles */
