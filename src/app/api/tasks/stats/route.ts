@@ -48,9 +48,9 @@ export async function GET() {
       const completedOnDay = allTasks.filter(
         (t) =>
           t.status === 'done' &&
-          t.updatedAt &&
-          new Date(t.updatedAt) >= dayStart &&
-          new Date(t.updatedAt) <= dayEnd
+          ((t as any).updatedAt ?? (t as any).updated_at) &&
+          new Date(((t as any).updatedAt ?? (t as any).updated_at) as string) >= dayStart &&
+          new Date(((t as any).updatedAt ?? (t as any).updated_at) as string) <= dayEnd
       ).length
 
       if (completedOnDay > 0) {

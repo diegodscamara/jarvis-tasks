@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       }
 
       const createdTask = await db.createTask({
-        id: `task-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        // NOTE: Supabase uses UUID primary keys; do not pass legacy string ids here.
         title: result.task.title!,
         description: result.task.description || '',
         priority: result.task.priority || 'medium',

@@ -26,6 +26,11 @@ npm-debug.log*
 # vercel
 .vercel
 
+# local sqlite artifacts (legacy)
+data/*.db-shm
+data/*.db-wal
+data/*.db-journal
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
