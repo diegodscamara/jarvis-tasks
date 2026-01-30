@@ -1,7 +1,6 @@
-import Database from 'better-sqlite3'
 import { exec } from 'child_process'
-import path from 'path'
 import { promisify } from 'util'
+import { createSupabaseServerClient } from './supabase/server'
 
 const execAsync = promisify(exec)
 
@@ -11,10 +10,6 @@ interface PR {
   url: string
   headRefName: string
   state: string
-}
-
-function getDb() {
-  return new Database(path.join(process.cwd(), 'data', 'jarvis-tasks.db'))
 }
 
 // Extract task ID from branch name
@@ -38,12 +33,12 @@ function extractTaskIdFromBranch(branch: string): string | null {
 }
 
 export async function scanAndLinkPRs(repoSlug?: string) {
-  const db = getDb()
+  const supabase = await createSupabaseServerClient()
   const results = {
     scanned: 0,
     linked: 0,
     errors: 0,
-    details: [] as any[],
+    details: [] as { taskId: string; prNumber: number; branch: string; title: string }[],
   }
 
   try {
@@ -54,14 +49,13 @@ export async function scanAndLinkPRs(repoSlug?: string) {
       repos = [repoSlug]
     } else {
       // Try to infer from existing GitHub links
-      const existingLinks = db
-        .prepare(
-          "SELECT DISTINCT url FROM task_links WHERE type IN ('github', 'github-pr', 'github-issue')"
-        )
-        .all() as { url: string }[]
+      const { data: existingLinks } = await supabase
+        .from('task_links')
+        .select('url')
+        .in('type', ['github', 'github-pr', 'github-issue'])
 
       const repoSet = new Set<string>()
-      for (const link of existingLinks) {
+      for (const link of existingLinks || []) {
         const match = link.url.match(/github\.com\/([^/]+\/[^/]+)/)
         if (match) {
           repoSet.add(match[1])
@@ -85,7 +79,6 @@ export async function scanAndLinkPRs(repoSlug?: string) {
     }
 
     if (repos.length === 0) {
-      db.close()
       return {
         ...results,
         error: 'No repositories found to scan',
@@ -111,29 +104,43 @@ export async function scanAndLinkPRs(repoSlug?: string) {
 
           if (taskId) {
             // Check if task exists
-            const task = db.prepare('SELECT id FROM tasks WHERE id = ?').get(taskId)
+            const { data: task } = await supabase
+              .from('tasks')
+              .select('id')
+              .eq('id', taskId)
+              .single()
 
             if (task) {
               // Check if PR is already linked
-              const existingLink = db
-                .prepare('SELECT id FROM task_links WHERE task_id = ? AND url = ?')
-                .get(taskId, pr.url)
+              const { data: existingLink } = await supabase
+                .from('task_links')
+                .select('id')
+                .eq('task_id', taskId)
+                .eq('url', pr.url)
+                .single()
 
               if (!existingLink) {
-                // Add the link
-                const linkId = `link-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+                // Get max position
+                const { data: maxPosData } = await supabase
+                  .from('task_links')
+                  .select('position')
+                  .eq('task_id', taskId)
+                  .order('position', { ascending: false })
+                  .limit(1)
+                  .single()
+
+                const position = (maxPosData?.position ?? -1) + 1
                 const title = `PR #${pr.number}: ${pr.title}`
 
-                // Get max position
-                const maxPos = db
-                  .prepare('SELECT MAX(position) as max FROM task_links WHERE task_id = ?')
-                  .get(taskId) as { max: number | null }
-                const position = (maxPos?.max ?? -1) + 1
-
-                db.prepare(`
-                  INSERT INTO task_links (id, task_id, url, title, type, icon, position)
-                  VALUES (?, ?, ?, ?, ?, ?, ?)
-                `).run(linkId, taskId, pr.url, title, 'github-pr', '🔀', position)
+                // Add the link
+                await supabase.from('task_links').insert({
+                  task_id: taskId,
+                  url: pr.url,
+                  title,
+                  type: 'github-pr',
+                  icon: '🔀',
+                  position,
+                })
 
                 results.linked++
                 results.details.push({
@@ -152,39 +159,37 @@ export async function scanAndLinkPRs(repoSlug?: string) {
       }
     }
 
-    db.close()
     return results
   } catch (error) {
-    db.close()
     throw error
   }
 }
 
 // Scan for a specific task
 export async function scanPRsForTask(taskId: string, repoSlug?: string) {
-  const db = getDb()
+  const supabase = await createSupabaseServerClient()
   const results = {
     found: 0,
     linked: 0,
-    prs: [] as any[],
+    prs: [] as { number: number; title: string; url: string; branch: string; state: string; alreadyLinked: boolean }[],
   }
 
   try {
-    // Determine repos to scan (similar logic as above)
+    // Determine repos to scan
     let repos: string[] = []
 
     if (repoSlug) {
       repos = [repoSlug]
     } else {
       // Try to infer from task's existing links
-      const existingLinks = db
-        .prepare(
-          "SELECT DISTINCT url FROM task_links WHERE task_id = ? AND type IN ('github', 'github-pr', 'github-issue')"
-        )
-        .all(taskId) as { url: string }[]
+      const { data: existingLinks } = await supabase
+        .from('task_links')
+        .select('url')
+        .eq('task_id', taskId)
+        .in('type', ['github', 'github-pr', 'github-issue'])
 
       const repoSet = new Set<string>()
-      for (const link of existingLinks) {
+      for (const link of existingLinks || []) {
         const match = link.url.match(/github\.com\/([^/]+\/[^/]+)/)
         if (match) {
           repoSet.add(match[1])
@@ -231,25 +236,35 @@ export async function scanPRsForTask(taskId: string, repoSlug?: string) {
             results.found++
 
             // Check if already linked
-            const existingLink = db
-              .prepare('SELECT id FROM task_links WHERE task_id = ? AND url = ?')
-              .get(taskId, pr.url)
+            const { data: existingLink } = await supabase
+              .from('task_links')
+              .select('id')
+              .eq('task_id', taskId)
+              .eq('url', pr.url)
+              .single()
 
             if (!existingLink) {
-              // Add the link
-              const linkId = `link-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+              // Get max position
+              const { data: maxPosData } = await supabase
+                .from('task_links')
+                .select('position')
+                .eq('task_id', taskId)
+                .order('position', { ascending: false })
+                .limit(1)
+                .single()
+
+              const position = (maxPosData?.position ?? -1) + 1
               const title = `PR #${pr.number}: ${pr.title}`
 
-              // Get max position
-              const maxPos = db
-                .prepare('SELECT MAX(position) as max FROM task_links WHERE task_id = ?')
-                .get(taskId) as { max: number | null }
-              const position = (maxPos?.max ?? -1) + 1
-
-              db.prepare(`
-                INSERT INTO task_links (id, task_id, url, title, type, icon, position)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-              `).run(linkId, taskId, pr.url, title, 'github-pr', '🔀', position)
+              // Add the link
+              await supabase.from('task_links').insert({
+                task_id: taskId,
+                url: pr.url,
+                title,
+                type: 'github-pr',
+                icon: '🔀',
+                position,
+              })
 
               results.linked++
             }
@@ -269,10 +284,8 @@ export async function scanPRsForTask(taskId: string, repoSlug?: string) {
       }
     }
 
-    db.close()
     return results
   } catch (error) {
-    db.close()
     throw error
   }
 }

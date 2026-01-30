@@ -149,3 +149,20 @@ Slash commands for:
 ---
 
 *Last updated: 2026-01-29*
+
+---
+
+## Phase 5: Intelligence & Transparency (Docs & Logs)
+
+### 📚 Docs Hub (/docs)
+- Centralized knowledge base
+- Syncs with Agent workspace (AGENTS.md, MEMORY.md)
+- Displays daily AI polls and automation summaries
+- Markdown viewer with search
+
+### 📡 Live Agent Logs (/logs)
+- Real-time timeline of Jarvis activities
+- Sub-agent orchestration visualization
+- Chronological work log
+- Filter by thought/action/system events
+- Supabase Realtime integration

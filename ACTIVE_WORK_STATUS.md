@@ -2,7 +2,13 @@
 
 ## 🔧 Currently Active Sub-agents
 
-### 1. PR #3 CI Fix (fix-pr3-ci)
+### 1. Intelligence Modules (Docs & Logs)
+- **Status:** Architecture & Spec Complete
+- **Started:** Just now
+- **Progress:** Spec written, Roadmap updated, Database schema planning
+- **ETA:** ~1 day for MVP
+
+### 2. PR #3 CI Fix (fix-pr3-ci)
 - **Status:** Working on TypeScript build errors
 - **Started:** 12:31 PM UTC
 - **Progress:** Running local builds, identifying issues

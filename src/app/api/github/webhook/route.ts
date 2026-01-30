@@ -1,11 +1,6 @@
-import Database from 'better-sqlite3'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 import crypto from 'crypto'
 import { type NextRequest, NextResponse } from 'next/server'
-import path from 'path'
-
-function getDb() {
-  return new Database(path.join(process.cwd(), 'data', 'jarvis-tasks.db'))
-}
 
 // Extract task ID from branch name
 function extractTaskIdFromBranch(branch: string): string | null {
@@ -40,7 +35,7 @@ function verifySignature(payload: string, signature: string | null, secret: stri
 }
 
 export async function POST(request: NextRequest) {
-  const db = getDb()
+  const supabase = await createSupabaseServerClient()
 
   try {
     // Get webhook secret from env
@@ -56,7 +51,6 @@ export async function POST(request: NextRequest) {
     if (webhookSecret) {
       const signature = request.headers.get('x-hub-signature-256')
       if (!verifySignature(body, signature, webhookSecret)) {
-        db.close()
         return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
       }
     }
@@ -70,7 +64,6 @@ export async function POST(request: NextRequest) {
 
       // We're interested in opened, reopened, and synchronize actions
       if (!['opened', 'reopened', 'synchronize'].includes(action)) {
-        db.close()
         return NextResponse.json({ message: 'Event ignored' })
       }
 
@@ -80,47 +73,63 @@ export async function POST(request: NextRequest) {
 
       if (!taskId) {
         console.log(`No task ID found in branch: ${branch}`)
-        db.close()
         return NextResponse.json({ message: 'No task ID in branch name' })
       }
 
       // Check if task exists
-      const task = db.prepare('SELECT id FROM tasks WHERE id = ?').get(taskId)
+      const { data: task } = await supabase
+        .from('tasks')
+        .select('id')
+        .eq('id', taskId)
+        .single()
+
       if (!task) {
         console.log(`Task not found: ${taskId}`)
-        db.close()
         return NextResponse.json({ message: 'Task not found' })
       }
 
       // Check if this PR is already linked
-      const existingLink = db
-        .prepare('SELECT id FROM task_links WHERE task_id = ? AND url = ?')
-        .get(taskId, pull_request.html_url)
+      const { data: existingLink } = await supabase
+        .from('task_links')
+        .select('id')
+        .eq('task_id', taskId)
+        .eq('url', pull_request.html_url)
+        .single()
 
       if (existingLink) {
         console.log(`PR already linked to task ${taskId}`)
-        db.close()
         return NextResponse.json({ message: 'PR already linked' })
       }
 
-      // Add the PR as a link
-      const linkId = `link-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+      // Get max position
+      const { data: maxPosData } = await supabase
+        .from('task_links')
+        .select('position')
+        .eq('task_id', taskId)
+        .order('position', { ascending: false })
+        .limit(1)
+        .single()
+
+      const position = (maxPosData?.position ?? -1) + 1
       const title = `PR #${pull_request.number}: ${pull_request.title}`
 
-      // Get max position
-      const maxPos = db
-        .prepare('SELECT MAX(position) as max FROM task_links WHERE task_id = ?')
-        .get(taskId) as { max: number | null }
-      const position = (maxPos?.max ?? -1) + 1
+      // Add the PR as a link
+      const { error } = await supabase.from('task_links').insert({
+        task_id: taskId,
+        url: pull_request.html_url,
+        title,
+        type: 'github-pr',
+        icon: '🔀',
+        position,
+      })
 
-      db.prepare(`
-        INSERT INTO task_links (id, task_id, url, title, type, icon, position)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `).run(linkId, taskId, pull_request.html_url, title, 'github-pr', '🔀', position)
+      if (error) {
+        console.error('Error linking PR:', error)
+        return NextResponse.json({ error: 'Failed to link PR' }, { status: 500 })
+      }
 
       console.log(`Auto-linked PR #${pull_request.number} to task ${taskId}`)
 
-      db.close()
       return NextResponse.json({
         message: 'PR linked successfully',
         taskId,
@@ -128,10 +137,8 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    db.close()
     return NextResponse.json({ message: 'Event processed' })
   } catch (error) {
-    db.close()
     console.error('Webhook error:', error)
     return NextResponse.json(
       {

@@ -6,10 +6,8 @@
  * PUT /api/orchestrate - Update session status (for sub-agent callbacks)
  */
 
-import { and, eq, inArray } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
-import { db } from '@/db'
-import { tasks } from '@/db/schema'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 import {
   AGENT_CONFIG,
   canDispatch,
@@ -23,14 +21,23 @@ import {
 // GET - Status and pending dispatches
 export async function GET() {
   try {
+    const supabase = await createSupabaseServerClient()
     const sessions = loadSessions()
     const metrics = loadMetrics()
 
     // Get all todo tasks
-    const todoTasks = await db.select().from(tasks).where(eq(tasks.status, 'todo'))
+    const { data: todoTasks, error } = await supabase
+      .from('tasks')
+      .select('id, title, status, assignee, description')
+      .eq('status', 'todo')
+
+    if (error) {
+      console.error('Error fetching tasks:', error)
+      return NextResponse.json({ error: 'Failed to fetch tasks' }, { status: 500 })
+    }
 
     const dispatchable = getDispatchableTasks(
-      todoTasks.map((t) => ({
+      (todoTasks || []).map((t) => ({
         id: t.id,
         title: t.title,
         status: t.status,
@@ -70,19 +77,29 @@ export async function GET() {
 // POST - Dispatch tasks to sub-agents
 export async function POST(request: Request) {
   try {
+    const supabase = await createSupabaseServerClient()
     const body = await request.json().catch(() => ({}))
     const { taskIds, dryRun = false } = body as { taskIds?: string[]; dryRun?: boolean }
 
     // Get tasks to dispatch
-    let todoTasks = await db.select().from(tasks).where(eq(tasks.status, 'todo'))
+    let query = supabase
+      .from('tasks')
+      .select('id, title, status, assignee, description')
+      .eq('status', 'todo')
 
-    // Filter to specific tasks if provided
     if (taskIds && taskIds.length > 0) {
-      todoTasks = todoTasks.filter((t) => taskIds.includes(t.id))
+      query = query.in('id', taskIds)
+    }
+
+    const { data: todoTasks, error } = await query
+
+    if (error) {
+      console.error('Error fetching tasks:', error)
+      return NextResponse.json({ error: 'Failed to fetch tasks' }, { status: 500 })
     }
 
     const dispatchable = getDispatchableTasks(
-      todoTasks.map((t) => ({
+      (todoTasks || []).map((t) => ({
         id: t.id,
         title: t.title,
         status: t.status,
@@ -109,10 +126,10 @@ export async function POST(request: Request) {
       recordDispatch(task.id, task.title, agent)
 
       // Update task status to in_progress
-      await db
-        .update(tasks)
-        .set({ status: 'in_progress', updatedAt: new Date().toISOString() })
-        .where(eq(tasks.id, task.id))
+      await supabase
+        .from('tasks')
+        .update({ status: 'in_progress', updated_at: new Date().toISOString() })
+        .eq('id', task.id)
 
       dispatched.push({
         taskId: task.id,
@@ -136,6 +153,7 @@ export async function POST(request: Request) {
 // PUT - Update session status (callback from sub-agents)
 export async function PUT(request: Request) {
   try {
+    const supabase = await createSupabaseServerClient()
     const body = await request.json()
     const { taskId, status, result } = body as {
       taskId: string
@@ -152,17 +170,21 @@ export async function PUT(request: Request) {
 
     // Update task status
     const newStatus = status === 'completed' ? 'done' : 'todo' // Reset to todo if failed
-    await db
-      .update(tasks)
-      .set({
+    await supabase
+      .from('tasks')
+      .update({
         status: newStatus,
-        updatedAt: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
-      .where(eq(tasks.id, taskId))
+      .eq('id', taskId)
 
     // If result provided, add as comment
     if (result) {
-      // TODO: Add comment to task
+      await supabase.from('comments').insert({
+        task_id: taskId,
+        author: 'Jarvis',
+        content: `## Agent Result\n\n${result}`,
+      })
     }
 
     return NextResponse.json({

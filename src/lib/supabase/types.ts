@@ -385,6 +385,211 @@ export type Database = {
         }
         Relationships: []
       }
+      documents: {
+        Row: {
+          id: string
+          title: string
+          content: string
+          category: string
+          tags: string[] | null
+          source: string
+          visibility: string
+          created_at: string
+          updated_at: string
+          created_by: string
+          memory_path: string | null
+          version: number
+        }
+        Insert: {
+          id?: string
+          title: string
+          content: string
+          category?: string
+          tags?: string[] | null
+          source?: string
+          visibility?: string
+          created_at?: string
+          updated_at?: string
+          created_by?: string
+          memory_path?: string | null
+          version?: number
+        }
+        Update: {
+          id?: string
+          title?: string
+          content?: string
+          category?: string
+          tags?: string[] | null
+          source?: string
+          visibility?: string
+          created_at?: string
+          updated_at?: string
+          created_by?: string
+          memory_path?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
+      document_versions: {
+        Row: {
+          id: string
+          document_id: string
+          content: string
+          version: number
+          created_at: string
+          created_by: string
+        }
+        Insert: {
+          id?: string
+          document_id: string
+          content: string
+          version: number
+          created_at?: string
+          created_by?: string
+        }
+        Update: {
+          id?: string
+          document_id?: string
+          content?: string
+          version?: number
+          created_at?: string
+          created_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'document_versions_document_id_fkey'
+            columns: ['document_id']
+            isOneToOne: false
+            referencedRelation: 'documents'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      logs: {
+        Row: {
+          id: string
+          type: string
+          actor: string
+          title: string
+          description: string | null
+          context: Json | null
+          session_id: string | null
+          duration_ms: number | null
+          status: string
+          created_at: string
+          related_type: string | null
+          related_id: string | null
+          tags: string[] | null
+        }
+        Insert: {
+          id?: string
+          type: string
+          actor: string
+          title: string
+          description?: string | null
+          context?: Json | null
+          session_id?: string | null
+          duration_ms?: number | null
+          status?: string
+          created_at?: string
+          related_type?: string | null
+          related_id?: string | null
+          tags?: string[] | null
+        }
+        Update: {
+          id?: string
+          type?: string
+          actor?: string
+          title?: string
+          description?: string | null
+          context?: Json | null
+          session_id?: string | null
+          duration_ms?: number | null
+          status?: string
+          created_at?: string
+          related_type?: string | null
+          related_id?: string | null
+          tags?: string[] | null
+        }
+        Relationships: []
+      }
+      log_sessions: {
+        Row: {
+          id: string
+          type: string
+          title: string
+          description: string | null
+          metadata: Json | null
+          started_at: string
+          completed_at: string | null
+          status: string
+          parent_session_id: string | null
+        }
+        Insert: {
+          id?: string
+          type: string
+          title: string
+          description?: string | null
+          metadata?: Json | null
+          started_at?: string
+          completed_at?: string | null
+          status?: string
+          parent_session_id?: string | null
+        }
+        Update: {
+          id?: string
+          type?: string
+          title?: string
+          description?: string | null
+          metadata?: Json | null
+          started_at?: string
+          completed_at?: string | null
+          status?: string
+          parent_session_id?: string | null
+        }
+        Relationships: []
+      }
+      task_templates: {
+        Row: {
+          id: string
+          name: string
+          description: string
+          priority: string
+          assignee: string
+          project_id: string | null
+          estimate: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string
+          priority?: string
+          assignee?: string
+          project_id?: string | null
+          estimate?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string
+          priority?: string
+          assignee?: string
+          project_id?: string | null
+          estimate?: number | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'task_templates_project_id_fkey'
+            columns: ['project_id']
+            isOneToOne: false
+            referencedRelation: 'projects'
+            referencedColumns: ['id']
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

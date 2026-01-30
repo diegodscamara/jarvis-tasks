@@ -13,7 +13,7 @@ import {
   startOfWeek,
   subMonths,
 } from 'date-fns'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -37,6 +37,9 @@ interface CalendarViewProps {
 
 type ViewMode = 'month' | 'week'
 
+// Fixed reference date for SSR - will be updated on client
+const INITIAL_DATE = new Date('2026-01-01T00:00:00.000Z')
+
 export function CalendarView({
   tasks,
   projects,
@@ -44,8 +47,16 @@ export function CalendarView({
   onDateClick,
   onTaskReschedule,
 }: CalendarViewProps) {
-  const [currentDate, setCurrentDate] = useState(new Date())
+  const [currentDate, setCurrentDate] = useState(INITIAL_DATE)
+  const [todayDate, setTodayDate] = useState<Date | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('month')
+  
+  // Update to current date after hydration
+  useEffect(() => {
+    const now = new Date()
+    setCurrentDate(now)
+    setTodayDate(now)
+  }, [])
   const [draggedTask, setDraggedTask] = useState<Task | null>(null)
   const [dragOverDate, setDragOverDate] = useState<Date | null>(null)
 
@@ -186,7 +197,7 @@ export function CalendarView({
         >
           {calendarDays.map((day) => {
             const dayTasks = getTasksForDate(day)
-            const isToday = isSameDay(day, new Date())
+            const isToday = todayDate ? isSameDay(day, todayDate) : false
             const isCurrentMonth = isSameMonth(day, currentDate)
             const isDragOver = dragOverDate && isSameDay(dragOverDate, day)
 
