@@ -73,6 +73,36 @@ export const comments = sqliteTable('comments', {
     .$defaultFn(() => new Date().toISOString()),
 })
 
+// Links table
+export const links = sqliteTable('links', {
+  id: text('id').primaryKey(),
+  taskId: text('task_id')
+    .notNull()
+    .references(() => tasks.id, { onDelete: 'cascade' }),
+  url: text('url').notNull(),
+  title: text('title'),
+  type: text('type').notNull(),
+  icon: text('icon'),
+  metadata: text('metadata'), // JSON string
+  createdAt: text('created_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+})
+
+// Task Dependencies table (many-to-many self-referential)
+export const taskDependencies = sqliteTable('task_dependencies', {
+  id: text('id').primaryKey(),
+  taskId: text('task_id')
+    .notNull()
+    .references(() => tasks.id, { onDelete: 'cascade' }),
+  dependsOnId: text('depends_on_id')
+    .notNull()
+    .references(() => tasks.id, { onDelete: 'cascade' }),
+  createdAt: text('created_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+})
+
 // Type exports for use in the app
 export type Project = typeof projects.$inferSelect
 export type NewProject = typeof projects.$inferInsert

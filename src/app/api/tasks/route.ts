@@ -1,13 +1,13 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import * as db from '@/db/queries'
 import { notifyTaskEvent } from '@/lib/telegram-notifier'
-import { canChangeTaskStatus, getTaskDependencies, getTaskDependents } from '@/lib/task-dependencies'
+import { canChangeTaskStatus, getTaskDependencies, getTaskDependents } from '@/db/task-dependencies'
 
 export async function GET() {
   try {
-    const tasks = db.getAllTasks()
+    const tasks = await db.getAllTasks()
     // Transform to match expected frontend format
-    const formattedTasks = tasks.map((task) => ({
+    const formattedTasks = await Promise.all(tasks.map(async (task) => ({
       id: task.id,
       title: task.title,
       description: task.description,
@@ -15,24 +15,14 @@ export async function GET() {
       status: task.status,
       assignee: task.assignee,
       projectId: task.projectId,
-      parentId: task.parentId,
-      recurrenceType: task.recurrenceType,
-      timeSpent: task.timeSpent,
-      labelIds: task.labelIds,
-      dueDate: task.due_date,
+      dueDate: task.dueDate,
       estimate: task.estimate,
-      createdAt: task.created_at,
-      updatedAt: task.updated_at,
+      createdAt: task.createdAt,
+      updatedAt: task.updatedAt,
       // Add dependencies information
-      dependsOn: getTaskDependencies(task.id),
-      blockedBy: getTaskDependents(task.id),
-      comments: task.comments?.map((c) => ({
-        id: c.id,
-        author: c.author,
-        text: c.content,  // Map content to text for frontend compatibility
-        createdAt: c.created_at,
-      })),
-    }))
+      dependsOn: await getTaskDependencies(task.id),
+      blockedBy: await getTaskDependents(task.id),
+    })))
     return NextResponse.json({ tasks: formattedTasks })
   } catch (error) {
     console.error('Error fetching tasks:', error)
@@ -45,23 +35,20 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const id = body.id || `task-${Date.now()}-${Math.random().toString(36).slice(2)}`
 
-    const task = db.createTask({
+    const task = await db.createTask({
       id,
       title: body.title,
-      description: body.description,
-      priority: body.priority,
-      status: body.status,
-      assignee: body.assignee,
+      description: body.description || '',
+      priority: body.priority || 'medium',
+      status: body.status || 'todo',
+      assignee: body.assignee || 'jarvis',
       projectId: body.projectId,
-      labelIds: body.labelIds,
       dueDate: body.dueDate,
       estimate: body.estimate,
-      parentId: body.parentId,
-      recurrenceType: body.recurrenceType,
     })
 
     // Send Telegram notification
-    await notifyTaskEvent('task_created', task.id, task.title, task.status, task.assignee, task.due_date ?? undefined, body.telegramChannel)
+    await notifyTaskEvent('task_created', task.id, task.title, task.status, task.assignee, task.dueDate ?? undefined, body.telegramChannel)
 
     return NextResponse.json({
       id: task.id,
@@ -71,12 +58,10 @@ export async function POST(request: NextRequest) {
       status: task.status,
       assignee: task.assignee,
       projectId: task.projectId,
-      parentId: task.parentId,
-      labelIds: task.labelIds,
-      dueDate: task.due_date,
+      dueDate: task.dueDate,
       estimate: task.estimate,
-      createdAt: task.created_at,
-      updatedAt: task.updated_at,
+      createdAt: task.createdAt,
+      updatedAt: task.updatedAt,
     })
   } catch (error) {
     console.error('Error creating task:', error)
@@ -94,12 +79,12 @@ export async function PUT(request: NextRequest) {
     }
 
     // Get current task for notifications
-    const currentTask = db.getTaskById(id)
+    const currentTask = await db.getTask(id)
 
     // Check if status is being changed and validate dependencies
     if (updates.status) {
       if (currentTask && currentTask.status !== updates.status) {
-        const validation = canChangeTaskStatus(id, updates.status)
+        const validation = await canChangeTaskStatus(id, updates.status)
         if (!validation.allowed) {
           return NextResponse.json(
             { 
@@ -114,23 +99,20 @@ export async function PUT(request: NextRequest) {
 
     // Send Telegram notification for task update or completion
     if (currentTask && updates.status && updates.status === 'done' && currentTask.status !== 'done') {
-      await notifyTaskEvent('task_completed', id, currentTask.title, updates.status, currentTask.assignee, currentTask.due_date ?? undefined, body.telegramChannel)
+      await notifyTaskEvent('task_completed', id, currentTask.title, updates.status, currentTask.assignee, currentTask.dueDate ?? undefined, body.telegramChannel)
     } else if (currentTask && updates.status && currentTask.status !== updates.status) {
-      await notifyTaskEvent('task_updated', id, currentTask.title, updates.status, currentTask.assignee, currentTask.due_date ?? undefined, body.telegramChannel)
+      await notifyTaskEvent('task_updated', id, currentTask.title, updates.status, currentTask.assignee, currentTask.dueDate ?? undefined, body.telegramChannel)
     }
 
-    const task = db.updateTask(id, {
+    const task = await db.updateTask(id, {
       title: updates.title,
       description: updates.description,
       priority: updates.priority,
       status: updates.status,
       assignee: updates.assignee,
-      parentId: updates.parentId,
       projectId: updates.projectId,
-      labelIds: updates.labelIds,
       dueDate: updates.dueDate,
       estimate: updates.estimate,
-      timeSpent: updates.timeSpent,
     })
 
     if (!task) {
@@ -145,11 +127,10 @@ export async function PUT(request: NextRequest) {
       status: task.status,
       assignee: task.assignee,
       projectId: task.projectId,
-      labelIds: task.labelIds,
-      dueDate: task.due_date,
+      dueDate: task.dueDate,
       estimate: task.estimate,
-      createdAt: task.created_at,
-      updatedAt: task.updated_at,
+      createdAt: task.createdAt,
+      updatedAt: task.updatedAt,
     })
   } catch (error) {
     console.error('Error updating task:', error)
@@ -166,7 +147,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Task ID required' }, { status: 400 })
     }
 
-    const deleted = db.deleteTask(id)
+    const deleted = await db.deleteTask(id)
 
     if (!deleted) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 })

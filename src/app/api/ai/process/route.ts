@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { parseNaturalLanguage, generateSuggestions, processAICommand } from '@/lib/ai-assistant'
-import * as db from '@/db/queries'
-import { addTaskDependency, getTaskDependencies } from '@/lib/task-dependencies'
+import * as db from '@/lib/supabase/queries'
+import { addTaskDependency, getTaskDependencies } from '@/lib/supabase/task-dependencies'
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,15 +24,21 @@ export async function POST(request: NextRequest) {
     
     // If it's a create command and we have a task, actually create it
     if (result.success && result.action === 'created' && result.task) {
-      const createdTask = db.createTask({
+      // Ensure status is valid
+      const validStatuses = ['backlog', 'todo', 'in_progress', 'done'] as const
+      let status = result.task.status as typeof validStatuses[number]
+      if (!validStatuses.includes(status)) {
+        status = 'todo'
+      }
+
+      const createdTask = await db.createTask({
         id: `task-${Date.now()}-${Math.random().toString(36).slice(2)}`,
         title: result.task.title!,
         description: result.task.description || '',
         priority: result.task.priority || 'medium',
-        status: result.task.status || 'todo',
+        status,
         assignee: result.task.assignee || 'jarvis',
         projectId: result.task.projectId,
-        labelIds: result.task.labelIds,
         dueDate: result.task.dueDate,
         estimate: result.task.estimate,
       })
@@ -49,7 +55,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Generate AI suggestions for the new task
-      const allTasks = db.getAllTasks()
+      const allTasks = await db.getAllTasks()
       const suggestions = generateSuggestions(createdTask as any, allTasks as any)
       
       return NextResponse.json({
@@ -57,7 +63,7 @@ export async function POST(request: NextRequest) {
         action: 'created',
         task: {
           ...createdTask,
-          dependsOn: getTaskDependencies(createdTask.id),
+          dependsOn: await getTaskDependencies(createdTask.id),
         },
         suggestions,
         message: result.message,
@@ -66,11 +72,17 @@ export async function POST(request: NextRequest) {
     
     // If it's an update command, process the update
     if (result.success && result.action === 'updated' && result.task?.id) {
-      const updatedTask = db.updateTask(result.task.id, {
+      // Ensure status is valid
+      let updateStatus = result.task.status
+      if (updateStatus && !['backlog', 'todo', 'in_progress', 'done'].includes(updateStatus)) {
+        updateStatus = 'todo'
+      }
+
+      const updatedTask = await db.updateTask(result.task.id, {
         title: result.task.title,
         description: result.task.description,
         priority: result.task.priority,
-        status: result.task.status,
+        status: updateStatus,
         assignee: result.task.assignee,
         dueDate: result.task.dueDate,
         estimate: result.task.estimate,
@@ -93,7 +105,7 @@ export async function POST(request: NextRequest) {
     
     // If it's a query, perform the search
     if (result.success && result.action === 'queried') {
-      const allTasks = db.getAllTasks()
+      const allTasks = await db.getAllTasks()
       // Here you would apply filters from the parsed command
       // For now, returning all tasks
       
@@ -133,7 +145,7 @@ export async function GET(request: NextRequest) {
   }
   
   try {
-    const task = db.getTaskById(taskId)
+    const task = await db.getTaskById(taskId)
     if (!task) {
       return NextResponse.json(
         { error: 'Task not found' },
@@ -141,7 +153,7 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    const allTasks = db.getAllTasks()
+    const allTasks = await db.getAllTasks()
     const suggestions = generateSuggestions(task as any, allTasks as any)
     
     return NextResponse.json({

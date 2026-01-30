@@ -3,15 +3,8 @@ import * as db from '@/db/queries'
 
 export async function GET() {
   try {
-    const labels = db.getAllLabels()
-    // Transform to match expected frontend format
-    const formattedLabels = labels.map((label) => ({
-      id: label.id,
-      name: label.name,
-      color: label.color,
-      group: label.group,
-    }))
-    return NextResponse.json({ labels: formattedLabels })
+    const labels = await db.getAllLabels()
+    return NextResponse.json({ labels })
   } catch (error) {
     console.error('Error fetching labels:', error)
     return NextResponse.json({ error: 'Failed to fetch labels' }, { status: 500 })
@@ -23,19 +16,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const id = body.id || `label-${Date.now()}-${Math.random().toString(36).slice(2)}`
 
-    const label = db.createLabel({
+    const label = await db.createLabel({
       id,
       name: body.name,
-      color: body.color,
-      group: body.group || null,
+      color: body.color || '#000000',
+      group: body.group,
     })
 
-    return NextResponse.json({
-      id: label.id,
-      name: label.name,
-      color: label.color,
-      group: label.group,
-    })
+    return NextResponse.json(label)
   } catch (error) {
     console.error('Error creating label:', error)
     return NextResponse.json({ error: 'Failed to create label' }, { status: 500 })
@@ -51,22 +39,13 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Label ID required' }, { status: 400 })
     }
 
-    const label = db.updateLabel(id, {
-      name: updates.name,
-      color: updates.color,
-      group: updates.group,
-    })
+    const label = await db.updateLabel(id, updates)
 
     if (!label) {
       return NextResponse.json({ error: 'Label not found' }, { status: 404 })
     }
 
-    return NextResponse.json({
-      id: label.id,
-      name: label.name,
-      color: label.color,
-      group: label.group,
-    })
+    return NextResponse.json(label)
   } catch (error) {
     console.error('Error updating label:', error)
     return NextResponse.json({ error: 'Failed to update label' }, { status: 500 })
@@ -82,7 +61,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Label ID required' }, { status: 400 })
     }
 
-    const deleted = db.deleteLabel(id)
+    const deleted = await db.deleteLabel(id)
 
     if (!deleted) {
       return NextResponse.json({ error: 'Label not found' }, { status: 404 })

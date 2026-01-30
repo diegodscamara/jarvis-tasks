@@ -21,9 +21,9 @@ export async function GET(request: NextRequest) {
     }
     
     // Get all data
-    const tasks = db.getAllTasks()
-    const projects = db.getAllProjects()
-    const labels = db.getAllLabels()
+    const tasks = await db.getAllTasks()
+    const projects = await db.getAllProjects()
+    const labels = await db.getAllLabels()
     
     // Parse the search query
     const searchQuery = parseSearchQuery(query)

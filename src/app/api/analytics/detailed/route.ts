@@ -4,7 +4,7 @@ import { subDays, startOfDay, startOfWeek, format, eachDayOfInterval } from "dat
 
 export async function GET() {
   try {
-    const tasks = db.getAllTasks()
+    const tasks = await db.getAllTasks()
     const now = new Date()
     const thirtyDaysAgo = subDays(now, 30)
     
@@ -16,9 +16,9 @@ export async function GET() {
       
       const completed = tasks.filter(t =>
         t.status === "done" &&
-        t.updated_at &&
-        new Date(t.updated_at) >= dayStart &&
-        new Date(t.updated_at) <= dayEnd
+        t.updatedAt &&
+        new Date(t.updatedAt) >= dayStart &&
+        new Date(t.updatedAt) <= dayEnd
       ).length
       
       return {
@@ -31,18 +31,18 @@ export async function GET() {
     const byDayOfWeek = [0, 1, 2, 3, 4, 5, 6].map(dow => {
       const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
       const completed = tasks.filter(t => {
-        if (t.status !== "done" || !t.updated_at) return false
-        return new Date(t.updated_at).getDay() === dow
+        if (t.status !== "done" || !t.updatedAt) return false
+        return new Date(t.updatedAt).getDay() === dow
       }).length
       return { day: dayNames[dow], completed }
     })
     
     // Time to completion (for tasks with created_at and done)
-    const completedTasks = tasks.filter(t => t.status === "done" && t.created_at && t.updated_at)
+    const completedTasks = tasks.filter(t => t.status === "done" && t.createdAt && t.updatedAt)
     const avgCompletionTime = completedTasks.length > 0
       ? completedTasks.reduce((sum, t) => {
-          const created = new Date(t.created_at).getTime()
-          const completed = new Date(t.updated_at).getTime()
+          const created = new Date(t.createdAt).getTime()
+          const completed = new Date(t.updatedAt).getTime()
           return sum + (completed - created)
         }, 0) / completedTasks.length / (1000 * 60 * 60) // hours
       : 0
@@ -50,10 +50,8 @@ export async function GET() {
     // Status flow (how many tasks in each status)
     const statusFlow = {
       backlog: tasks.filter(t => t.status === "backlog").length,
-      planning: tasks.filter(t => t.status === "planning").length,
       todo: tasks.filter(t => t.status === "todo").length,
       in_progress: tasks.filter(t => t.status === "in_progress").length,
-      review: tasks.filter(t => t.status === "review").length,
       done: tasks.filter(t => t.status === "done").length,
     }
     

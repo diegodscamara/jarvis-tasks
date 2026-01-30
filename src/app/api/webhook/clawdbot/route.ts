@@ -70,15 +70,21 @@ export async function POST(request: NextRequest) {
       switch (result.action) {
         case 'created':
           if (result.task) {
-            const task = db.createTask({
+            // Ensure status is valid
+            const validStatuses = ['backlog', 'todo', 'in_progress', 'done'] as const
+            let status = result.task.status as typeof validStatuses[number]
+            if (!validStatuses.includes(status)) {
+              status = 'todo'
+            }
+
+            const task = await db.createTask({
               id: `task-${Date.now()}-${Math.random().toString(36).slice(2)}`,
               title: result.task.title!,
               description: result.task.description || '',
               priority: result.task.priority || 'medium',
-              status: result.task.status || 'todo',
+              status,
               assignee: result.task.assignee || userId || 'jarvis',
               projectId: result.task.projectId,
-              labelIds: result.task.labelIds,
               dueDate: result.task.dueDate,
               estimate: result.task.estimate,
             })
@@ -89,8 +95,8 @@ export async function POST(request: NextRequest) {
 - Status: ${task.status}
 - Assignee: ${task.assignee}`
             
-            if (task.due_date) {
-              responseMessage += `\n- Due: ${new Date(task.due_date).toLocaleDateString()}`
+            if (task.dueDate) {
+              responseMessage += `\n- Due: ${new Date(task.dueDate).toLocaleDateString()}`
             }
           }
           break

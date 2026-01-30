@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { type NextRequest, NextResponse } from 'next/server'
-import * as db from '@/db/queries'
+import * as db from '@/lib/supabase/queries'
 
 interface JarvisNotification {
   id: string
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     const unreadNotifications = notifications.filter((n) => !n.isRead)
 
     // Get tasks assigned to Jarvis
-    const allTasks = db.getAllTasks()
+    const allTasks = await db.getAllTasks()
     const jarvisTasks = allTasks.filter((t) => t.assignee === 'jarvis' || t.assignee === 'Jarvis')
 
     // Get tasks by status
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
       case 'create_task': {
         // Quick task creation with Jarvis defaults
         const id = `task-${Date.now()}-${Math.random().toString(36).slice(2)}`
-        const task = db.createTask({
+        const task = await db.createTask({
           id,
           title: body.title,
           description: body.description || '',
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
 
       case 'update_status': {
         // Quick status update
-        const task = db.updateTask(body.taskId, { status: body.status })
+        const task = await db.updateTask(body.taskId, { status: body.status })
         if (!task) {
           return NextResponse.json({ error: 'Task not found' }, { status: 404 })
         }
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
 
       case 'add_comment': {
         // Add a comment as Jarvis
-        const comment = db.createComment({
+        const comment = await db.createComment({
           id: `comment-${Date.now()}-${Math.random().toString(36).slice(2)}`,
           task_id: body.taskId,
           author: 'jarvis',
@@ -177,12 +177,12 @@ export async function POST(request: NextRequest) {
 
       case 'start_task': {
         // Move task to in_progress
-        const task = db.updateTask(body.taskId, { status: 'in_progress' })
+        const task = await db.updateTask(body.taskId, { status: 'in_progress' })
         if (!task) {
           return NextResponse.json({ error: 'Task not found' }, { status: 404 })
         }
         // Add comment about starting
-        db.createComment({
+        await db.createComment({
           id: `comment-${Date.now()}-${Math.random().toString(36).slice(2)}`,
           task_id: body.taskId,
           author: 'jarvis',
@@ -193,12 +193,12 @@ export async function POST(request: NextRequest) {
 
       case 'complete_task': {
         // Move task to done
-        const task = db.updateTask(body.taskId, { status: 'done' })
+        const task = await db.updateTask(body.taskId, { status: 'done' })
         if (!task) {
           return NextResponse.json({ error: 'Task not found' }, { status: 404 })
         }
         // Add comment about completion
-        db.createComment({
+        await db.createComment({
           id: `comment-${Date.now()}-${Math.random().toString(36).slice(2)}`,
           task_id: body.taskId,
           author: 'jarvis',
@@ -217,7 +217,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Add response comment
-        const comment = db.createComment({
+        const comment = await db.createComment({
           id: `comment-${Date.now()}-${Math.random().toString(36).slice(2)}`,
           task_id: notification.taskId,
           author: 'jarvis',

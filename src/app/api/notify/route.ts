@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type") || "summary"
   
   try {
-    const tasks = db.getAllTasks()
+    const tasks = await db.getAllTasks()
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const weekEnd = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)

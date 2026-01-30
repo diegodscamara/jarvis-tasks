@@ -3,9 +3,9 @@ import * as db from '@/db/queries'
 
 export async function GET() {
   try {
-    const tasks = db.getAllTasks()
-    const projects = db.getAllProjects()
-    const labels = db.getAllLabels()
+    const tasks = await db.getAllTasks()
+    const projects = await db.getAllProjects()
+    const labels = await db.getAllLabels()
 
     // Status breakdown
     const statusCounts = {

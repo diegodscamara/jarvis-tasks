@@ -5,7 +5,7 @@ import {
   addTaskDependency,
   removeTaskDependency,
   validateDependency,
-} from '@/lib/task-dependencies'
+} from '@/db/task-dependencies'
 import { getTaskById } from '@/db/queries'
 
 // GET /api/tasks/[id]/dependencies - Get task dependencies and dependents
@@ -17,16 +17,16 @@ export async function GET(
   
   try {
     // Get the task to ensure it exists
-    const task = getTaskById(taskId)
+    const task = await getTaskById(taskId)
     if (!task) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 })
     }
     
     // Get dependencies (tasks this task depends on)
-    const dependsOn = getTaskDependencies(taskId)
+    const dependsOn = await getTaskDependencies(taskId)
     
     // Get dependents (tasks that depend on this task)
-    const blockedBy = getTaskDependents(taskId)
+    const blockedBy = await getTaskDependents(taskId)
     
     return NextResponse.json({
       taskId,
@@ -65,8 +65,8 @@ export async function POST(
     }
     
     // Validate that both tasks exist
-    const task = getTaskById(taskId)
-    const dependsOnTask = getTaskById(dependsOnId)
+    const task = await getTaskById(taskId)
+    const dependsOnTask = await getTaskById(dependsOnId)
     
     if (!task || !dependsOnTask) {
       return NextResponse.json(
@@ -76,7 +76,7 @@ export async function POST(
     }
     
     // Validate that this won't create a circular dependency
-    const validation = validateDependency(taskId, dependsOnId)
+    const validation = await validateDependency(taskId, dependsOnId)
     if (!validation.valid) {
       return NextResponse.json(
         { 
@@ -88,11 +88,11 @@ export async function POST(
     }
     
     // Add the dependency
-    addTaskDependency(taskId, dependsOnId)
+    await addTaskDependency(taskId, dependsOnId)
     
     // Return updated dependencies
-    const dependsOn = getTaskDependencies(taskId)
-    const blockedBy = getTaskDependents(taskId)
+    const dependsOn = await getTaskDependencies(taskId)
+    const blockedBy = await getTaskDependents(taskId)
     
     return NextResponse.json({
       taskId,
@@ -131,7 +131,7 @@ export async function DELETE(
     }
     
     // Remove the dependency
-    const removed = removeTaskDependency(taskId, dependsOnId)
+    const removed = await removeTaskDependency(taskId, dependsOnId)
     
     if (!removed) {
       return NextResponse.json(
@@ -141,8 +141,8 @@ export async function DELETE(
     }
     
     // Return updated dependencies
-    const dependsOn = getTaskDependencies(taskId)
-    const blockedBy = getTaskDependents(taskId)
+    const dependsOn = await getTaskDependencies(taskId)
+    const blockedBy = await getTaskDependents(taskId)
     
     return NextResponse.json({
       taskId,
