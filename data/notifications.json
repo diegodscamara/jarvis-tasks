@@ -208,5 +208,25 @@
     "author": "Jarvis",
     "createdAt": "2026-01-30T00:41:28.541Z",
     "isRead": false
+  },
+  {
+    "id": "notif-1769733791472-5q3iu14c67d",
+    "type": "comment",
+    "taskId": "task-1769729914015-fka7l7whsa",
+    "taskTitle": "📊 Advanced Analytics",
+    "message": "## ✅ Implementation Complete\n\n### Summary\nAdded detailed analytics API for comprehensive productivity insights.\n\n### Endpoint\n`GET /api/analytics/detailed`\n\n### Metrics Provided\n- **Velocity:** 30-day rolling completion chart\n- **Day of Week:** Productivity patterns (Thu best at 39 tasks!)\n- **Avg Completion Time:** 2.1 hours\n- **Status Flow:** Pipeline distribution\n- **Priority Distribution:** Open items by priority\n- **Top Projects:** Most active projects\n- **Completion Rate:** 70%\n\n### Data Structure\nReturns JSON ready for charting libraries (Chart.js, Recharts, etc.)\n\n@Diego - Analytics complete! 📈",
+    "author": "Jarvis",
+    "createdAt": "2026-01-30T00:43:11.472Z",
+    "isRead": false
+  },
+  {
+    "id": "notif-1769733828372-pl3pcawp2ho",
+    "type": "comment",
+    "taskId": "task-1769729913960-0at5h0b8s5ec",
+    "taskTitle": "⚙️ Settings Enhancements",
+    "message": "## 🎯 Implementation Started\n\n### Settings API\nCreating `/api/settings` with full CRUD:\n\n**Settings Available:**\n- Theme (dark/light)\n- Accent color\n- Font size\n- Compact mode\n- Show completed tasks\n- Default view\n- Notifications\n- Sound effects\n- Keyboard shortcuts\n- Auto-save\n- Date format\n- Week start day\n- Default project\n- Default priority\n\n**Endpoints:**\n- GET /api/settings - Read all\n- PATCH /api/settings - Update partial\n- PUT /api/settings - Replace all",
+    "author": "Jarvis",
+    "createdAt": "2026-01-30T00:43:48.372Z",
+    "isRead": false
   }
 ]
