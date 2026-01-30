@@ -16,6 +16,7 @@ interface TaskCardProps {
   compact?: boolean
   isSelected?: boolean
   onToggleSelect?: () => void
+  isFocused?: boolean
 }
 
 export function TaskCard({
@@ -28,6 +29,7 @@ export function TaskCard({
   compact = false,
   isSelected = false,
   onToggleSelect,
+  isFocused = false,
 }: TaskCardProps) {
   const agent = AGENTS.find((a) => a.id === task.assignee)
   const statusInfo = COLUMNS.find((c) => c.id === task.status)
@@ -35,7 +37,7 @@ export function TaskCard({
   if (variant === 'list') {
     return (
       <div
-        className={`flex items-center gap-4 px-3 py-2 rounded-md cursor-pointer hover:bg-accent/50 transition-colors ${isSelected ? 'bg-primary/10' : ''}`}
+        className={`flex items-center gap-4 px-3 py-2 rounded-md cursor-pointer hover:bg-accent/50 transition-colors ${isSelected ? 'bg-primary/10' : ''} ${isFocused ? 'ring-2 ring-primary bg-accent/30' : ''}`}
         draggable
         onDragStart={onDragStart}
         onClick={onClick}

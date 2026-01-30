@@ -92,6 +92,7 @@ export default function Home() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [showNotifications, setShowNotifications] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [focusedTaskIndex, setFocusedTaskIndex] = useState<number>(-1)
   const [showSearch, setShowSearch] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -184,8 +185,27 @@ export default function Home() {
         setActiveProject(null)
         setActiveLabel(null)
       }
+
+      // j/k navigation - uses tasks.length as approximation
+      if (e.key === 'j' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault()
+        setFocusedTaskIndex((prev) => Math.min(prev + 1, tasks.length - 1))
+      }
+      if (e.key === 'k' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault()
+        setFocusedTaskIndex((prev) => Math.max(prev - 1, 0))
+      }
+      // gg for first, G for last
+      if (e.key === 'g' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault()
+        setFocusedTaskIndex(0)
+      }
+      if (e.key === 'G' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault()
+        setFocusedTaskIndex(tasks.length - 1)
+      }
     },
-    [settings.defaultAssignee]
+    [settings.defaultAssignee, tasks.length]
   )
 
   useEffect(() => {
@@ -396,6 +416,33 @@ export default function Home() {
     }
     return getFilteredTasks(activeView as Status)
   })()
+
+  // Handle Enter key to open focused task (needs filteredTasks)
+  useEffect(() => {
+    const handleEnter = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      ) {
+        return
+      }
+      if (e.key === 'Enter' && focusedTaskIndex >= 0 && focusedTaskIndex < filteredTasks.length) {
+        e.preventDefault()
+        setEditingTask(filteredTasks[focusedTaskIndex])
+        setShowModal(true)
+      }
+    }
+    window.addEventListener('keydown', handleEnter)
+    return () => window.removeEventListener('keydown', handleEnter)
+  }, [focusedTaskIndex, filteredTasks])
+
+  // Reset focused index when filtered tasks change
+  useEffect(() => {
+    if (focusedTaskIndex >= filteredTasks.length) {
+      setFocusedTaskIndex(Math.max(0, filteredTasks.length - 1))
+    }
+  }, [filteredTasks.length, focusedTaskIndex])
 
   const getProjectTaskCount = (projectId: string) =>
     tasks.filter((t) => t.projectId === projectId).length
@@ -938,7 +985,7 @@ export default function Home() {
               <div className="w-24 text-right">Updated</div>
             </div>
             <div className="flex flex-col gap-1">
-              {filteredTasks.map((task) => (
+              {filteredTasks.map((task, index) => (
                 <TaskCard
                   key={task.id}
                   task={task}
@@ -948,11 +995,13 @@ export default function Home() {
                   onClick={() => {
                     setEditingTask(task)
                     setShowModal(true)
+                    setFocusedTaskIndex(index)
                   }}
                   variant="list"
                   compact={settings.compactView}
                   isSelected={selectedTaskIds.has(task.id)}
                   onToggleSelect={() => toggleTaskSelection(task.id)}
+                  isFocused={focusedTaskIndex === index}
                 />
               ))}
             </div>
@@ -1007,6 +1056,11 @@ export default function Home() {
               <h3 className="text-sm font-medium text-muted-foreground mb-2">Actions</h3>
               <div className="space-y-1">
                 <ShortcutRow keys={['c']} description="Create new task" />
+                <ShortcutRow keys={['j']} description="Next task" />
+                <ShortcutRow keys={['k']} description="Previous task" />
+                <ShortcutRow keys={['Enter']} description="Open focused task" />
+                <ShortcutRow keys={['g']} description="First task" />
+                <ShortcutRow keys={['G']} description="Last task" />
                 <ShortcutRow keys={['Esc']} description="Close dialog" />
                 <ShortcutRow keys={['/']} description="Search tasks" />
                 <ShortcutRow keys={['?']} description="Show this help" />
