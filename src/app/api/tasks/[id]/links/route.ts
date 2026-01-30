@@ -1,10 +1,14 @@
-import Database from 'better-sqlite3'
+import { createClient } from '@supabase/supabase-js'
 import { type NextRequest, NextResponse } from 'next/server'
-import path from 'path'
 
-function getDb() {
-  return new Database(path.join(process.cwd(), 'data', 'jarvis-tasks.db'))
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing Supabase configuration')
 }
+
+const supabase = createClient(supabaseUrl!, supabaseKey!)
 
 interface TaskLink {
   id: string
@@ -57,17 +61,22 @@ function detectLinkType(url: string): { type: string; icon: string } {
 // GET /api/tasks/[id]/links - Get all links for a task
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: taskId } = await params
-  const db = getDb()
 
   try {
-    const links = db
-      .prepare('SELECT * FROM task_links WHERE task_id = ? ORDER BY position ASC, created_at ASC')
-      .all(taskId) as TaskLink[]
+    const { data: links, error } = await supabase
+      .from('task_links')
+      .select('*')
+      .eq('task_id', taskId)
+      .order('position', { ascending: true })
+      .order('created_at', { ascending: true })
 
-    db.close()
+    if (error) {
+      console.error('Error fetching links:', error)
+      return NextResponse.json({ error: 'Failed to fetch links', details: error.message }, { status: 500 })
+    }
+
     return NextResponse.json({ links })
   } catch (error) {
-    db.close()
     console.error('Error fetching links:', error)
     return NextResponse.json({ error: 'Failed to fetch links' }, { status: 500 })
   }
@@ -76,14 +85,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 // POST /api/tasks/[id]/links - Add a new link
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: taskId } = await params
-  const db = getDb()
 
   try {
     const body = await request.json()
     const { url, title } = body
 
     if (!url) {
-      db.close()
       return NextResponse.json({ error: 'URL is required' }, { status: 400 })
     }
 
@@ -91,22 +98,37 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const id = `link-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
 
     // Get max position
-    const maxPos = db
-      .prepare('SELECT MAX(position) as max FROM task_links WHERE task_id = ?')
-      .get(taskId) as { max: number | null }
-    const position = (maxPos?.max ?? -1) + 1
+    const { data: existingLinks } = await supabase
+      .from('task_links')
+      .select('position')
+      .eq('task_id', taskId)
+      .order('position', { ascending: false })
+      .limit(1)
 
-    db.prepare(`
-      INSERT INTO task_links (id, task_id, url, title, type, icon, position)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(id, taskId, url, title || null, type, icon, position)
+    const maxPosition = existingLinks && existingLinks[0] ? existingLinks[0].position : -1
+    const position = maxPosition + 1
 
-    const link = db.prepare('SELECT * FROM task_links WHERE id = ?').get(id) as TaskLink
+    const { data: link, error } = await supabase
+      .from('task_links')
+      .insert({
+        id,
+        task_id: taskId,
+        url,
+        title: title || null,
+        type,
+        icon,
+        position,
+      })
+      .select()
+      .single()
 
-    db.close()
+    if (error) {
+      console.error('Error creating link:', error)
+      return NextResponse.json({ error: 'Failed to create link', details: error.message }, { status: 500 })
+    }
+
     return NextResponse.json(link, { status: 201 })
   } catch (error) {
-    db.close()
     console.error('Error creating link:', error)
     return NextResponse.json({ error: 'Failed to create link' }, { status: 500 })
   }
@@ -117,23 +139,23 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const db = getDb()
-
   try {
     const { searchParams } = new URL(request.url)
     const linkId = searchParams.get('linkId')
 
     if (!linkId) {
-      db.close()
       return NextResponse.json({ error: 'Link ID required' }, { status: 400 })
     }
 
-    db.prepare('DELETE FROM task_links WHERE id = ?').run(linkId)
+    const { error } = await supabase.from('task_links').delete().eq('id', linkId)
 
-    db.close()
+    if (error) {
+      console.error('Error deleting link:', error)
+      return NextResponse.json({ error: 'Failed to delete link', details: error.message }, { status: 500 })
+    }
+
     return NextResponse.json({ success: true })
   } catch (error) {
-    db.close()
     console.error('Error deleting link:', error)
     return NextResponse.json({ error: 'Failed to delete link' }, { status: 500 })
   }

@@ -245,6 +245,47 @@ export type Database = {
           },
         ]
       }
+      task_links: {
+        Row: {
+          id: string
+          task_id: string
+          url: string
+          title: string | null
+          type: string
+          icon: string | null
+          position: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          task_id: string
+          url: string
+          title?: string | null
+          type?: string
+          icon?: string | null
+          position?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          task_id?: string
+          url?: string
+          title?: string | null
+          type?: string
+          icon?: string | null
+          position?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'task_links_task_id_fkey'
+            columns: ['task_id']
+            isOneToOne: false
+            referencedRelation: 'tasks'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       tasks: {
         Row: {
           assignee: string

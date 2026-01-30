@@ -340,3 +340,36 @@ export async function deleteComment(id: string): Promise<boolean> {
 
   return !error
 }
+
+// Task Links
+type TaskLink = Database['public']['Tables']['task_links']['Row']
+
+export async function getLinksForTask(taskId: string): Promise<TaskLink[]> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('task_links')
+    .select('*')
+    .eq('task_id', taskId)
+    .order('position', { ascending: true })
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+  return data || []
+}
+
+export async function createLink(
+  link: Omit<Database['public']['Tables']['task_links']['Insert'], 'created_at'>
+): Promise<TaskLink> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.from('task_links').insert(link).select().single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteLink(id: string): Promise<boolean> {
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.from('task_links').delete().eq('id', id)
+
+  return !error
+}
