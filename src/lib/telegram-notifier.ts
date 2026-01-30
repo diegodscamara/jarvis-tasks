@@ -19,7 +19,8 @@ export class TelegramNotifier {
   constructor() {
     this.channelId = process.env.TELEGRAM_CHANNEL_ID || ''
     this.botToken = process.env.TELEGRAM_BOT_TOKEN || ''
-    this.enabled = !!this.channelId && !!this.botToken
+    // Only enable if both environment variables are set
+    this.enabled = !!this.channelId && !!this.botToken && process.env.TELEGRAM_NOTIFICATIONS_ENABLED === 'true'
   }
 
   async send(notification: TelegramNotification): Promise<boolean> {

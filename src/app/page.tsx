@@ -1,4 +1,4 @@
-'use client'
+import { QuickCapture } from '@/components/quick-capture'
 
 import { useCallback, useEffect, useState } from 'react'
 import {
@@ -100,6 +100,7 @@ export default function Home() {
   const [showSearch, setShowSearch] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [showQuickCapture, setShowQuickCapture] = useState(false)
   const [viewMode, setViewMode] = useState<'board' | 'list' | 'calendar'>('board')
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
 
@@ -524,7 +525,11 @@ export default function Home() {
   }
 
   return (
-    <SidebarProvider>
+    <>
+      <QuickCapture isOpen={showQuickCapture} onClose={() => setShowQuickCapture(false)} onTaskCreated={(task) => {
+        console.log('Task created via Quick Capture:', task)
+      }} />
+      <SidebarProvider>
       <Sidebar variant="inset" collapsible="icon" className="border-r border-border">
         <SidebarHeader className="p-4 border-b border-border">
           <div className="flex items-center gap-2">
