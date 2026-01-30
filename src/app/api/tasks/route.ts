@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import * as db from '@/db/queries'
+import { notifyTaskEvent } from '@/lib/telegram-notifier'
+import { getTaskDependencies, getTaskDependents } from '@/lib/task-dependencies'
 import { canChangeTaskStatus, getTaskDependencies, getTaskDependents } from '@/lib/task-dependencies'
 
 export async function GET() {
@@ -59,6 +61,9 @@ export async function POST(request: NextRequest) {
       recurrenceType: body.recurrenceType,
     })
 
+    // Send Telegram notification
+    await notifyTaskEvent('task_created', task.id, task.title, task.status, task.assignee, task.dueDate, body.telegramChannel)
+
     return NextResponse.json({
       id: task.id,
       title: task.title,
@@ -104,6 +109,13 @@ export async function PUT(request: NextRequest) {
           )
         }
       }
+    }
+
+    // Send Telegram notification for task update or completion
+    if (updates.status && updates.status === 'done' && currentTask.status !== 'done') {
+      await notifyTaskEvent('task_completed', id, currentTask.title, updates.status, currentTask.assignee, currentTask.due_date, body.telegramChannel)
+    } else if (updates.status && currentTask.status !== updates.status) {
+      await notifyTaskEvent('task_updated', id, currentTask.title, updates.status, currentTask.assignee, currentTask.due_date, body.telegramChannel)
     }
 
     const task = db.updateTask(id, {
