@@ -26,6 +26,7 @@ import {
   TodoIcon,
 } from '@/components/icons'
 import { QuickCapture } from '@/components/quick-capture'
+import { QuickCaptureButton } from '@/components/quick-capture-button'
 import { SearchBar } from '@/components/search-bar'
 import { ShortcutRow } from '@/components/shortcut-row'
 import { TaskCard } from '@/components/task-card'
@@ -183,6 +184,12 @@ export default function Home() {
         e.preventDefault()
         setEditingTask({ status: 'todo', assignee: settings.defaultAssignee } as Task)
         setShowModal(true)
+        return
+      }
+
+      if (e.key === 'n' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault()
+        setShowQuickCapture(true)
         return
       }
 
@@ -575,8 +582,10 @@ export default function Home() {
         isOpen={showQuickCapture}
         onClose={() => setShowQuickCapture(false)}
         onTaskCreated={(task) => {
-          console.log('Task created via Quick Capture:', task)
+          setTasks((prev) => [...prev, task])
+          setShowQuickCapture(false)
         }}
+        defaultAssignee={settings.defaultAssignee}
       />
       <SidebarProvider>
         <Sidebar variant="inset" collapsible="icon" className="border-r border-border">
@@ -1218,6 +1227,7 @@ export default function Home() {
                 <h3 className="text-sm font-medium text-muted-foreground mb-2">Actions</h3>
                 <div className="space-y-1">
                   <ShortcutRow keys={['c']} description="Create new task" />
+                  <ShortcutRow keys={['n']} description="Quick capture" />
                   <ShortcutRow keys={['j']} description="Next task" />
                   <ShortcutRow keys={['k']} description="Previous task" />
                   <ShortcutRow keys={['Enter']} description="Open focused task" />
@@ -1453,6 +1463,8 @@ export default function Home() {
             setActiveLabel(labelId)
           }}
         />
+
+        <QuickCaptureButton onTaskCreated={fetchTasks} />
       </SidebarProvider>
     </>
   )

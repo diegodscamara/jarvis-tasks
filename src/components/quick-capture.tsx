@@ -1,81 +1,96 @@
 'use client'
 
-import { ArrowRight, Clock, Plus, Zap } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { Plus } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import type { Agent, Priority } from '@/types'
+import { parseQuickCaptureInput } from '@/lib/quick-capture-parse'
+import type { Priority, Task } from '@/types'
 
 interface QuickCaptureProps {
   isOpen: boolean
   onClose: () => void
-  onTaskCreated?: (task: Partial<any>) => void
+  onTaskCreated?: (task: Task) => void
+  defaultAssignee?: string
 }
 
-export function QuickCapture({ isOpen, onClose, onTaskCreated }: QuickCaptureProps) {
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [priority, setPriority] = useState<Priority>('medium')
-  const [assignee, setAssignee] = useState<Agent>('jarvis')
-  const [dueDate, setDueDate] = useState('')
-  const [projectId, _setProjectId] = useState('')
+export function QuickCapture({
+  isOpen,
+  onClose,
+  onTaskCreated,
+  defaultAssignee = 'jarvis',
+}: QuickCaptureProps) {
+  const [input, setInput] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  // Global keyboard shortcut: Cmd/Ctrl + K
+  const parsed = useMemo(() => (input.trim() ? parseQuickCaptureInput(input) : null), [input])
+
   useEffect(() => {
-    const handleGlobalShortcut = (e: any) => {
-      // Cmd/Ctrl + K to open quick capture
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault()
-        // This would be handled by parent component to open dialog
+    if (!isOpen) {
+      setInput('')
+      setError(null)
+    }
+  }, [isOpen])
+
+  const handleSubmit = useCallback(async () => {
+    const trimmed = input.trim()
+    if (!trimmed) return
+
+    const { title, priority, dueDate } = parseQuickCaptureInput(trimmed)
+    if (!title) return
+
+    setIsSubmitting(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description: '',
+          priority,
+          status: 'todo',
+          assignee: defaultAssignee,
+          dueDate: dueDate ?? undefined,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error ?? 'Failed to create task')
+        return
+      }
+      const task = data as Task
+      onTaskCreated?.(task)
+      setInput('')
+      onClose()
+    } catch (e) {
+      setError('Failed to create task')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }, [input, defaultAssignee, onTaskCreated, onClose])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey && isOpen) {
+        const target = e.target as HTMLElement
+        if (target.getAttribute('data-quick-capture-input') === 'true') {
+          e.preventDefault()
+          handleSubmit()
+        }
       }
     }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, handleSubmit])
 
-    document.addEventListener('keydown', handleGlobalShortcut)
-
-    return () => {
-      document.removeEventListener('keydown', handleGlobalShortcut)
-    }
-  }, [])
-
-  const handleSubmit = useCallback(() => {
-    if (!title.trim()) return
-
-    onTaskCreated?.({
-      title,
-      description,
-      priority,
-      assignee,
-      projectId,
-      dueDate,
-    })
-
-    // Reset form
-    setTitle('')
-    setDescription('')
-    setPriority('medium')
-    setAssignee('jarvis')
-    setDueDate('')
-    onClose()
-  }, [title, description, priority, assignee, dueDate, projectId, onTaskCreated, onClose])
-
-  const shortcuts = [
-    { key: 'N', label: 'Next input', icon: ArrowRight },
-    { key: 'D', label: 'Set due date', icon: Clock },
-    { key: 'P', label: 'Set priority', icon: Zap },
-    { key: 'A', label: 'Set assignee', icon: '👤' },
-  ]
+  const priorityLabel = (p: Priority) => (p === 'high' ? 'High' : p === 'low' ? 'Low' : 'Medium')
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm max-w-md">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5 text-primary" />
@@ -83,106 +98,61 @@ export function QuickCapture({ isOpen, onClose, onTaskCreated }: QuickCapturePro
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 pt-4">
-          {/* Title input - always focused */}
+        <div className="space-y-4 pt-2">
           <Input
-            placeholder="What needs to be done?"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            data-quick-capture-input
+            placeholder="e.g. Review PR tomorrow, urgent"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
                 handleSubmit()
-              } else if (e.key === 'n' || e.key === 'N') {
-                // Navigate to next input (if we had multiple)
               }
             }}
             autoFocus
-            className="text-lg"
+            className="text-base"
+            disabled={isSubmitting}
+            aria-label="Quick capture task input"
           />
 
-          {/* Description - optional */}
-          {title && (
-            <Input
-              placeholder="Add details (optional)..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  handleSubmit()
-                }
-              }}
-              className="text-sm"
-            />
-          )}
-
-          {/* Quick Actions Row */}
-          {title && (
-            <div className="flex items-center gap-2">
-              {/* Due Date */}
-              <div className="flex-1">
-                <Input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="text-sm"
-                />
-              </div>
-
-              {/* Priority */}
-              <Select value={priority} onValueChange={(v) => setPriority(v as Priority)}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(['high', 'medium', 'low'] as Priority[]).map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {p === 'high' && '🔴 High'}
-                      {p === 'medium' && '🟡 Medium'}
-                      {p === 'low' && '🟢 Low'}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Status hints */}
-          {title && (
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <div className="flex gap-2">
-                <span>
-                  Press <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">Enter</kbd> to
-                  save
-                </span>
-              </div>
-              <div className="font-medium">{title.length}/50</div>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex justify-between pt-4">
-            <div className="flex gap-2">
-              {shortcuts.map((shortcut) => (
-                <div
-                  key={shortcut.key}
-                  className="flex items-center gap-1 text-xs text-muted-foreground"
+          {parsed && parsed.title && (
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              {parsed.priority !== 'medium' && (
+                <span
+                  className={`rounded px-2 py-0.5 ${
+                    parsed.priority === 'high'
+                      ? 'bg-red-500/20 text-red-600 dark:text-red-400'
+                      : 'bg-muted text-muted-foreground'
+                  }`}
                 >
-                  <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">{shortcut.key}</kbd>
-                  <span>{shortcut.label}</span>
-                  {shortcut.icon && typeof shortcut.icon === 'string' ? (
-                    shortcut.icon
-                  ) : (
-                    <shortcut.icon className="h-3 w-3" />
-                  )}
-                </div>
-              ))}
+                  {priorityLabel(parsed.priority)} priority
+                </span>
+              )}
+              {parsed.dueDate && (
+                <span className="rounded bg-primary/10 px-2 py-0.5 text-primary">
+                  Due {parsed.dueDate}
+                </span>
+              )}
             </div>
+          )}
 
-            <Button onClick={handleSubmit} disabled={!title.trim()}>
-              <ArrowRight className="mr-1 h-4 w-4" />
-              Add
+          {error && (
+            <p className="text-sm text-destructive" role="alert">
+              {error}
+            </p>
+          )}
+
+          <div className="flex items-center justify-between gap-2 pt-2">
+            <p className="text-xs text-muted-foreground">
+              Press{' '}
+              <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px]">Enter</kbd> to
+              save · <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px]">n</kbd>{' '}
+              to open
+            </p>
+            <Button onClick={handleSubmit} disabled={!input.trim() || isSubmitting}>
+              <Plus className="mr-1 h-4 w-4" />
+              Add task
             </Button>
           </div>
         </div>
