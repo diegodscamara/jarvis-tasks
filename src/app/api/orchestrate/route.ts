@@ -7,7 +7,6 @@
  */
 
 import { NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/supabase/server'
 import {
   AGENT_CONFIG,
   canDispatch,
@@ -17,6 +16,7 @@ import {
   loadSessions,
   recordDispatch,
 } from '@/lib/orchestrator'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 // GET - Status and pending dispatches
 export async function GET() {

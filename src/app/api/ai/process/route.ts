@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { generateSuggestions, parseNaturalLanguage, processAICommand } from '@/lib/ai-assistant'
+import { generateSuggestions, processAICommand } from '@/lib/ai-assistant'
 import * as db from '@/lib/supabase/queries'
 import { addTaskDependency, getTaskDependencies } from '@/lib/supabase/task-dependencies'
 

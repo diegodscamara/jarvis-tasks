@@ -29,14 +29,15 @@ export async function GET() {
       name: project.name,
       icon: project.icon,
       color: project.color,
-      total: tasks.filter((t) => ((t as any).projectId ?? (t as any).project_id) === project.id).length,
+      total: tasks.filter((t) => ((t as any).projectId ?? (t as any).project_id) === project.id)
+        .length,
       done: tasks.filter(
-        (t) =>
-          ((t as any).projectId ?? (t as any).project_id) === project.id && t.status === 'done'
+        (t) => ((t as any).projectId ?? (t as any).project_id) === project.id && t.status === 'done'
       ).length,
       inProgress: tasks.filter(
         (t) =>
-          ((t as any).projectId ?? (t as any).project_id) === project.id && t.status === 'in_progress'
+          ((t as any).projectId ?? (t as any).project_id) === project.id &&
+          t.status === 'in_progress'
       ).length,
     }))
 

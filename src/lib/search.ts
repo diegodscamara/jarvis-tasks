@@ -1,4 +1,4 @@
-import { addDays, endOfDay, isWithinInterval, parseISO, startOfDay, subDays } from 'date-fns'
+import { addDays, endOfDay, parseISO, startOfDay, subDays } from 'date-fns'
 import type { Priority, Status, Task } from '@/types'
 
 export interface SearchFilters {
@@ -41,7 +41,7 @@ export function parseSearchQuery(query: string): SearchQuery {
 
   // Extract quoted strings first to preserve them
   const quotedStrings: string[] = []
-  text = text.replace(/"([^"]+)"/g, (match, p1) => {
+  text = text.replace(/"([^"]+)"/g, (_match, p1) => {
     quotedStrings.push(p1)
     return `__QUOTED_${quotedStrings.length - 1}__`
   })
@@ -130,8 +130,8 @@ export function parseSearchQuery(query: string): SearchQuery {
   }
 
   // Restore quoted strings
-  text = text.replace(/__QUOTED_(\d+)__/g, (match, index) => {
-    return quotedStrings[parseInt(index)]
+  text = text.replace(/__QUOTED_(\d+)__/g, (_match, index) => {
+    return quotedStrings[parseInt(index, 10)]
   })
 
   return {

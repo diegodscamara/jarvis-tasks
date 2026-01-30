@@ -1,6 +1,6 @@
-import { exec } from 'child_process'
+import { exec } from 'node:child_process'
+import { promisify } from 'node:util'
 import { type NextRequest, NextResponse } from 'next/server'
-import { promisify } from 'util'
 
 const execAsync = promisify(exec)
 

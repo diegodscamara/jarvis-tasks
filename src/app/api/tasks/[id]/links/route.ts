@@ -10,7 +10,7 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl!, supabaseKey!)
 
-interface TaskLink {
+interface _TaskLink {
   id: string
   task_id: string
   url: string
@@ -59,7 +59,7 @@ function detectLinkType(url: string): { type: string; icon: string } {
 }
 
 // GET /api/tasks/[id]/links - Get all links for a task
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: taskId } = await params
 
   try {
@@ -72,7 +72,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     if (error) {
       console.error('Error fetching links:', error)
-      return NextResponse.json({ error: 'Failed to fetch links', details: error.message }, { status: 500 })
+      return NextResponse.json(
+        { error: 'Failed to fetch links', details: error.message },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json({ links })
@@ -105,7 +108,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .order('position', { ascending: false })
       .limit(1)
 
-    const maxPosition = existingLinks && existingLinks[0] ? existingLinks[0].position : -1
+    const maxPosition = existingLinks?.[0] ? existingLinks[0].position : -1
     const position = maxPosition + 1
 
     const { data: link, error } = await supabase
@@ -124,7 +127,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (error) {
       console.error('Error creating link:', error)
-      return NextResponse.json({ error: 'Failed to create link', details: error.message }, { status: 500 })
+      return NextResponse.json(
+        { error: 'Failed to create link', details: error.message },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json(link, { status: 201 })
@@ -151,7 +157,10 @@ export async function DELETE(
 
     if (error) {
       console.error('Error deleting link:', error)
-      return NextResponse.json({ error: 'Failed to delete link', details: error.message }, { status: 500 })
+      return NextResponse.json(
+        { error: 'Failed to delete link', details: error.message },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json({ success: true })

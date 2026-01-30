@@ -1,14 +1,14 @@
+import { type NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   const supabase = await createSupabaseServerClient()
   const { searchParams } = new URL(request.url)
-  
+
   const category = searchParams.get('category')
   const search = searchParams.get('search')
-  const limit = parseInt(searchParams.get('limit') || '50')
-  const offset = parseInt(searchParams.get('offset') || '0')
+  const limit = parseInt(searchParams.get('limit') || '50', 10)
+  const offset = parseInt(searchParams.get('offset') || '0', 10)
 
   let query = supabase
     .from('documents')
@@ -42,7 +42,15 @@ export async function POST(request: NextRequest) {
   const supabase = await createSupabaseServerClient()
   const body = await request.json()
 
-  const { title, content, category = 'system', tags = [], source = 'manual', visibility = 'private', memoryPath } = body
+  const {
+    title,
+    content,
+    category = 'system',
+    tags = [],
+    source = 'manual',
+    visibility = 'private',
+    memoryPath,
+  } = body
 
   if (!title || !content) {
     return NextResponse.json({ error: 'Title and content are required' }, { status: 400 })

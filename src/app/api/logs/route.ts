@@ -1,16 +1,16 @@
+import { type NextRequest, NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   const supabase = await createSupabaseServerClient()
   const { searchParams } = new URL(request.url)
-  
+
   const type = searchParams.get('type')
   const actor = searchParams.get('actor')
   const status = searchParams.get('status')
   const sessionId = searchParams.get('sessionId')
-  const limit = parseInt(searchParams.get('limit') || '100')
-  const offset = parseInt(searchParams.get('offset') || '0')
+  const limit = parseInt(searchParams.get('limit') || '100', 10)
+  const offset = parseInt(searchParams.get('offset') || '0', 10)
   const since = searchParams.get('since') // ISO timestamp for polling
 
   let query = supabase
@@ -72,13 +72,18 @@ export async function POST(request: NextRequest) {
   } = body
 
   if (!type || !actor || !title) {
-    return NextResponse.json(
-      { error: 'type, actor, and title are required' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: 'type, actor, and title are required' }, { status: 400 })
   }
 
-  const validTypes = ['agent_action', 'dispatch', 'task_event', 'system_event', 'message', 'error', 'success']
+  const validTypes = [
+    'agent_action',
+    'dispatch',
+    'task_event',
+    'system_event',
+    'message',
+    'error',
+    'success',
+  ]
   if (!validTypes.includes(type)) {
     return NextResponse.json(
       { error: `Invalid type. Must be one of: ${validTypes.join(', ')}` },

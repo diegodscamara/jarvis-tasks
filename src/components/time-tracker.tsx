@@ -1,7 +1,7 @@
 'use client'
 
 import { Clock, Pause, Play, Square, TrendingUp } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,

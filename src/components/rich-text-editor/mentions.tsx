@@ -1,5 +1,4 @@
-import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
-import { AGENTS } from '@/lib/constants'
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
 import { cn } from '@/lib/utils'
 
 export interface MentionItem {

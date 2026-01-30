@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import * as db from '@/lib/supabase/queries'
 import type { SavedSearch } from '@/lib/search'
 import { filterTasks, parseSearchQuery, rankSearchResults } from '@/lib/search'
+import * as db from '@/lib/supabase/queries'
 
 // In-memory storage for saved searches (should be in DB in production)
 const savedSearches: SavedSearch[] = []

@@ -28,14 +28,15 @@ export async function POST(request: NextRequest, props: RouteParams) {
       id,
       task_id: taskId,
       author: body.author || 'Anonymous',
-      content: body.text, // Frontend sends 'text', we save as 'content'
+      content: body.content || body.text, // Support both 'content' (current frontend) and 'text' (legacy)
     })
 
     // Return in frontend expected format
     return NextResponse.json({
       id: comment.id,
       author: comment.author,
-      text: comment.content,
+      content: comment.content,
+      text: comment.content, // Include both for compatibility
       createdAt: (comment as any).createdAt ?? (comment as any).created_at,
     })
   } catch (error) {

@@ -2,13 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { DependencyPicker } from '@/components/dependency-picker'
-import {
-  CalendarIcon,
-  ClockIcon,
-  CommentIcon,
-  FlashLightIcon,
-  RecurrenceIcon,
-} from '@/components/icons'
+import { CalendarIcon, CommentIcon, FlashLightIcon, RecurrenceIcon } from '@/components/icons'
 import { LinkItem } from '@/components/link-item'
 import { RichTextEditor } from '@/components/rich-text-editor'
 import { TimeEstimate, TimeTracker } from '@/components/time-tracker'
@@ -21,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 import { AGENTS, COLUMNS } from '@/lib/constants'
 import type {
   Agent,

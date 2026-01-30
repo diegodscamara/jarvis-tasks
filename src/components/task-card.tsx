@@ -32,6 +32,7 @@ export function TaskCard({
   onToggleSelect,
   isFocused = false,
 }: TaskCardProps) {
+  const isOverdue = useIsOverdue(task.dueDate)
   const agent = AGENTS.find((a) => a.id === task.assignee)
   const statusInfo = COLUMNS.find((c) => c.id === task.status)
 
@@ -180,7 +181,7 @@ export function TaskCard({
             {task.dueDate && (
               <span
                 className={`px-2 py-0.5 rounded flex items-center gap-1 ${
-                  useIsOverdue(task.dueDate) ? 'bg-red-500/20 text-red-400' : 'bg-muted'
+                  isOverdue ? 'bg-red-500/20 text-red-400' : 'bg-muted'
                 }`}
               >
                 <CalendarIcon size={10} />

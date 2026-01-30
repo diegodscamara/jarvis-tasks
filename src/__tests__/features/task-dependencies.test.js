@@ -1,4 +1,4 @@
-const { describe, expect, it, beforeEach } = require('@jest/globals')
+const { describe, expect, it } = require('@jest/globals')
 
 describe('Task Dependencies - TDD', () => {
   describe('Dependency Management', () => {
@@ -95,7 +95,7 @@ describe('Task Dependencies - TDD', () => {
         { id: 'task-2', title: 'Frontend UI', status: 'todo', dependsOn: ['task-1'] },
       ]
 
-      const canChangeStatus = (taskId, newStatus, allTasks) => {
+      const canChangeStatus = (taskId, _newStatus, allTasks) => {
         const task = allTasks.find((t) => t.id === taskId)
         if (!task) return { allowed: false }
 

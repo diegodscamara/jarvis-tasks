@@ -462,7 +462,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'documents'
             referencedColumns: ['id']
-          }
+          },
         ]
       }
       logs: {
@@ -587,7 +587,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: 'projects'
             referencedColumns: ['id']
-          }
+          },
         ]
       }
     }

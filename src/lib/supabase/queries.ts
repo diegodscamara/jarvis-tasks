@@ -5,7 +5,7 @@ type Project = Database['public']['Tables']['projects']['Row']
 type Label = Database['public']['Tables']['labels']['Row']
 type Task = Database['public']['Tables']['tasks']['Row']
 type Comment = Database['public']['Tables']['comments']['Row']
-type TaskLabel = Database['public']['Tables']['task_labels']['Row']
+type _TaskLabel = Database['public']['Tables']['task_labels']['Row']
 
 export interface TaskWithRelations extends Task {
   labelIds?: string[]

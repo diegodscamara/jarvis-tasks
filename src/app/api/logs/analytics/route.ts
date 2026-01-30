@@ -1,5 +1,5 @@
-import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 
 interface LogEntry {
   id: string
@@ -61,24 +61,36 @@ export async function GET() {
   }, {})
 
   // Error rate
-  const errorCount = logs.filter((l: LogEntry) => l.type === 'error' || l.status === 'failed').length
+  const errorCount = logs.filter(
+    (l: LogEntry) => l.type === 'error' || l.status === 'failed'
+  ).length
   const errorRate = totalLogs > 0 ? ((errorCount / totalLogs) * 100).toFixed(1) : '0'
 
   // Activity by hour (last 24h)
   const activityByHour: Record<string, number> = {}
-  logs.filter((l: LogEntry) => new Date(l.created_at) > oneDayAgo).forEach((log: LogEntry) => {
-    const hour = new Date(log.created_at).getHours()
-    activityByHour[hour] = (activityByHour[hour] || 0) + 1
-  })
+  logs
+    .filter((l: LogEntry) => new Date(l.created_at) > oneDayAgo)
+    .forEach((log: LogEntry) => {
+      const hour = new Date(log.created_at).getHours()
+      activityByHour[hour] = (activityByHour[hour] || 0) + 1
+    })
 
   // Recent dispatches
   const recentDispatches = logs.filter((l: LogEntry) => l.type === 'dispatch').slice(0, 10)
 
   // Average duration for completed actions
-  const completedWithDuration = logs.filter((l: LogEntry) => l.duration_ms && l.status === 'completed')
-  const avgDuration = completedWithDuration.length > 0
-    ? Math.round(completedWithDuration.reduce((sum: number, l: LogEntry) => sum + (l.duration_ms || 0), 0) / completedWithDuration.length)
-    : 0
+  const completedWithDuration = logs.filter(
+    (l: LogEntry) => l.duration_ms && l.status === 'completed'
+  )
+  const avgDuration =
+    completedWithDuration.length > 0
+      ? Math.round(
+          completedWithDuration.reduce(
+            (sum: number, l: LogEntry) => sum + (l.duration_ms || 0),
+            0
+          ) / completedWithDuration.length
+        )
+      : 0
 
   return NextResponse.json({
     summary: {
