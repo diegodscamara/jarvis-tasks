@@ -7,6 +7,7 @@ import Mention from '@tiptap/extension-mention'
 import Placeholder from '@tiptap/extension-placeholder'
 import TaskItem from '@tiptap/extension-task-item'
 import TaskList from '@tiptap/extension-task-list'
+import { Extension } from '@tiptap/core'
 import { EditorContent, ReactRenderer, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import suggestion from '@tiptap/suggestion'
@@ -94,14 +95,10 @@ const SLASH_COMMANDS: SlashCommandItem[] = [
 ]
 
 // Slash commands configuration
-const SlashCommand = StarterKit.configure({
-  heading: false,
-  bulletList: false,
-  orderedList: false,
-  codeBlock: false,
-  blockquote: false,
-  horizontalRule: false,
-}).extend({
+// NOTE: This must NOT be based on StarterKit, otherwise we'll end up with duplicate ProseMirror
+// plugins (e.g. history$) and crash when opening the task modal.
+const SlashCommand = Extension.create({
+  name: 'slashCommand',
   addProseMirrorPlugins() {
     return [
       suggestion({
