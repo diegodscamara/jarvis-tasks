@@ -427,15 +427,6 @@ export function RichTextEditor({
     },
   })
 
-  // TipTap editor is created asynchronously; avoid rendering toolbar/actions until ready.
-  if (!editor) {
-    return (
-      <div className={cn('rich-text-editor border border-input rounded-md overflow-hidden', className)}>
-        <div className="p-3 text-sm text-muted-foreground">Loading editor…</div>
-      </div>
-    )
-  }
-
   // Handle slash command execution
   useEffect(() => {
     if (!editor) return
@@ -450,6 +441,15 @@ export function RichTextEditor({
     window.addEventListener('slashCommand', handleSlashCommand)
     return () => window.removeEventListener('slashCommand', handleSlashCommand)
   }, [editor])
+
+  // TipTap editor is created asynchronously; avoid rendering toolbar/actions until ready.
+  if (!editor) {
+    return (
+      <div className={cn('rich-text-editor border border-input rounded-md overflow-hidden', className)}>
+        <div className="p-3 text-sm text-muted-foreground">Loading editor…</div>
+      </div>
+    )
+  }
 
   return (
     <div className={cn('rich-text-editor border border-input rounded-md overflow-hidden', className)}>
