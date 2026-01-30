@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
+import { useToast } from '@/components/ui/use-toast'
 import { supabase } from '@/lib/supabase/client'
 import type { Database } from '@/lib/supabase/types'
-import { useToast } from '@/components/ui/use-toast'
 
 type Task = Database['public']['Tables']['tasks']['Row']
 
@@ -30,7 +30,7 @@ export function useRealtimeTasks({
             onTaskCreated(payload.new)
           }
           toast({
-            title: "Task Created",
+            title: 'Task Created',
             description: `${payload.new.title} has been created`,
           })
         }
@@ -51,12 +51,12 @@ export function useRealtimeTasks({
         (payload) => {
           console.log('Task deleted:', payload.old.id)
           if (onTaskDeleted) {
-            onTaskDeleted(payload.old.id)
+            if (payload.old.id) onTaskDeleted(payload.old.id)
           }
           toast({
-            title: "Task Deleted",
+            title: 'Task Deleted',
             description: `Task has been removed`,
-            variant: "destructive",
+            variant: 'destructive',
           })
         }
       )
@@ -75,11 +75,11 @@ export function useRealtimeComments(taskId: string, onCommentAdded?: () => void)
       .channel(`comments-${taskId}`)
       .on(
         'postgres_changes',
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
+        {
+          event: 'INSERT',
+          schema: 'public',
           table: 'comments',
-          filter: `task_id=eq.${taskId}`
+          filter: `task_id=eq.${taskId}`,
         },
         (payload) => {
           console.log('Comment added:', payload)
@@ -97,7 +97,10 @@ export function useRealtimeComments(taskId: string, onCommentAdded?: () => void)
 }
 
 // Hook for realtime notifications
-export function useRealtimeNotifications(userId: string, onNotification?: (notification: any) => void) {
+export function useRealtimeNotifications(
+  userId: string,
+  onNotification?: (notification: any) => void
+) {
   const { toast } = useToast()
 
   useEffect(() => {
@@ -105,11 +108,11 @@ export function useRealtimeNotifications(userId: string, onNotification?: (notif
       .channel(`notifications-${userId}`)
       .on(
         'postgres_changes',
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
+        {
+          event: 'INSERT',
+          schema: 'public',
           table: 'notifications',
-          filter: `user_id=eq.${userId}`
+          filter: `user_id=eq.${userId}`,
         },
         (payload) => {
           console.log('New notification:', payload)

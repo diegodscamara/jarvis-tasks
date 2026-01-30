@@ -35,7 +35,7 @@ export const tasks = sqliteTable('tasks', {
   priority: text('priority', { enum: ['low', 'medium', 'high'] })
     .notNull()
     .default('medium'),
-  status: text('status', { enum: ['backlog', 'todo', 'in_progress', 'done'] })
+  status: text('status', { enum: ['backlog', 'planning', 'todo', 'in_progress', 'review', 'done'] })
     .notNull()
     .default('todo'),
   assignee: text('assignee').notNull().default('jarvis'),

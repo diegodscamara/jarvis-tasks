@@ -1,5 +1,5 @@
-import { type NextRequest, NextResponse } from 'next/server'
 import Database from 'better-sqlite3'
+import { type NextRequest, NextResponse } from 'next/server'
 import path from 'path'
 
 function getDb() {
@@ -9,25 +9,37 @@ function getDb() {
 // GET /api/export?format=json|csv
 export async function GET(request: NextRequest) {
   const db = getDb()
-  
+
   try {
     const { searchParams } = new URL(request.url)
     const format = searchParams.get('format') || 'json'
-    
-    const tasks = db.prepare('SELECT * FROM tasks ORDER BY created_at DESC').all()
+
+    const tasks = db.prepare('SELECT * FROM tasks ORDER BY createdAt DESC').all()
     const projects = db.prepare('SELECT * FROM projects').all()
     const labels = db.prepare('SELECT * FROM labels').all()
     const taskLabels = db.prepare('SELECT * FROM task_labels').all()
-    
+
     db.close()
-    
+
     if (format === 'csv') {
       // Generate CSV
-      const headers = ['id', 'title', 'description', 'priority', 'status', 'assignee', 'project_id', 'due_date', 'estimate', 'created_at', 'updated_at']
+      const headers = [
+        'id',
+        'title',
+        'description',
+        'priority',
+        'status',
+        'assignee',
+        'project_id',
+        'dueDate',
+        'estimate',
+        'createdAt',
+        'updatedAt',
+      ]
       const csvRows = [headers.join(',')]
-      
+
       for (const task of tasks as any[]) {
-        const row = headers.map(h => {
+        const row = headers.map((h) => {
           const val = task[h] ?? ''
           // Escape quotes and wrap in quotes if contains comma
           const str = String(val).replace(/"/g, '""')
@@ -35,7 +47,7 @@ export async function GET(request: NextRequest) {
         })
         csvRows.push(row.join(','))
       }
-      
+
       return new NextResponse(csvRows.join('\n'), {
         headers: {
           'Content-Type': 'text/csv',
@@ -43,7 +55,7 @@ export async function GET(request: NextRequest) {
         },
       })
     }
-    
+
     // Default: JSON export
     const exportData = {
       version: '1.0',
@@ -53,7 +65,7 @@ export async function GET(request: NextRequest) {
       labels,
       taskLabels,
     }
-    
+
     return new NextResponse(JSON.stringify(exportData, null, 2), {
       headers: {
         'Content-Type': 'application/json',

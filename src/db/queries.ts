@@ -1,6 +1,17 @@
-import { eq, desc } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import { db } from './index'
-import { projects, tasks, labels, taskLabels, links, comments, type NewProject, type NewTask, type NewLabel, type NewComment } from './schema'
+import {
+  comments,
+  labels,
+  links,
+  type NewComment,
+  type NewLabel,
+  type NewProject,
+  type NewTask,
+  projects,
+  taskLabels,
+  tasks,
+} from './schema'
 
 // Projects
 export async function getAllProjects() {
@@ -38,34 +49,37 @@ export async function getAllTasks() {
 
 export async function getTasksWithDetails() {
   const allTasks = await db.select().from(tasks).orderBy(desc(tasks.createdAt))
-  
+
   // Get labels for all tasks
-  const taskIds = allTasks.map(t => t.id)
+  const taskIds = allTasks.map((t) => t.id)
   if (taskIds.length > 0) {
     const taskLabelsData = await db
       .select({
         taskId: taskLabels.taskId,
-        label: labels
+        label: labels,
       })
       .from(taskLabels)
       .innerJoin(labels, eq(taskLabels.labelId, labels.id))
       .where(eq(taskLabels.taskId, taskIds[0])) // This needs to be improved for multiple tasks
-    
+
     // Group labels by task
-    const labelsByTask = taskLabelsData.reduce((acc, item) => {
-      if (!acc[item.taskId]) acc[item.taskId] = []
-      acc[item.taskId].push(item.label)
-      return acc
-    }, {} as Record<string, typeof labels.$inferSelect[]>)
-    
+    const labelsByTask = taskLabelsData.reduce(
+      (acc, item) => {
+        if (!acc[item.taskId]) acc[item.taskId] = []
+        acc[item.taskId].push(item.label)
+        return acc
+      },
+      {} as Record<string, (typeof labels.$inferSelect)[]>
+    )
+
     // Attach labels to tasks
-    return allTasks.map(task => ({
+    return allTasks.map((task) => ({
       ...task,
-      labels: labelsByTask[task.id] || []
+      labels: labelsByTask[task.id] || [],
     }))
   }
-  
-  return allTasks.map(task => ({ ...task, labels: [] }))
+
+  return allTasks.map((task) => ({ ...task, labels: [] }))
 }
 
 export async function getTask(id: string) {
@@ -75,10 +89,6 @@ export async function getTask(id: string) {
 
 // Alias for backward compatibility
 export const getTaskById = getTask
-
-export async function getTaskById(id: string) {
-  return getTask(id)
-}
 
 export async function createTask(task: NewTask) {
   const result = await db.insert(tasks).values(task).returning()
@@ -110,11 +120,7 @@ export async function createLabel(label: NewLabel) {
 }
 
 export async function updateLabel(id: string, updates: Partial<NewLabel>) {
-  const result = await db
-    .update(labels)
-    .set(updates)
-    .where(eq(labels.id, id))
-    .returning()
+  const result = await db.update(labels).set(updates).where(eq(labels.id, id)).returning()
   return result[0]
 }
 
@@ -139,9 +145,17 @@ export async function getTaskLinks(taskId: string) {
   return db.select().from(links).where(eq(links.taskId, taskId))
 }
 
-export async function addTaskLink(link: { taskId: string; url: string; title?: string; type: string }) {
+export async function addTaskLink(link: {
+  taskId: string
+  url: string
+  title?: string
+  type: string
+}) {
   const id = `link-${Date.now()}-${Math.random().toString(36).slice(2)}`
-  const result = await db.insert(links).values({ id, ...link }).returning()
+  const result = await db
+    .insert(links)
+    .values({ id, ...link })
+    .returning()
   return result[0]
 }
 
@@ -168,12 +182,15 @@ export async function addTaskComment(comment: NewComment) {
 }
 
 export async function createComment(comment: any) {
-  const result = await db.insert(comments).values({
-    id: comment.id,
-    taskId: comment.task_id,
-    author: comment.author,
-    content: comment.content,
-  }).returning()
+  const result = await db
+    .insert(comments)
+    .values({
+      id: comment.id,
+      taskId: comment.task_id,
+      author: comment.author,
+      content: comment.content,
+    })
+    .returning()
   return result[0]
 }
 

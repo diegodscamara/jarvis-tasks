@@ -1,9 +1,9 @@
 -- Enable UUID generation
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- Create projects table
 CREATE TABLE projects (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   icon TEXT DEFAULT '📁' NOT NULL,
   color TEXT DEFAULT '#6366f1' NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE projects (
 
 -- Create labels table
 CREATE TABLE labels (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   color TEXT NOT NULL,
   "group" TEXT,
@@ -24,7 +24,7 @@ CREATE TABLE labels (
 
 -- Create tasks table
 CREATE TABLE tasks (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title TEXT NOT NULL,
   description TEXT DEFAULT '' NOT NULL,
   priority TEXT DEFAULT 'medium' NOT NULL CHECK (priority IN ('low', 'medium', 'high')),
@@ -50,7 +50,7 @@ CREATE TABLE task_labels (
 
 -- Create comments table
 CREATE TABLE comments (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   task_id UUID REFERENCES tasks(id) ON DELETE CASCADE NOT NULL,
   author TEXT NOT NULL,
   content TEXT NOT NULL,
@@ -59,7 +59,7 @@ CREATE TABLE comments (
 
 -- Create attachments table
 CREATE TABLE attachments (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   task_id UUID REFERENCES tasks(id) ON DELETE CASCADE NOT NULL,
   file_name TEXT NOT NULL,
   file_url TEXT NOT NULL,
@@ -81,7 +81,7 @@ CREATE TABLE task_dependencies (
 
 -- Create notifications table
 CREATE TABLE notifications (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id TEXT NOT NULL,
   type TEXT NOT NULL,
   title TEXT NOT NULL,
