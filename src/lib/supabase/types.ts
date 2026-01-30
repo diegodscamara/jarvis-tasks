@@ -649,6 +649,53 @@ export type Database = {
           },
         ]
       }
+      habit_completions: {
+        Row: {
+          id: string
+          habit_id: string
+          completed_date: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          habit_id: string
+          completed_date: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          habit_id?: string
+          completed_date?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'habit_completions_habit_id_fkey'
+            columns: ['habit_id']
+            isOneToOne: false
+            referencedRelation: 'habits'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      habits: {
+        Row: {
+          id: string
+          name: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

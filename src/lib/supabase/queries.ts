@@ -511,3 +511,115 @@ export async function deleteKeyResult(id: string): Promise<boolean> {
 
   return !error
 }
+
+type Habit = Database['public']['Tables']['habits']['Row']
+type HabitCompletion = Database['public']['Tables']['habit_completions']['Row']
+
+export interface HabitWithCompletions extends Habit {
+  streak: number
+  completed_dates: string[]
+}
+
+function computeStreak(dates: string[]): number {
+  if (dates.length === 0) return 0
+  const sorted = [...dates].sort().reverse()
+  const today = new Date().toISOString().slice(0, 10)
+  let streak = 0
+  let check = today
+  for (const d of sorted) {
+    if (d !== check) break
+    streak++
+    const next = new Date(check)
+    next.setDate(next.getDate() - 1)
+    check = next.toISOString().slice(0, 10)
+  }
+  return streak
+}
+
+export async function getAllHabitsWithCompletions(): Promise<HabitWithCompletions[]> {
+  const supabase = await createSupabaseServerClient()
+  const { data: habits, error: habitsError } = await supabase
+    .from('habits')
+    .select('*')
+    .order('created_at', { ascending: true })
+
+  if (habitsError) throw habitsError
+  if (!habits?.length) return []
+
+  const start = new Date()
+  start.setDate(start.getDate() - 6)
+  const startStr = start.toISOString().slice(0, 10)
+
+  const { data: weekCompletions, error: compError } = await supabase
+    .from('habit_completions')
+    .select('habit_id, completed_date')
+    .gte('completed_date', startStr)
+
+  if (compError) throw compError
+
+  const habitIds = habits.map((h) => h.id)
+  const { data: allCompletions, error: allError } = await supabase
+    .from('habit_completions')
+    .select('habit_id, completed_date')
+    .in('habit_id', habitIds)
+
+  if (allError) throw allError
+
+  const weekByHabit = new Map<string, string[]>()
+  const allByHabit = new Map<string, string[]>()
+  for (const c of weekCompletions ?? []) {
+    const list = weekByHabit.get(c.habit_id) ?? []
+    list.push(c.completed_date)
+    weekByHabit.set(c.habit_id, list)
+  }
+  for (const c of allCompletions ?? []) {
+    const list = allByHabit.get(c.habit_id) ?? []
+    list.push(c.completed_date)
+    allByHabit.set(c.habit_id, list)
+  }
+
+  return habits.map((h) => {
+    const weekDates = (weekByHabit.get(h.id) ?? []).sort()
+    const allDates = allByHabit.get(h.id) ?? []
+    return {
+      ...h,
+      streak: computeStreak(allDates),
+      completed_dates: weekDates,
+    }
+  })
+}
+
+export async function createHabit(
+  habit: Omit<Database['public']['Tables']['habits']['Insert'], 'created_at'>
+): Promise<Habit> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.from('habits').insert(habit).select().single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteHabit(id: string): Promise<boolean> {
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.from('habits').delete().eq('id', id)
+
+  return !error
+}
+
+export async function setHabitCompletion(habitId: string, date: string): Promise<void> {
+  const supabase = await createSupabaseServerClient()
+  await supabase
+    .from('habit_completions')
+    .upsert({ habit_id: habitId, completed_date: date }, { onConflict: 'habit_id,completed_date' })
+}
+
+export async function removeHabitCompletion(habitId: string, date: string): Promise<boolean> {
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase
+    .from('habit_completions')
+    .delete()
+    .eq('habit_id', habitId)
+    .eq('completed_date', date)
+
+  return !error
+}
