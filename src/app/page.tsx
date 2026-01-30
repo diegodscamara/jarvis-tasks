@@ -26,6 +26,7 @@ import {
 import { CalendarView } from '@/components/calendar-view'
 import { CommandPalette } from '@/components/command-palette'
 import { ThemeSwitcher } from '@/components/theme-switcher'
+import { UserMenu } from '@/components/user-menu'
 import { ShortcutRow } from '@/components/shortcut-row'
 import { TaskCard } from '@/components/task-card'
 import { TaskForm } from '@/components/task-form'
@@ -866,6 +867,7 @@ export default function Home() {
               )}
             </Button>
             <ThemeSwitcher />
+            <UserMenu />
             <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
               <span className="w-2 h-2 rounded-full bg-green-500"></span>
               <span>System Online</span>

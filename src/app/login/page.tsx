@@ -1,93 +1,70 @@
 'use client'
 
 import { signIn } from 'next-auth/react'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { GitHubLogoIcon } from '@radix-ui/react-icons'
+import { FlashLightIcon } from '@/components/icons'
+import { useSearchParams } from 'next/navigation'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const searchParams = useSearchParams()
+  const error = searchParams.get('error')
+  const callbackUrl = searchParams.get('callbackUrl') || '/'
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-
-    try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      })
-
-      if (result?.error) {
-        setError('Invalid email or password')
-      } else {
-        router.push('/')
-        router.refresh()
-      }
-    } catch {
-      setError('An error occurred')
-    } finally {
-      setLoading(false)
-    }
+  const handleSignIn = () => {
+    signIn('github', { callbackUrl })
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg border border-border shadow-lg">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">⚡ Jarvis Tasks</h1>
-          <p className="text-sm text-muted-foreground mt-2">Sign in to continue</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-950 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center space-y-2">
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center">
+              <FlashLightIcon size={32} className="text-primary" />
+            </div>
+          </div>
+          <CardTitle className="text-2xl font-bold">Welcome to Jarvis Tasks</CardTitle>
+          <CardDescription>
+            Sign in to manage your tasks and boost productivity
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-4">
           {error && (
-            <div className="p-3 text-sm text-red-500 bg-red-500/10 rounded-md">
-              {error}
+            <div className="p-3 text-sm text-red-500 bg-red-500/10 rounded-md text-center">
+              {error === 'OAuthSignin' && 'Failed to sign in with GitHub'}
+              {error === 'OAuthCallback' && 'Failed to handle OAuth callback'}
+              {error === 'OAuthCreateAccount' && 'Failed to create account'}
+              {error === 'Verification' && 'Verification failed'}
+              {error === 'Default' && 'An error occurred during sign in'}
             </div>
           )}
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="diego@jarvis.local"
-              className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 disabled:opacity-50"
+          
+          <Button
+            onClick={handleSignIn}
+            className="w-full"
+            size="lg"
+            variant="default"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
-
-        <div className="text-xs text-center text-muted-foreground">
-          <p>Demo credentials:</p>
-          <p>diego@jarvis.local / jarvis123</p>
-        </div>
+            <GitHubLogoIcon className="mr-2 h-5 w-5" />
+            Sign in with GitHub
+          </Button>
+          
+          <div className="text-center text-sm text-muted-foreground">
+            <p>By signing in, you agree to our</p>
+            <p>
+              <a href="#" className="underline hover:text-primary">Terms of Service</a>
+              {' and '}
+              <a href="#" className="underline hover:text-primary">Privacy Policy</a>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <div className="absolute bottom-4 text-center text-xs text-muted-foreground">
+        Powered by Jarvis AI ⚡
       </div>
     </div>
   )
