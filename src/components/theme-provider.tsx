@@ -25,19 +25,8 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children, defaultTheme = 'linear-purple' }: ThemeProviderProps) {
-  const [themeVariant, setThemeVariant] = React.useState<ThemeVariant>(() => {
-    // Try to get theme from localStorage
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('theme-variant')
-      if (
-        stored &&
-        ['default', 'dark', 'light', 'midnight', 'linear-purple', 'linear-blue'].includes(stored)
-      ) {
-        return stored as ThemeVariant
-      }
-    }
-    return defaultTheme
-  })
+  const [themeVariant, setThemeVariant] = React.useState<ThemeVariant>(defaultTheme)
+  const [isInitialized, setIsInitialized] = React.useState(false)
 
   const theme = React.useMemo(() => {
     return getThemeByVariant(themeVariant) || linearPurpleTheme
@@ -49,6 +38,18 @@ export function ThemeProvider({ children, defaultTheme = 'linear-purple' }: Them
     if (typeof window !== 'undefined') {
       localStorage.setItem('theme-variant', variant)
     }
+  }, [])
+
+  // Initialize theme from localStorage after mount to avoid hydration mismatch
+  React.useEffect(() => {
+    const stored = localStorage.getItem('theme-variant')
+    if (
+      stored &&
+      ['default', 'dark', 'light', 'midnight', 'linear-purple', 'linear-blue'].includes(stored)
+    ) {
+      setThemeVariant(stored as ThemeVariant)
+    }
+    setIsInitialized(true)
   }, [])
 
   // Apply theme CSS variables to root
