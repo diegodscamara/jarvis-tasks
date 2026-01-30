@@ -62,7 +62,7 @@ export function DependencyPicker({
       <div className="flex items-center justify-between">
         <label className="text-sm font-medium">Dependencies</label>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
+          <DialogTrigger>
             <Button type="button" variant="outline" size="sm">
               Add Dependency
             </Button>
@@ -83,7 +83,7 @@ export function DependencyPicker({
                   onChange={(e) => setSearch(e.target.value)}
                   className="flex-1"
                 />
-                <Select value={filterProject} onValueChange={setFilterProject}>
+                <Select value={filterProject} onValueChange={(value) => setFilterProject(value ?? '')}>
                   <SelectTrigger className="w-48">
                     <SelectValue placeholder="All projects" />
                   </SelectTrigger>
@@ -96,7 +96,7 @@ export function DependencyPicker({
                     ))}
                   </SelectContent>
                 </Select>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value ?? '')}>
                   <SelectTrigger className="w-32">
                     <SelectValue placeholder="All status" />
                   </SelectTrigger>

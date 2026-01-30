@@ -149,7 +149,7 @@ export function SearchBar({ onSearch, onFiltersChange, className }: SearchBarPro
   return (
     <div className={className}>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
+        <PopoverTrigger>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={16} />
             <Input
@@ -191,7 +191,7 @@ export function SearchBar({ onSearch, onFiltersChange, className }: SearchBarPro
           <Command>
             <CommandList>
               {suggestions.length > 0 && (
-                <CommandGroup heading="Suggestions">
+                <CommandGroup>
                   {suggestions.map((suggestion, idx) => (
                     <CommandItem
                       key={idx}
@@ -210,7 +210,7 @@ export function SearchBar({ onSearch, onFiltersChange, className }: SearchBarPro
               {savedSearches.length > 0 && (
                 <>
                   <CommandSeparator />
-                  <CommandGroup heading="Saved Searches">
+                  <CommandGroup>
                     {savedSearches.map((search) => (
                       <CommandItem
                         key={search.id}
@@ -230,7 +230,7 @@ export function SearchBar({ onSearch, onFiltersChange, className }: SearchBarPro
               {recentSearches.length > 0 && (
                 <>
                   <CommandSeparator />
-                  <CommandGroup heading="Recent Searches">
+                  <CommandGroup>
                     {recentSearches.map((search, idx) => (
                       <CommandItem
                         key={idx}
@@ -248,7 +248,7 @@ export function SearchBar({ onSearch, onFiltersChange, className }: SearchBarPro
               )}
               
               <CommandSeparator />
-              <CommandGroup heading="Search Tips">
+              <CommandGroup>
                 <div className="px-3 py-2 text-xs text-muted-foreground space-y-1">
                   <p>• Use quotes for exact matches: "bug fix"</p>
                   <p>• Filter by status: status:done</p>

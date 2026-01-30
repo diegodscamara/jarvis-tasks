@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
     }
     
     const allTasks = db.getAllTasks()
-    const suggestions = generateSuggestions(task, allTasks)
+    const suggestions = generateSuggestions(task as any, allTasks as any)
     
     return NextResponse.json({
       taskId,

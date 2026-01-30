@@ -117,7 +117,7 @@ export function AIAssistant({ onTaskCreated, onTasksQueried }: AIAssistantProps)
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
+      <DialogTrigger>
         <Button variant="outline" size="icon" className="relative">
           <Sparkles className="h-4 w-4" />
           <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary animate-pulse" />

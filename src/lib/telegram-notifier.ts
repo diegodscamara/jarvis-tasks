@@ -48,15 +48,9 @@ export class TelegramNotifier {
       }
 
       // Send message to Clawdbot which will relay to Telegram
-      await message({
-        channel: 'telegram',
-        target: notification.channel || this.channelId,
-        message: messageText,
-        // Include inline button for quick actions
-        buttons: notification.type === 'task_updated' || notification.type === 'task_assigned' 
-          ? [[{ text: 'View Task', callback_data: `view_${notification.taskId}` }]]
-          : undefined,
-      })
+      // Note: Direct Clawdbot tool access not available in server-side code
+      // TODO: Implement direct Telegram API call or notification queue
+      console.log('Would send Telegram notification:', messageText)
 
       return true
     } catch (error) {

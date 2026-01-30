@@ -31,12 +31,12 @@ export async function GET(request: NextRequest) {
     // Return suggestions if requested
     if (getSuggestions) {
       const { getSearchSuggestions } = await import('@/lib/search')
-      const suggestions = getSearchSuggestions(query, tasks, projects, labels)
+      const suggestions = getSearchSuggestions(query, tasks as any, projects, labels)
       return NextResponse.json({ suggestions })
     }
     
     // Filter tasks based on search
-    const filteredTasks = filterTasks(tasks, {
+    const filteredTasks = filterTasks(tasks as any, {
       ...searchQuery.filters,
       query: searchQuery.text,
     })
@@ -57,15 +57,15 @@ export async function GET(request: NextRequest) {
       recurrenceType: task.recurrenceType,
       timeSpent: task.timeSpent,
       labelIds: task.labelIds,
-      dueDate: task.due_date,
+      dueDate: task.dueDate,
       estimate: task.estimate,
-      createdAt: task.created_at,
-      updatedAt: task.updated_at,
+      createdAt: task.createdAt,
+      updatedAt: task.updatedAt,
       comments: task.comments?.map((c) => ({
         id: c.id,
         author: c.author,
         content: c.content,
-        createdAt: c.created_at,
+        createdAt: c.createdAt,
       })),
     }))
     

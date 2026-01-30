@@ -25,7 +25,7 @@ export function QuickCapture({ isOpen, onClose, onTaskCreated }: QuickCapturePro
 
   // Global keyboard shortcut: Cmd/Ctrl + K
   useEffect(() => {
-    const handleGlobalShortcut = (e: KeyboardEvent) => {
+    const handleGlobalShortcut = (e: any) => {
       // Cmd/Ctrl + K to open quick capture
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()

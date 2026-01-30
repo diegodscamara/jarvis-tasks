@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Send Telegram notification
-    await notifyTaskEvent('task_created', task.id, task.title, task.status, task.assignee, task.dueDate, body.telegramChannel)
+    await notifyTaskEvent('task_created', task.id, task.title, task.status, task.assignee, task.due_date ?? undefined, body.telegramChannel)
 
     return NextResponse.json({
       id: task.id,
@@ -93,9 +93,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Task ID required' }, { status: 400 })
     }
 
+    // Get current task for notifications
+    const currentTask = db.getTaskById(id)
+
     // Check if status is being changed and validate dependencies
     if (updates.status) {
-      const currentTask = db.getTaskById(id)
       if (currentTask && currentTask.status !== updates.status) {
         const validation = canChangeTaskStatus(id, updates.status)
         if (!validation.allowed) {
@@ -111,10 +113,10 @@ export async function PUT(request: NextRequest) {
     }
 
     // Send Telegram notification for task update or completion
-    if (updates.status && updates.status === 'done' && currentTask.status !== 'done') {
-      await notifyTaskEvent('task_completed', id, currentTask.title, updates.status, currentTask.assignee, currentTask.due_date, body.telegramChannel)
-    } else if (updates.status && currentTask.status !== updates.status) {
-      await notifyTaskEvent('task_updated', id, currentTask.title, updates.status, currentTask.assignee, currentTask.due_date, body.telegramChannel)
+    if (currentTask && updates.status && updates.status === 'done' && currentTask.status !== 'done') {
+      await notifyTaskEvent('task_completed', id, currentTask.title, updates.status, currentTask.assignee, currentTask.due_date ?? undefined, body.telegramChannel)
+    } else if (currentTask && updates.status && currentTask.status !== updates.status) {
+      await notifyTaskEvent('task_updated', id, currentTask.title, updates.status, currentTask.assignee, currentTask.due_date ?? undefined, body.telegramChannel)
     }
 
     const task = db.updateTask(id, {

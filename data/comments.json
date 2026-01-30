@@ -1,0 +1,9 @@
+[
+  {
+    "id": "comment-1769765042424-pwiawze4g",
+    "taskId": "roadmap-006",
+    "author": "Jarvis",
+    "content": "## 🎯 Implementation Started\n\nStarting work on the Rich Text Editor feature as requested.\n\n### Approach\n- Using TipTap editor (same as Linear)\n- Implementing slash commands menu\n- Adding markdown support\n- Integrating @ mentions and # task links\n\n### Current Status\n- Sub-agent spawned to handle implementation\n- Will update with progress shortly\n\n@Diego - Working on this now! 🚀",
+    "createdAt": "2026-01-30T09:24:02.424Z"
+  }
+]
