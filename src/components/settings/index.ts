@@ -1,0 +1,7 @@
+export { AppearanceSection } from './appearance-section'
+export { IntegrationsSection } from './integrations-section'
+export { NotificationsSection } from './notifications-section'
+export { PreferencesSection } from './preferences-section'
+export { SettingRow } from './setting-row'
+export { SettingsSection } from './settings-section'
+export { SettingsSidebar } from './settings-sidebar'

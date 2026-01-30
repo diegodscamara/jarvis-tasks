@@ -86,12 +86,47 @@ export interface Analytics {
   }>
 }
 
+export type ThemeVariantSetting = 'dark' | 'light' | 'midnight' | 'linear-purple' | 'linear-blue'
+
+export type ViewDensity = 'compact' | 'comfortable' | 'spacious'
+export type FontSizeSetting = 'small' | 'medium' | 'large' | 'xlarge'
+export type DefaultViewSetting = 'board' | 'list' | 'calendar'
+export type DateFormatSetting = 'relative' | 'absolute' | 'iso'
+export type TimeFormatSetting = '12h' | '24h'
+
 export interface Settings {
   defaultAssignee: Agent
   showCompletedTasks: boolean
   compactView: boolean
-  theme: 'dark' | 'light'
+  theme: ThemeVariantSetting | string
   accentColor: string
+  fontSize?: FontSizeSetting
+  defaultView?: DefaultViewSetting
+  viewDensity?: ViewDensity
+  defaultPriority?: Priority
+  defaultProject?: string | null
+  autoSave?: boolean
+  autoSaveInterval?: 5 | 10 | 30
+  dateFormat?: DateFormatSetting
+  timeFormat?: TimeFormatSetting
+  weekStartsOn?: 0 | 1
+  notificationsEnabled?: boolean
+  soundEffects?: boolean
+  soundVolume?: number
+  keyboardShortcuts?: boolean
+  taskAssigned?: boolean
+  taskDueSoon?: boolean
+  taskOverdue?: boolean
+  taskComment?: boolean
+  taskCompleted?: boolean
+  dailySummary?: boolean
+  dailySummaryTime?: string
+  telegramEnabled?: boolean
+  telegramChannelId?: string
+  desktopNotifications?: boolean
+  githubEnabled?: boolean
+  githubRepository?: string
+  webhooksEnabled?: boolean
 }
 
 export interface Column {

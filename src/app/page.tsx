@@ -19,7 +19,6 @@ import {
   InProgressIcon,
   KeyboardIcon,
   ListIcon,
-  MoonIcon,
   NotificationIcon,
   PlanningIcon,
   ReviewIcon,
@@ -116,7 +115,6 @@ export default function Home() {
   const [activeProject, setActiveProject] = useState<string | null>(null)
   const [activeLabel, setActiveLabel] = useState<string | null>(null)
   const [showShortcuts, setShowShortcuts] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
   const [showAnalytics, setShowAnalytics] = useState(false)
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -840,6 +838,14 @@ export default function Home() {
                     </SidebarMenuButton>
                   </Link>
                 </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <Link href="/settings" className="w-full">
+                    <SidebarMenuButton>
+                      <SettingsIcon className="w-3.5 h-3.5" />
+                      <span>Settings</span>
+                    </SidebarMenuButton>
+                  </Link>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroup>
           </SidebarContent>
@@ -856,15 +862,16 @@ export default function Home() {
               <AnalyticsIcon size={14} />
               <span>Analytics</span>
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowSettings(true)}
-              className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
-            >
-              <SettingsIcon size={14} />
-              <span>Settings</span>
-            </Button>
+            <Link href="/settings" className="w-full">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+              >
+                <SettingsIcon size={14} />
+                <span>Settings</span>
+              </Button>
+            </Link>
             <div className="text-xs text-muted-foreground text-center mt-2 flex items-center justify-center gap-1">
               Built with <FlashLightIcon size={10} /> by Jarvis
             </div>
@@ -1419,111 +1426,6 @@ export default function Home() {
                   </div>
                 ))
               )}
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showSettings} onOpenChange={setShowSettings}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <SettingsIcon size={18} />
-                Settings
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Default Assignee</label>
-                <Select
-                  value={settings.defaultAssignee}
-                  onValueChange={(v) => updateSettings({ defaultAssignee: v as Agent })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {AGENTS.map((agent) => (
-                      <SelectItem key={agent.id} value={agent.id}>
-                        {agent.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  New tasks will be assigned to this agent by default
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <label className="text-sm font-medium">Show Completed Tasks</label>
-                  <p className="text-xs text-muted-foreground">
-                    Display tasks marked as done in the board view
-                  </p>
-                </div>
-                <Switch
-                  checked={settings.showCompletedTasks}
-                  onCheckedChange={(checked) => updateSettings({ showCompletedTasks: checked })}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <label className="text-sm font-medium">Compact View</label>
-                  <p className="text-xs text-muted-foreground">
-                    Show smaller task cards with less detail
-                  </p>
-                </div>
-                <Switch
-                  checked={settings.compactView}
-                  onCheckedChange={(checked) => updateSettings({ compactView: checked })}
-                />
-              </div>
-
-              <div className="pt-4 border-t border-border">
-                <div>
-                  <label className="text-sm font-medium">Accent Color</label>
-                  <p className="text-xs text-muted-foreground mb-2">
-                    Customize the primary accent color
-                  </p>
-                  <div className="flex gap-2 flex-wrap">
-                    {ACCENT_COLORS.map((color) => (
-                      <button
-                        key={color.value}
-                        onClick={() => {
-                          updateSettings({ accentColor: color.value })
-                          document.documentElement.style.setProperty('--accent-color', color.value)
-                        }}
-                        className={`w-8 h-8 rounded-full border-2 transition-all ${
-                          settings.accentColor === color.value
-                            ? 'border-white scale-110'
-                            : 'border-transparent hover:scale-105'
-                        }`}
-                        style={{ backgroundColor: color.value }}
-                        title={color.name}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-border">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <label className="text-sm font-medium">Theme</label>
-                    <p className="text-xs text-muted-foreground">
-                      Dark theme optimized for reduced eye strain
-                    </p>
-                  </div>
-                  <span className="px-2 py-1 rounded bg-muted text-xs flex items-center gap-1">
-                    <MoonIcon size={12} /> Dark
-                  </span>
-                </div>
-              </div>
-
-              <div className="pt-4 text-xs text-muted-foreground text-center border-t border-border">
-                Settings are saved automatically
-              </div>
             </div>
           </DialogContent>
         </Dialog>
