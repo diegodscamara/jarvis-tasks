@@ -3,6 +3,7 @@
 import { CalendarIcon, ClockIcon, StatusIcon } from '@/components/icons'
 import { Card, CardContent } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
+import { useIsOverdue } from '@/hooks/use-is-overdue'
 import { AGENTS, COLUMNS, PRIORITY_COLORS } from '@/lib/constants'
 import type { Label, Project, Task } from '@/types'
 
@@ -179,7 +180,7 @@ export function TaskCard({
             {task.dueDate && (
               <span
                 className={`px-2 py-0.5 rounded flex items-center gap-1 ${
-                  new Date(task.dueDate) < new Date() ? 'bg-red-500/20 text-red-400' : 'bg-muted'
+                  useIsOverdue(task.dueDate) ? 'bg-red-500/20 text-red-400' : 'bg-muted'
                 }`}
               >
                 <CalendarIcon size={10} />
