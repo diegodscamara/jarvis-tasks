@@ -65,18 +65,44 @@ import {
 } from '@/components/ui/sidebar'
 import { Switch } from '@/components/ui/switch'
 import { Toggle } from '@/components/ui/toggle'
+import { useRealtimeTasks } from '@/hooks/use-realtime-tasks'
 import { ACCENT_COLORS, AGENTS, COLUMNS, DEFAULT_SETTINGS, STORAGE_KEYS } from '@/lib/constants'
 import { filterTasks, parseSearchQuery, rankSearchResults } from '@/lib/search'
+import type { Database } from '@/lib/supabase/types'
 import type {
   Agent,
   Analytics,
   Label,
   Notification,
+  Priority,
   Project,
+  RecurrenceType,
   Settings,
   Status,
   Task,
 } from '@/types'
+
+type TaskRow = Database['public']['Tables']['tasks']['Row']
+
+function mapTaskRowToTask(row: TaskRow): Task {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    priority: row.priority as Priority,
+    status: row.status as Status,
+    assignee: row.assignee as Agent,
+    projectId: row.project_id ?? undefined,
+    dueDate: row.due_date ?? undefined,
+    estimate: row.estimate ?? undefined,
+    parentId: row.parent_id ?? undefined,
+    recurrenceType: (row.recurrence_type as RecurrenceType) ?? undefined,
+    recurrenceInterval: row.recurrence_interval ?? undefined,
+    timeSpent: row.time_spent ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -314,6 +340,18 @@ export default function Home() {
     const interval = setInterval(fetchNotifications, 30000)
     return () => clearInterval(interval)
   }, [fetchLabels, fetchNotifications, fetchProjects, fetchTasks])
+
+  const onTaskCreated = useCallback((row: TaskRow) => {
+    setTasks((prev) => [...prev, mapTaskRowToTask(row)])
+  }, [])
+  const onTaskUpdated = useCallback((row: TaskRow) => {
+    setTasks((prev) => prev.map((t) => (t.id === row.id ? mapTaskRowToTask(row) : t)))
+  }, [])
+  const onTaskDeleted = useCallback((taskId: string) => {
+    setTasks((prev) => prev.filter((t) => t.id !== taskId))
+  }, [])
+
+  useRealtimeTasks({ onTaskCreated, onTaskUpdated, onTaskDeleted })
 
   const markAllNotificationsRead = async () => {
     try {
