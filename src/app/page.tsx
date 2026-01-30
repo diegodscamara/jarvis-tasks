@@ -63,6 +63,7 @@ import {
 } from '@/components/ui/sidebar'
 import { Switch } from '@/components/ui/switch'
 import { Toggle } from '@/components/ui/toggle'
+import { StatsWidget } from '@/components/stats-widget'
 import { ACCENT_COLORS, AGENTS, COLUMNS, DEFAULT_SETTINGS, STORAGE_KEYS } from '@/lib/constants'
 import type {
   Agent,

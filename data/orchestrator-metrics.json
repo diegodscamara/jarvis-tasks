@@ -1,0 +1,14 @@
+{
+  "totalDispatched": 1,
+  "byAgent": {
+    "gemini": {
+      "dispatched": 1,
+      "completed": 1,
+      "failed": 0
+    }
+  },
+  "averageCompletionTime": {
+    "gemini": 58531
+  },
+  "lastUpdated": "2026-01-30T00:23:22.873Z"
+}
