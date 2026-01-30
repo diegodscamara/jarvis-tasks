@@ -36,7 +36,7 @@ export async function POST(request: NextRequest, props: RouteParams) {
       id: comment.id,
       author: comment.author,
       text: comment.content,
-      createdAt: comment.created_at,
+      createdAt: comment.createdAt,
     })
   } catch (error) {
     console.error('Error creating comment:', error)
