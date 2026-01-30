@@ -1,8 +1,44 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { type NextRequest, NextResponse } from 'next/server'
 import * as db from '@/lib/supabase/queries'
 
 interface RouteParams {
   params: Promise<{ id: string }>
+}
+
+// Helper to create notification when user (not jarvis) comments
+async function createNotificationForComment(taskId: string, author: string, content: string) {
+  // Don't notify for jarvis's own comments
+  if (author.toLowerCase() === 'jarvis') return
+
+  try {
+    const notificationsPath = path.join(process.cwd(), 'data', 'notifications.json')
+    let notifications = []
+
+    if (fs.existsSync(notificationsPath)) {
+      notifications = JSON.parse(fs.readFileSync(notificationsPath, 'utf-8') || '[]')
+    }
+
+    // Get task title
+    const tasks = await db.getAllTasks()
+    const task = tasks.find((t) => t.id === taskId)
+
+    notifications.push({
+      id: crypto.randomUUID(),
+      type: 'comment',
+      taskId,
+      taskTitle: task?.title || 'Unknown Task',
+      message: content.substring(0, 200),
+      author,
+      createdAt: new Date().toISOString(),
+      isRead: false,
+    })
+
+    fs.writeFileSync(notificationsPath, JSON.stringify(notifications, null, 2))
+  } catch (e) {
+    console.error('Error creating notification:', e)
+  }
 }
 
 export async function GET(_request: NextRequest, props: RouteParams) {
@@ -24,12 +60,18 @@ export async function POST(request: NextRequest, props: RouteParams) {
     const body = await request.json()
     const id = body.id || crypto.randomUUID()
 
+    const author = body.author || 'Anonymous'
+    const content = body.content || body.text || ''
+
     const comment = await db.createComment({
       id,
       task_id: taskId,
-      author: body.author || 'Anonymous',
-      content: body.content || body.text, // Support both 'content' (current frontend) and 'text' (legacy)
+      author,
+      content, // Support both 'content' (current frontend) and 'text' (legacy)
     })
+
+    // Create notification for non-jarvis comments
+    await createNotificationForComment(taskId, author, content)
 
     // Return in frontend expected format
     return NextResponse.json({
