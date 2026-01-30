@@ -164,7 +164,7 @@
       "title": "📊 Task Properties Extension",
       "description": "Add Linear-style task properties:\n- Estimates (points or time)\n- Due dates with calendar picker\n- Priority (Urgent/High/Medium/Low/No priority)\n- Status workflow (Backlog → Todo → In Progress → In Review → Done → Cancelled)\n- Cycle/Sprint assignment\n- Parent task (for sub-issues)",
       "priority": "high",
-      "status": "done",
+      "status": "review",
       "assignee": "jarvis",
       "project": "jarvis-tasks",
       "labels": [
@@ -172,14 +172,14 @@
         "tasks"
       ],
       "createdAt": "2026-01-29T17:20:00Z",
-      "updatedAt": "2026-01-29T17:20:00Z"
+      "updatedAt": "2026-01-30T09:32:36.042Z"
     },
     {
       "id": "roadmap-006",
       "title": "📝 Rich Text Editor",
       "description": "Implement Linear-style rich text editor for descriptions:\n- Slash commands (/) for:\n  - Headings (h1, h2, h3)\n  - Bullet list, numbered list, checklist\n  - Code block with syntax highlighting\n  - Quote/callout blocks\n  - Dividers\n  - Collapsible sections\n- @ mentions for assignees\n- # links to other tasks\n- Markdown support\n- Image/video uploads\n- File attachments\n- GIF picker",
       "priority": "high",
-      "status": "done",
+      "status": "review",
       "assignee": "jarvis",
       "project": "jarvis-tasks",
       "labels": [
@@ -187,7 +187,7 @@
         "editor"
       ],
       "createdAt": "2026-01-29T17:20:00Z",
-      "updatedAt": "2026-01-30T09:27:51.312Z"
+      "updatedAt": "2026-01-30T09:32:36.041Z"
     },
     {
       "id": "roadmap-007",

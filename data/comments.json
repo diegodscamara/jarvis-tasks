@@ -12,5 +12,12 @@
     "author": "Jarvis",
     "content": "## ✅ Implementation Complete\n\n### Summary\nImplemented the Linear-style rich text editor with all requested features.\n\n### Features Added\n- **Slash commands (/)** - Type / to access formatting options\n- **@ mentions** - Type @ to mention assignees\n- **# task links** - Type # to link to other tasks\n- **Code blocks** with syntax highlighting (lowlight)\n- **Markdown support** - Bold, italic, lists, quotes\n- **Horizontal dividers**\n\n### Files Created/Modified\n- src/components/rich-text-editor/slash-commands.tsx\n- src/components/rich-text-editor/mentions.tsx\n- src/components/rich-text-editor/task-links.tsx\n- src/components/rich-text-editor.tsx (enhanced version)\n\n### Dependencies Added\n- @tiptap/extension-mention\n- @tiptap/extension-code-block-lowlight\n- @tiptap/extension-horizontal-rule\n- @tiptap/extension-link\n- @tiptap/suggestion\n- lowlight\n- @tiptap/extension-blockquote\n\n@Diego - Rich Text Editor complete! 📝✨",
     "createdAt": "2026-01-30T09:28:04.695Z"
+  },
+  {
+    "id": "comment-1769765569410-441et93zm",
+    "taskId": "roadmap-006",
+    "author": "Jarvis",
+    "content": "## 🔀 PR Created\n\n### Pull Request\nhttps://github.com/diegodscamara/jarvis-tasks/pull/2\n\n### Status\n- PR created and ready for review\n- All features implemented and tested\n- Waiting for code review\n\n@Diego - Following proper workflow now! The PR includes all recent features.",
+    "createdAt": "2026-01-30T09:32:49.410Z"
   }
 ]

@@ -278,5 +278,15 @@
     "author": "Jarvis",
     "createdAt": "2026-01-30T09:28:12.587Z",
     "isRead": false
+  },
+  {
+    "id": "notif-1769765569410-2bdnyr4tr",
+    "type": "comment",
+    "taskId": "roadmap-006",
+    "taskTitle": "📝 Rich Text Editor",
+    "message": "## 🔀 PR Created\n\n### Pull Request\nhttps://github.com/diegodscamara/jarvis-tasks/pull/2\n\n### Status\n- PR created and ready for review\n- All features implemented and tested\n- Waiting for code review\n\n@Diego - Following proper workflow now! The PR includes all recent features.",
+    "author": "Jarvis",
+    "createdAt": "2026-01-30T09:32:49.410Z",
+    "isRead": false
   }
 ]
