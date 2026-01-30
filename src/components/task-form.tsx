@@ -21,6 +21,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { RichTextEditor } from '@/components/rich-text-editor'
 import { LinkItem } from '@/components/link-item'
 import { DependencyPicker } from '@/components/dependency-picker'
+import { TimeTracker, TimeEstimate } from '@/components/time-tracker'
 import { AGENTS, COLUMNS } from '@/lib/constants'
 import type {
   Agent,
@@ -292,21 +293,12 @@ export function TaskForm({ task, tasks, projects, labels, onSave, onDelete, onCl
           <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium flex items-center gap-1">
-            <ClockIcon size={14} />
-            Estimate (hours)
-          </label>
-          <Input
-            type="number"
-            min="0"
-            step="0.5"
-            value={estimate}
-            onChange={(e) => setEstimate(e.target.value)}
-            placeholder="e.g. 2"
-          />
-        </div>
       </div>
+
+      <TimeEstimate 
+        estimate={estimate ? parseFloat(estimate) : undefined}
+        onChange={(value) => setEstimate(value?.toString() || '')}
+      />
 
       <div className="space-y-2">
         <label className="text-sm font-medium flex items-center gap-1">
@@ -345,25 +337,14 @@ export function TaskForm({ task, tasks, projects, labels, onSave, onDelete, onCl
       />
 
       {task?.id && (
-        <div className="space-y-2 pt-4 border-t border-border">
-          <label className="text-sm font-medium flex items-center gap-1">
-            <ClockIcon size={14} />
-            Time Spent
-          </label>
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              min="0"
-              className="w-20"
-              value={timeSpent}
-              onChange={(e) => setTimeSpent(e.target.value)}
-            />
-            <span className="text-sm text-muted-foreground">minutes</span>
-            <span className="text-xs text-muted-foreground ml-auto">
-              ({Math.floor(parseInt(timeSpent || '0', 10) / 60)}h{' '}
-              {parseInt(timeSpent || '0', 10) % 60}m)
-            </span>
-          </div>
+        <div className="pt-4 border-t border-border">
+          <TimeTracker 
+            task={{
+              ...task,
+              timeSpent: timeSpent ? parseFloat(timeSpent) / 60 : undefined, // Convert minutes to hours
+            }}
+            onUpdate={(hours) => setTimeSpent((hours * 60).toString())}
+          />
         </div>
       )}
 

@@ -65,7 +65,9 @@ import { Switch } from '@/components/ui/switch'
 import { Toggle } from '@/components/ui/toggle'
 import { StatsWidget } from '@/components/stats-widget'
 import { AIAssistant } from '@/components/ai-assistant'
+import { SearchBar } from '@/components/search-bar'
 import { ACCENT_COLORS, AGENTS, COLUMNS, DEFAULT_SETTINGS, STORAGE_KEYS } from '@/lib/constants'
+import { parseSearchQuery, filterTasks, rankSearchResults } from '@/lib/search'
 import type {
   Agent,
   Analytics,
@@ -139,7 +141,9 @@ export default function Home() {
 
       if (e.key === '/' && !e.metaKey && !e.ctrlKey) {
         e.preventDefault()
-        setShowSearch(true)
+        // Focus search bar
+        const searchInput = document.querySelector('input[placeholder*="Search tasks"]') as HTMLInputElement
+        searchInput?.focus()
         return
       }
 
@@ -406,16 +410,23 @@ export default function Home() {
   const getFilteredTasks = (statusFilter?: Status) => {
     let filtered = tasks
 
+    // Apply smart search if query exists
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter(
-        (t) =>
-          t.title.toLowerCase().includes(query) ||
-          t.description?.toLowerCase().includes(query) ||
-          t.id.toLowerCase().includes(query)
-      )
+      const parsedQuery = parseSearchQuery(searchQuery)
+      
+      // Apply filters from search query
+      filtered = filterTasks(filtered, {
+        ...parsedQuery.filters,
+        query: parsedQuery.text,
+      })
+      
+      // Rank results by relevance
+      if (parsedQuery.text) {
+        filtered = rankSearchResults(filtered, parsedQuery.text)
+      }
     }
 
+    // Apply UI filters (these override search filters)
     if (statusFilter) {
       filtered = filtered.filter((t) => t.status === statusFilter)
     }
@@ -802,50 +813,10 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-2 md:gap-4">
             <div className="relative hidden md:block">
-              {showSearch ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search tasks..."
-                    className="w-48"
-                    autoFocus
-                    onBlur={() => {
-                      if (!searchQuery) setShowSearch(false)
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') {
-                        setShowSearch(false)
-                        setSearchQuery('')
-                      }
-                    }}
-                  />
-                  {searchQuery && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => {
-                        setSearchQuery('')
-                        setShowSearch(false)
-                      }}
-                    >
-                      <CloseIcon size={14} />
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowSearch(true)}
-                  className="text-xs text-muted-foreground"
-                  title="Search (press /)"
-                >
-                  <SearchIcon size={14} /> <Kbd>/</Kbd>
-                </Button>
-              )}
+              <SearchBar
+                onSearch={(query) => setSearchQuery(query)}
+                className="w-64"
+              />
             </div>
             <div className="hidden md:flex items-center bg-muted rounded-md p-0.5">
               <Toggle
