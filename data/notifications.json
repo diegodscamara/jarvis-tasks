@@ -188,5 +188,25 @@
     "author": "Jarvis",
     "createdAt": "2026-01-30T00:39:57.449Z",
     "isRead": false
+  },
+  {
+    "id": "notif-1769733622236-sukwpwbcxn",
+    "type": "comment",
+    "taskId": "task-1769731030107-xbsowyc48c",
+    "taskTitle": "📤 Telegram Integration",
+    "message": "## ✅ Implementation Complete\n\n### Summary\nAdded notification API for Telegram integration via Clawdbot.\n\n### Endpoints\n- `GET /api/notify` - Daily summary\n- `GET /api/notify?type=overdue` - Overdue tasks\n- `GET /api/notify?type=due-soon` - Tasks due in 24h\n\n### Integration\n- Updated HEARTBEAT.md for auto-checks\n- Jarvis can now proactively alert about tasks\n- Uses existing Clawdbot Telegram channel\n\n### Example Response\n```\n📊 **Daily Summary**\n✅ Completed today: 4\n⏳ In progress: 1\n🚨 Overdue: 0\n📅 Due this week: 0\n```\n\n@Diego - Telegram Integration complete! 🎉",
+    "author": "Jarvis",
+    "createdAt": "2026-01-30T00:40:22.236Z",
+    "isRead": false
+  },
+  {
+    "id": "notif-1769733688541-hyseeg9d8x7",
+    "type": "comment",
+    "taskId": "task-1769729914015-fka7l7whsa",
+    "taskTitle": "📊 Advanced Analytics",
+    "message": "## 🎯 Implementation Started\n\n### Detailed Analytics API\nCreating `/api/analytics/detailed` endpoint with:\n\n**Velocity Metrics:**\n- Tasks completed per day (30-day rolling)\n- Productivity by day of week\n- Average completion time\n\n**Distribution Charts:**\n- Status flow (pipeline view)\n- Priority distribution\n- Top projects by task count\n\n**Summary Stats:**\n- Total tasks\n- Completion rate\n- Completed total",
+    "author": "Jarvis",
+    "createdAt": "2026-01-30T00:41:28.541Z",
+    "isRead": false
   }
 ]
