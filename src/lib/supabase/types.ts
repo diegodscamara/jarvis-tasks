@@ -590,6 +590,65 @@ export type Database = {
           },
         ]
       }
+      goals: {
+        Row: {
+          id: string
+          title: string
+          description: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      goal_key_results: {
+        Row: {
+          id: string
+          goal_id: string
+          title: string
+          done: boolean
+          position: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          goal_id: string
+          title: string
+          done?: boolean
+          position?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          goal_id?: string
+          title?: string
+          done?: boolean
+          position?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'goal_key_results_goal_id_fkey'
+            columns: ['goal_id']
+            isOneToOne: false
+            referencedRelation: 'goals'
+            referencedColumns: ['id']
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

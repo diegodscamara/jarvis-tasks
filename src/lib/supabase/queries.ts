@@ -373,3 +373,141 @@ export async function deleteLink(id: string): Promise<boolean> {
 
   return !error
 }
+
+type Goal = Database['public']['Tables']['goals']['Row']
+type GoalKeyResult = Database['public']['Tables']['goal_key_results']['Row']
+
+export interface GoalWithKeyResults extends Goal {
+  key_results: GoalKeyResult[]
+}
+
+export async function getAllGoals(): Promise<GoalWithKeyResults[]> {
+  const supabase = await createSupabaseServerClient()
+  const { data: goals, error: goalsError } = await supabase
+    .from('goals')
+    .select('*')
+    .order('updated_at', { ascending: false })
+
+  if (goalsError) throw goalsError
+  if (!goals?.length) return []
+
+  const { data: keyResults, error: krError } = await supabase
+    .from('goal_key_results')
+    .select('*')
+    .order('position')
+    .order('created_at')
+
+  if (krError) throw krError
+
+  return goals.map((goal) => ({
+    ...goal,
+    key_results: (keyResults ?? []).filter((kr) => kr.goal_id === goal.id),
+  }))
+}
+
+export async function getGoalById(id: string): Promise<GoalWithKeyResults | undefined> {
+  const supabase = await createSupabaseServerClient()
+  const { data: goal, error: goalError } = await supabase
+    .from('goals')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (goalError || !goal) return undefined
+
+  const { data: keyResults } = await supabase
+    .from('goal_key_results')
+    .select('*')
+    .eq('goal_id', id)
+    .order('position')
+    .order('created_at')
+
+  return {
+    ...goal,
+    key_results: keyResults ?? [],
+  }
+}
+
+export async function createGoal(
+  goal: Omit<Database['public']['Tables']['goals']['Insert'], 'created_at' | 'updated_at'>
+): Promise<Goal> {
+  const supabase = await createSupabaseServerClient()
+  const now = new Date().toISOString()
+  const { data, error } = await supabase
+    .from('goals')
+    .insert({ ...goal, created_at: now, updated_at: now })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateGoal(
+  id: string,
+  updates: Partial<Pick<Goal, 'title' | 'description'>>
+): Promise<Goal | undefined> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('goals')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) return undefined
+  return data
+}
+
+export async function deleteGoal(id: string): Promise<boolean> {
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.from('goals').delete().eq('id', id)
+
+  return !error
+}
+
+export async function getKeyResultsForGoal(goalId: string): Promise<GoalKeyResult[]> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('goal_key_results')
+    .select('*')
+    .eq('goal_id', goalId)
+    .order('position')
+    .order('created_at')
+
+  if (error) throw error
+  return data ?? []
+}
+
+export async function createKeyResult(
+  kr: Omit<Database['public']['Tables']['goal_key_results']['Insert'], 'created_at'>
+): Promise<GoalKeyResult> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.from('goal_key_results').insert(kr).select().single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateKeyResult(
+  id: string,
+  updates: Partial<Pick<GoalKeyResult, 'title' | 'done' | 'position'>>
+): Promise<GoalKeyResult | undefined> {
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('goal_key_results')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) return undefined
+  return data
+}
+
+export async function deleteKeyResult(id: string): Promise<boolean> {
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.from('goal_key_results').delete().eq('id', id)
+
+  return !error
+}

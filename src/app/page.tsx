@@ -788,6 +788,14 @@ export default function Home() {
               <SidebarGroupLabel>System</SidebarGroupLabel>
               <SidebarMenu>
                 <SidebarMenuItem>
+                  <Link href="/goals" className="w-full">
+                    <SidebarMenuButton>
+                      <PlanningIcon className="w-3.5 h-3.5" />
+                      <span>Goals</span>
+                    </SidebarMenuButton>
+                  </Link>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
                   <Link href="/docs" className="w-full">
                     <SidebarMenuButton>
                       <svg
