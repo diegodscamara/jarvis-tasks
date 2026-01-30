@@ -20,6 +20,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { RichTextEditor } from '@/components/rich-text-editor'
 import { LinkItem } from '@/components/link-item'
+import { DependencyPicker } from '@/components/dependency-picker'
 import { AGENTS, COLUMNS } from '@/lib/constants'
 import type {
   Agent,
@@ -34,6 +35,7 @@ import type {
 
 interface TaskFormProps {
   task: Task | null
+  tasks: Task[]
   projects: Project[]
   labels: Label[]
   onSave: (task: Partial<Task>) => void
@@ -41,7 +43,7 @@ interface TaskFormProps {
   onClose: () => void
 }
 
-export function TaskForm({ task, projects, labels, onSave, onDelete, onClose }: TaskFormProps) {
+export function TaskForm({ task, tasks, projects, labels, onSave, onDelete, onClose }: TaskFormProps) {
   const [title, setTitle] = useState(task?.title || '')
   const [description, setDescription] = useState(task?.description || '')
   const [priority, setPriority] = useState<Priority>(task?.priority || 'medium')
@@ -60,6 +62,7 @@ export function TaskForm({ task, projects, labels, onSave, onDelete, onClose }: 
   const [links, setLinks] = useState<{ id: string; url: string; title: string | null; type: string; icon: string }[]>([])
   const [newLinkUrl, setNewLinkUrl] = useState('')
   const [showAddLink, setShowAddLink] = useState(false)
+  const [selectedDependencies, setSelectedDependencies] = useState<string[]>(task?.dependsOn || [])
 
   // Fetch links when task changes
   useEffect(() => {
@@ -104,6 +107,16 @@ export function TaskForm({ task, projects, labels, onSave, onDelete, onClose }: 
     )
   }
 
+  const handleAddDependency = (taskId: string) => {
+    if (!selectedDependencies.includes(taskId)) {
+      setSelectedDependencies([...selectedDependencies, taskId])
+    }
+  }
+
+  const handleRemoveDependency = (taskId: string) => {
+    setSelectedDependencies(selectedDependencies.filter(id => id !== taskId))
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSave({
@@ -120,6 +133,7 @@ export function TaskForm({ task, projects, labels, onSave, onDelete, onClose }: 
       recurrenceType: recurrenceType !== 'none' ? recurrenceType : undefined,
       timeSpent: timeSpent ? parseInt(timeSpent, 10) : undefined,
       comments,
+      dependsOn: selectedDependencies.length > 0 ? selectedDependencies : undefined,
     })
   }
 
@@ -320,6 +334,15 @@ export function TaskForm({ task, projects, labels, onSave, onDelete, onClose }: 
           </p>
         )}
       </div>
+
+      <DependencyPicker
+        currentTaskId={task?.id}
+        selectedDependencies={selectedDependencies}
+        availableTasks={tasks}
+        projects={projects}
+        onAdd={handleAddDependency}
+        onRemove={handleRemoveDependency}
+      />
 
       {task?.id && (
         <div className="space-y-2 pt-4 border-t border-border">

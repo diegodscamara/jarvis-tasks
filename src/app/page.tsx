@@ -333,11 +333,44 @@ export default function Home() {
 
   const saveTask = async (task: Partial<Task>) => {
     const method = task.id ? 'PUT' : 'POST'
-    await fetch('/api/tasks', {
+    const response = await fetch('/api/tasks', {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(task),
     })
+    
+    if (response.ok) {
+      const savedTask = await response.json()
+      
+      // If dependencies were provided, update them via the dependencies API
+      if (task.dependsOn && savedTask.id) {
+        // First, get current dependencies
+        const depsResponse = await fetch(`/api/tasks/${savedTask.id}/dependencies`)
+        const depsData = await depsResponse.json()
+        const currentDeps = depsData.dependsOn || []
+        
+        // Remove dependencies that are no longer selected
+        for (const oldDep of currentDeps) {
+          if (!task.dependsOn.includes(oldDep)) {
+            await fetch(`/api/tasks/${savedTask.id}/dependencies?dependsOnId=${oldDep}`, {
+              method: 'DELETE',
+            })
+          }
+        }
+        
+        // Add new dependencies
+        for (const newDep of task.dependsOn) {
+          if (!currentDeps.includes(newDep)) {
+            await fetch(`/api/tasks/${savedTask.id}/dependencies`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ dependsOnId: newDep }),
+            })
+          }
+        }
+      }
+    }
+    
     await fetchTasks()
     setShowModal(false)
     setEditingTask(null)
@@ -1021,6 +1054,7 @@ export default function Home() {
           <DialogPanel className="max-h-[calc(90vh-120px)]">
             <TaskForm
               task={editingTask}
+              tasks={tasks}
               projects={projects}
               labels={labels}
               onSave={saveTask}

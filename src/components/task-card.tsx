@@ -57,6 +57,16 @@ export function TaskCard({
 
         <div className="flex-1 min-w-0 flex items-center gap-2">
           <span className="font-medium text-sm truncate">{task.title}</span>
+          {task.dependsOn && task.dependsOn.length > 0 && (
+            <span className="text-xs text-orange-400" title={`Blocked by ${task.dependsOn.length} task(s)`}>
+              🔒{task.dependsOn.length}
+            </span>
+          )}
+          {task.blockedBy && task.blockedBy.length > 0 && (
+            <span className="text-xs text-purple-400" title={`Blocking ${task.blockedBy.length} task(s)`}>
+              🚫{task.blockedBy.length}
+            </span>
+          )}
           {labels.slice(0, 2).map((label) => (
             <span
               key={label.id}
@@ -148,6 +158,18 @@ export function TaskCard({
           )}
           <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
             <span className="px-2 py-0.5 rounded bg-muted">{agent?.name || task.assignee}</span>
+            {task.dependsOn && task.dependsOn.length > 0 && (
+              <span className="px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 flex items-center gap-1">
+                <span>🔒</span>
+                <span>{task.dependsOn.length}</span>
+              </span>
+            )}
+            {task.blockedBy && task.blockedBy.length > 0 && (
+              <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 flex items-center gap-1">
+                <span>🚫</span>
+                <span>{task.blockedBy.length}</span>
+              </span>
+            )}
             {task.dueDate && (
               <span
                 className={`px-2 py-0.5 rounded flex items-center gap-1 ${

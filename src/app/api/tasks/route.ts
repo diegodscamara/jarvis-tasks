@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import * as db from '@/db/queries'
+import { canChangeTaskStatus, getTaskDependencies, getTaskDependents } from '@/lib/task-dependencies'
 
 export async function GET() {
   try {
@@ -21,6 +22,9 @@ export async function GET() {
       estimate: task.estimate,
       createdAt: task.created_at,
       updatedAt: task.updated_at,
+      // Add dependencies information
+      dependsOn: getTaskDependencies(task.id),
+      blockedBy: getTaskDependents(task.id),
       comments: task.comments?.map((c) => ({
         id: c.id,
         author: c.author,
@@ -83,6 +87,23 @@ export async function PUT(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json({ error: 'Task ID required' }, { status: 400 })
+    }
+
+    // Check if status is being changed and validate dependencies
+    if (updates.status) {
+      const currentTask = db.getTaskById(id)
+      if (currentTask && currentTask.status !== updates.status) {
+        const validation = canChangeTaskStatus(id, updates.status)
+        if (!validation.allowed) {
+          return NextResponse.json(
+            { 
+              error: 'Status change blocked',
+              reason: validation.reason,
+            },
+            { status: 400 }
+          )
+        }
+      }
     }
 
     const task = db.updateTask(id, {
