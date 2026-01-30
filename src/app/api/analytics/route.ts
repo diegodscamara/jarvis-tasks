@@ -3,14 +3,13 @@ import * as db from '@/db/queries'
 
 export async function GET() {
   try {
-    const tasks = db.getAllTasks()
-    const projects = db.getAllProjects()
-    const labels = db.getAllLabels()
+    const tasks = await db.getAllTasks()
+    const projects = await db.getAllProjects()
+    const labels = await db.getAllLabels()
 
     // Status breakdown
     const statusCounts = {
       backlog: tasks.filter((t) => t.status === 'backlog').length,
-      planning: tasks.filter((t) => t.status === 'planning').length,
       todo: tasks.filter((t) => t.status === 'todo').length,
       in_progress: tasks.filter((t) => t.status === 'in_progress').length,
       review: tasks.filter((t) => t.status === 'review').length,
@@ -45,7 +44,7 @@ export async function GET() {
         id: label.id,
         name: label.name,
         color: label.color,
-        count: tasks.filter((t) => t.labelIds?.includes(label.id)).length,
+        count: tasks.filter((t) => (t as any).labels?.some((l: any) => l.id === label.id)).length,
       }))
       .sort((a, b) => b.count - a.count)
 
@@ -66,16 +65,16 @@ export async function GET() {
       tasks.length > 0 ? Math.round((statusCounts.done / tasks.length) * 100) : 0
 
     // Tasks with due dates
-    const tasksWithDueDate = tasks.filter((t) => t.due_date)
+    const tasksWithDueDate = tasks.filter((t) => t.dueDate)
     const overdueTasks = tasksWithDueDate.filter(
-      (t) => t.status !== 'done' && new Date(t.due_date!) < new Date()
+      (t) => t.status !== 'done' && new Date(t.dueDate!) < new Date()
     ).length
 
     // Recently completed (last 7 days)
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
     const recentlyCompleted = tasks.filter(
-      (t) => t.status === 'done' && new Date(t.updated_at) > sevenDaysAgo
+      (t) => t.status === 'done' && new Date(t.updatedAt) > sevenDaysAgo
     ).length
 
     return NextResponse.json({

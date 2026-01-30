@@ -1,5 +1,5 @@
-import { type NextRequest, NextResponse } from 'next/server'
 import { exec } from 'child_process'
+import { type NextRequest, NextResponse } from 'next/server'
 import { promisify } from 'util'
 
 const execAsync = promisify(exec)
@@ -20,13 +20,13 @@ interface PRData {
 
 // Parse GitHub PR URL to extract owner, repo, and PR number
 function parseGitHubUrl(url: string): { owner: string; repo: string; number: number } | null {
-  const match = url.match(/github\.com\/([^\/]+)\/([^\/]+)\/pull\/(\d+)/)
+  const match = url.match(/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/)
   if (!match) return null
-  
+
   return {
     owner: match[1],
     repo: match[2],
-    number: parseInt(match[3], 10)
+    number: parseInt(match[3], 10),
   }
 }
 
@@ -34,32 +34,32 @@ function parseGitHubUrl(url: string): { owner: string; repo: string; number: num
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const url = searchParams.get('url')
-  
+
   if (!url) {
     return NextResponse.json({ error: 'URL parameter required' }, { status: 400 })
   }
-  
+
   const parsed = parseGitHubUrl(url)
   if (!parsed) {
     return NextResponse.json({ error: 'Invalid GitHub PR URL' }, { status: 400 })
   }
-  
+
   const { owner, repo, number } = parsed
   const repoSlug = `${owner}/${repo}`
-  
+
   try {
     // Use GitHub CLI to get PR details (more reliable and uses existing auth)
     const { stdout } = await execAsync(
       `gh pr view ${number} --repo ${repoSlug} --json number,title,state,isDraft,statusCheckRollup,headRefName,baseRefName,url,createdAt,updatedAt,mergedAt`
     )
-    
+
     const prData: PRData = JSON.parse(stdout)
-    
+
     // Determine status and styling
     let status: string
     let statusIcon: string
     let statusColor: string
-    
+
     if (prData.mergedAt) {
       status = 'merged'
       statusIcon = '🟣'
@@ -77,11 +77,11 @@ export async function GET(request: NextRequest) {
       statusIcon = '🟢'
       statusColor = '#10b981'
     }
-    
+
     // Determine checks status
     let checksStatus = 'unknown'
     let checksIcon = '⚪'
-    
+
     if (prData.statusCheckRollup) {
       switch (prData.statusCheckRollup.toUpperCase()) {
         case 'SUCCESS':
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
           break
       }
     }
-    
+
     return NextResponse.json({
       number: prData.number,
       title: prData.title,
@@ -116,13 +116,16 @@ export async function GET(request: NextRequest) {
       url: prData.url,
       createdAt: prData.createdAt,
       updatedAt: prData.updatedAt,
-      mergedAt: prData.mergedAt
+      mergedAt: prData.mergedAt,
     })
   } catch (error) {
     console.error('Error fetching PR status:', error)
-    return NextResponse.json({ 
-      error: 'Failed to fetch PR status',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: 'Failed to fetch PR status',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    )
   }
 }

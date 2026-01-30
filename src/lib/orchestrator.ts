@@ -1,6 +1,6 @@
 /**
  * Jarvis Orchestrator - Sub-Agent Dispatch System
- * 
+ *
  * Manages task delegation to different AI agents:
  * - gemini: Research, analysis, planning (via Gemini CLI)
  * - copilot: Coding suggestions (via gh copilot)
@@ -8,7 +8,7 @@
  * - jarvis: Orchestration only (Opus - expensive, use sparingly)
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
 const DATA_DIR = path.join(process.cwd(), 'data')
@@ -131,27 +131,30 @@ export function saveMetrics(metrics: OrchestratorMetrics): void {
 export function canDispatch(agent: string): boolean {
   const config = AGENT_CONFIG[agent as keyof typeof AGENT_CONFIG]
   if (!config) return false
-  
+
   const sessions = loadSessions()
-  const activeForAgent = sessions.filter(
-    (s) => s.agent === agent && s.status === 'running'
-  ).length
-  
+  const activeForAgent = sessions.filter((s) => s.agent === agent && s.status === 'running').length
+
   return activeForAgent < config.maxConcurrent
 }
 
 // Acquire a file lock
-export function acquireLock(filePath: string, taskId: string, agent: string, durationMinutes = 30): boolean {
+export function acquireLock(
+  filePath: string,
+  taskId: string,
+  agent: string,
+  durationMinutes = 30
+): boolean {
   const locks = loadLocks()
   const existing = locks.find((l) => l.path === filePath)
-  
+
   if (existing) {
     return false // Already locked
   }
-  
+
   const now = new Date()
   const expires = new Date(now.getTime() + durationMinutes * 60 * 1000)
-  
+
   locks.push({
     path: filePath,
     taskId,
@@ -159,7 +162,7 @@ export function acquireLock(filePath: string, taskId: string, agent: string, dur
     lockedAt: now.toISOString(),
     expiresAt: expires.toISOString(),
   })
-  
+
   saveLocks(locks)
   return true
 }
@@ -172,7 +175,12 @@ export function releaseLock(filePath: string, taskId: string): void {
 }
 
 // Record a dispatch
-export function recordDispatch(taskId: string, taskTitle: string, agent: string, sessionKey?: string): void {
+export function recordDispatch(
+  taskId: string,
+  taskTitle: string,
+  agent: string,
+  sessionKey?: string
+): void {
   const sessions = loadSessions()
   sessions.push({
     taskId,
@@ -183,7 +191,7 @@ export function recordDispatch(taskId: string, taskTitle: string, agent: string,
     status: 'running',
   })
   saveSessions(sessions)
-  
+
   // Update metrics
   const metrics = loadMetrics()
   metrics.totalDispatched++
@@ -198,13 +206,13 @@ export function recordDispatch(taskId: string, taskTitle: string, agent: string,
 export function completeSession(taskId: string, result: string, success = true): void {
   const sessions = loadSessions()
   const session = sessions.find((s) => s.taskId === taskId && s.status === 'running')
-  
+
   if (session) {
     session.status = success ? 'completed' : 'failed'
     session.result = result
     session.completedAt = new Date().toISOString()
     saveSessions(sessions)
-    
+
     // Update metrics
     const metrics = loadMetrics()
     if (metrics.byAgent[session.agent]) {
@@ -213,7 +221,7 @@ export function completeSession(taskId: string, result: string, success = true):
       } else {
         metrics.byAgent[session.agent].failed++
       }
-      
+
       // Calculate average completion time
       const completedSessions = sessions.filter(
         (s) => s.agent === session.agent && s.status === 'completed' && s.completedAt
@@ -232,45 +240,50 @@ export function completeSession(taskId: string, result: string, success = true):
 }
 
 // Get pending tasks for dispatch (to be called from API)
-export function getDispatchableTasks(tasks: Array<{ id: string; title: string; status: string; assignee: string }>): Array<{ task: typeof tasks[0]; agent: string }> {
-  const dispatchable: Array<{ task: typeof tasks[0]; agent: string }> = []
+export function getDispatchableTasks(
+  tasks: Array<{ id: string; title: string; status: string; assignee: string }>
+): Array<{ task: (typeof tasks)[0]; agent: string }> {
+  const dispatchable: Array<{ task: (typeof tasks)[0]; agent: string }> = []
   const sessions = loadSessions()
-  
+
   for (const task of tasks) {
     // Only dispatch 'todo' tasks assigned to non-jarvis agents
     if (task.status !== 'todo') continue
     if (task.assignee === 'jarvis' || task.assignee === 'diego') continue
-    
+
     // Check if already dispatched
     const existing = sessions.find((s) => s.taskId === task.id && s.status === 'running')
     if (existing) continue
-    
+
     // Check if we can dispatch to this agent
     if (!canDispatch(task.assignee)) continue
-    
+
     dispatchable.push({ task, agent: task.assignee })
   }
-  
+
   return dispatchable
 }
 
 // Generate dispatch command based on agent type
-export function generateDispatchCommand(task: { id: string; title: string; description?: string }, agent: string): string {
+export function generateDispatchCommand(
+  task: { id: string; title: string; description?: string },
+  agent: string
+): string {
   const taskContext = `Task ID: ${task.id}\nTitle: ${task.title}\n${task.description ? `Description: ${task.description}` : ''}`
-  
+
   switch (agent) {
     case 'gemini':
       // Use Gemini CLI via Mac SSH
-      return `ssh mac "source ~/.zshenv && gemini --allowed-mcp-server-names=none -p '${taskContext.replace(/'/g, "\\'")}'"` 
-    
+      return `ssh mac "source ~/.zshenv && gemini --allowed-mcp-server-names=none -p '${taskContext.replace(/'/g, "\\'")}'"`
+
     case 'copilot':
       // Use GitHub Copilot
       return `gh copilot suggest "${task.title.replace(/"/g, '\\"')}"`
-    
+
     case 'claude':
       // Use sessions_spawn (handled differently in the API)
       return `sessions_spawn`
-    
+
     default:
       return ''
   }

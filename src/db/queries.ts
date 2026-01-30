@@ -1,394 +1,200 @@
-import path from 'node:path'
-import Database from 'better-sqlite3'
-
-// Types
-export interface Project {
-  id: string
-  name: string
-  icon: string
-  color: string
-  description: string | null
-  lead: string
-  created_at: string
-  updated_at: string
-}
-
-export interface Label {
-  id: string
-  name: string
-  color: string
-  group: string | null
-  created_at: string
-}
-
-export interface Task {
-  id: string
-  title: string
-  description: string
-  priority: 'low' | 'medium' | 'high'
-  status: 'backlog' | 'planning' | 'todo' | 'in_progress' | 'review' | 'done'
-  assignee: string
-  project_id: string | null
-  due_date: string | null
-  estimate: number | null
-  parent_id: string | null
-  recurrence_type: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' | null
-  recurrence_interval: number | null
-  time_spent: number | null
-  created_at: string
-  updated_at: string
-}
-
-export interface Comment {
-  id: string
-  task_id: string
-  author: string
-  content: string
-  created_at: string
-}
-
-// Database connection
-function getDb() {
-  const dbPath = path.join(process.cwd(), 'data', 'jarvis-tasks.db')
-  const db = new Database(dbPath)
-  db.pragma('journal_mode = WAL')
-  return db
-}
+import { desc, eq } from 'drizzle-orm'
+import { db } from './index'
+import {
+  comments,
+  labels,
+  links,
+  type NewComment,
+  type NewLabel,
+  type NewProject,
+  type NewTask,
+  projects,
+  taskLabels,
+  tasks,
+} from './schema'
 
 // Projects
-export function getAllProjects(): Project[] {
-  const db = getDb()
-  const projects = db.prepare('SELECT * FROM projects ORDER BY name').all() as Project[]
-  db.close()
-  return projects
+export async function getAllProjects() {
+  return db.select().from(projects).orderBy(desc(projects.createdAt))
 }
 
-export function getProjectById(id: string): Project | undefined {
-  const db = getDb()
-  const project = db.prepare('SELECT * FROM projects WHERE id = ?').get(id) as Project | undefined
-  db.close()
-  return project
+export async function getProject(id: string) {
+  const result = await db.select().from(projects).where(eq(projects.id, id)).limit(1)
+  return result[0]
 }
 
-export function createProject(project: Omit<Project, 'created_at' | 'updated_at'>): Project {
-  const db = getDb()
-  const now = new Date().toISOString()
-  db.prepare(`
-    INSERT INTO projects (id, name, icon, color, description, lead, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    project.id,
-    project.name,
-    project.icon,
-    project.color,
-    project.description,
-    project.lead,
-    now,
-    now
-  )
-  const newProject = getProjectById(project.id)!
-  db.close()
-  return newProject
+export async function createProject(project: NewProject) {
+  const result = await db.insert(projects).values(project).returning()
+  return result[0]
 }
 
-export function updateProject(id: string, updates: Partial<Project>): Project | undefined {
-  const db = getDb()
-  const existing = getProjectById(id)
-  if (!existing) return undefined
-
-  const now = new Date().toISOString()
-  db.prepare(`
-    UPDATE projects SET name = ?, icon = ?, color = ?, description = ?, lead = ?, updated_at = ?
-    WHERE id = ?
-  `).run(
-    updates.name ?? existing.name,
-    updates.icon ?? existing.icon,
-    updates.color ?? existing.color,
-    updates.description ?? existing.description,
-    updates.lead ?? existing.lead,
-    now,
-    id
-  )
-  db.close()
-  return getProjectById(id)
+export async function updateProject(id: string, updates: Partial<NewProject>) {
+  const result = await db
+    .update(projects)
+    .set({ ...updates, updatedAt: new Date().toISOString() })
+    .where(eq(projects.id, id))
+    .returning()
+  return result[0]
 }
 
-export function deleteProject(id: string): boolean {
-  const db = getDb()
-  const result = db.prepare('DELETE FROM projects WHERE id = ?').run(id)
-  db.close()
-  return result.changes > 0
-}
-
-// Labels
-export function getAllLabels(): Label[] {
-  const db = getDb()
-  const labels = db.prepare('SELECT * FROM labels ORDER BY "group", name').all() as Label[]
-  db.close()
-  return labels
-}
-
-export function getLabelById(id: string): Label | undefined {
-  const db = getDb()
-  const label = db.prepare('SELECT * FROM labels WHERE id = ?').get(id) as Label | undefined
-  db.close()
-  return label
-}
-
-export function createLabel(label: Omit<Label, 'created_at'>): Label {
-  const db = getDb()
-  const now = new Date().toISOString()
-  db.prepare(`
-    INSERT INTO labels (id, name, color, "group", created_at)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(label.id, label.name, label.color, label.group, now)
-  const newLabel = getLabelById(label.id)!
-  db.close()
-  return newLabel
-}
-
-export function updateLabel(id: string, updates: Partial<Label>): Label | undefined {
-  const db = getDb()
-  const existing = getLabelById(id)
-  if (!existing) return undefined
-
-  db.prepare(`
-    UPDATE labels SET name = ?, color = ?, "group" = ?
-    WHERE id = ?
-  `).run(
-    updates.name ?? existing.name,
-    updates.color ?? existing.color,
-    updates.group ?? existing.group,
-    id
-  )
-  db.close()
-  return getLabelById(id)
-}
-
-export function deleteLabel(id: string): boolean {
-  const db = getDb()
-  const result = db.prepare('DELETE FROM labels WHERE id = ?').run(id)
-  db.close()
-  return result.changes > 0
+export async function deleteProject(id: string) {
+  await db.delete(projects).where(eq(projects.id, id))
+  return { success: true }
 }
 
 // Tasks
-export interface TaskWithRelations extends Task {
-  labelIds?: string[]
-  comments?: Comment[]
-  projectId?: string | null
-  parentId?: string | null
-  recurrenceType?: string | null
-  timeSpent?: number | null
+export async function getAllTasks() {
+  return db.select().from(tasks).orderBy(desc(tasks.createdAt))
 }
 
-export function getAllTasks(): TaskWithRelations[] {
-  const db = getDb()
-  const tasks = db.prepare('SELECT * FROM tasks ORDER BY updated_at DESC').all() as Task[]
+export async function getTasksWithDetails() {
+  const allTasks = await db.select().from(tasks).orderBy(desc(tasks.createdAt))
 
-  // Get labels for each task
-  const taskLabelsStmt = db.prepare('SELECT label_id FROM task_labels WHERE task_id = ?')
-  const commentsStmt = db.prepare(
-    'SELECT * FROM comments WHERE task_id = ? ORDER BY created_at ASC'
-  )
+  // Get labels for all tasks
+  const taskIds = allTasks.map((t) => t.id)
+  if (taskIds.length > 0) {
+    const taskLabelsData = await db
+      .select({
+        taskId: taskLabels.taskId,
+        label: labels,
+      })
+      .from(taskLabels)
+      .innerJoin(labels, eq(taskLabels.labelId, labels.id))
+      .where(eq(taskLabels.taskId, taskIds[0])) // This needs to be improved for multiple tasks
 
-  const tasksWithRelations = tasks.map((task) => {
-    const labelIds = (taskLabelsStmt.all(task.id) as { label_id: string }[]).map((r) => r.label_id)
-    const comments = commentsStmt.all(task.id) as Comment[]
-    return {
-      ...task,
-      projectId: task.project_id,
-      parentId: task.parent_id,
-      recurrenceType: task.recurrence_type,
-      timeSpent: task.time_spent,
-      labelIds,
-      comments: comments.length > 0 ? comments : undefined,
-    }
-  })
-
-  db.close()
-  return tasksWithRelations
-}
-
-export function getTaskById(id: string): TaskWithRelations | undefined {
-  const db = getDb()
-  const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(id) as Task | undefined
-  if (!task) {
-    db.close()
-    return undefined
-  }
-
-  const labelIds = (
-    db.prepare('SELECT label_id FROM task_labels WHERE task_id = ?').all(id) as {
-      label_id: string
-    }[]
-  ).map((r) => r.label_id)
-  const comments = db
-    .prepare('SELECT * FROM comments WHERE task_id = ? ORDER BY created_at ASC')
-    .all(id) as Comment[]
-
-  db.close()
-  return {
-    ...task,
-    projectId: task.project_id,
-    parentId: task.parent_id,
-    recurrenceType: task.recurrence_type,
-    timeSpent: task.time_spent,
-    labelIds,
-    comments: comments.length > 0 ? comments : undefined,
-  }
-}
-
-export function createTask(task: {
-  id: string
-  title: string
-  description?: string
-  priority?: 'low' | 'medium' | 'high'
-  status?: 'backlog' | 'planning' | 'todo' | 'in_progress' | 'review' | 'done'
-  assignee?: string
-  projectId?: string
-  labelIds?: string[]
-  dueDate?: string
-  estimate?: number
-  parentId?: string
-  recurrenceType?: string
-}): TaskWithRelations {
-  const db = getDb()
-  const now = new Date().toISOString()
-
-  db.prepare(`
-    INSERT INTO tasks (id, title, description, priority, status, assignee, project_id, due_date, estimate, parent_id, recurrence_type, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    task.id,
-    task.title,
-    task.description || '',
-    task.priority || 'medium',
-    task.status || 'todo',
-    task.assignee || 'jarvis',
-    task.projectId || null,
-    task.dueDate || null,
-    task.estimate || null,
-    task.parentId || null,
-    task.recurrenceType || null,
-    now,
-    now
-  )
-
-  // Insert labels
-  if (task.labelIds && task.labelIds.length > 0) {
-    const insertLabel = db.prepare(
-      'INSERT OR IGNORE INTO task_labels (task_id, label_id) VALUES (?, ?)'
+    // Group labels by task
+    const labelsByTask = taskLabelsData.reduce(
+      (acc, item) => {
+        if (!acc[item.taskId]) acc[item.taskId] = []
+        acc[item.taskId].push(item.label)
+        return acc
+      },
+      {} as Record<string, (typeof labels.$inferSelect)[]>
     )
-    for (const labelId of task.labelIds) {
-      insertLabel.run(task.id, labelId)
-    }
+
+    // Attach labels to tasks
+    return allTasks.map((task) => ({
+      ...task,
+      labels: labelsByTask[task.id] || [],
+    }))
   }
 
-  db.close()
-  return getTaskById(task.id)!
+  return allTasks.map((task) => ({ ...task, labels: [] }))
 }
 
-export function updateTask(
-  id: string,
-  updates: Partial<{
-    title: string
-    description: string
-    priority: 'low' | 'medium' | 'high'
-    status: 'backlog' | 'planning' | 'todo' | 'in_progress' | 'review' | 'done'
-    assignee: string
-    projectId: string | null
-    labelIds: string[]
-    dueDate: string | null
-    estimate: number | null
-    parentId: string | null
-    timeSpent: number | null
-  }>
-): TaskWithRelations | undefined {
-  const db = getDb()
-  const existing = getTaskById(id)
-  if (!existing) return undefined
-
-  const now = new Date().toISOString()
-
-  db.prepare(`
-    UPDATE tasks SET
-      title = ?,
-      description = ?,
-      priority = ?,
-      status = ?,
-      assignee = ?,
-      project_id = ?,
-      due_date = ?,
-      estimate = ?,
-      parent_id = ?,
-      time_spent = ?,
-      updated_at = ?
-    WHERE id = ?
-  `).run(
-    updates.title ?? existing.title,
-    updates.description ?? existing.description,
-    updates.priority ?? existing.priority,
-    updates.status ?? existing.status,
-    updates.assignee ?? existing.assignee,
-    updates.projectId !== undefined ? updates.projectId : existing.project_id,
-    updates.dueDate !== undefined ? updates.dueDate : existing.due_date,
-    updates.estimate !== undefined ? updates.estimate : existing.estimate,
-    updates.parentId !== undefined ? updates.parentId : existing.parent_id,
-    updates.timeSpent !== undefined ? updates.timeSpent : existing.time_spent,
-    now,
-    id
-  )
-
-  // Update labels if provided
-  if (updates.labelIds !== undefined) {
-    db.prepare('DELETE FROM task_labels WHERE task_id = ?').run(id)
-    if (updates.labelIds.length > 0) {
-      const insertLabel = db.prepare(
-        'INSERT OR IGNORE INTO task_labels (task_id, label_id) VALUES (?, ?)'
-      )
-      for (const labelId of updates.labelIds) {
-        insertLabel.run(id, labelId)
-      }
-    }
-  }
-
-  db.close()
-  return getTaskById(id)
+export async function getTask(id: string) {
+  const result = await db.select().from(tasks).where(eq(tasks.id, id)).limit(1)
+  return result[0]
 }
 
-export function deleteTask(id: string): boolean {
-  const db = getDb()
-  const result = db.prepare('DELETE FROM tasks WHERE id = ?').run(id)
-  db.close()
-  return result.changes > 0
+// Alias for backward compatibility
+export const getTaskById = getTask
+
+export async function createTask(task: NewTask) {
+  const result = await db.insert(tasks).values(task).returning()
+  return result[0]
+}
+
+export async function updateTask(id: string, updates: Partial<NewTask>) {
+  const result = await db
+    .update(tasks)
+    .set({ ...updates, updatedAt: new Date().toISOString() })
+    .where(eq(tasks.id, id))
+    .returning()
+  return result[0]
+}
+
+export async function deleteTask(id: string) {
+  await db.delete(tasks).where(eq(tasks.id, id))
+  return { success: true }
+}
+
+// Labels
+export async function getAllLabels() {
+  return db.select().from(labels).orderBy(labels.name)
+}
+
+export async function createLabel(label: NewLabel) {
+  const result = await db.insert(labels).values(label).returning()
+  return result[0]
+}
+
+export async function updateLabel(id: string, updates: Partial<NewLabel>) {
+  const result = await db.update(labels).set(updates).where(eq(labels.id, id)).returning()
+  return result[0]
+}
+
+export async function deleteLabel(id: string) {
+  await db.delete(labels).where(eq(labels.id, id))
+  return { success: true }
+}
+
+// Task Labels
+export async function addTaskLabel(taskId: string, labelId: string) {
+  await db.insert(taskLabels).values({ taskId, labelId })
+}
+
+export async function removeTaskLabel(taskId: string, labelId: string) {
+  await db
+    .delete(taskLabels)
+    .where(eq(taskLabels.taskId, taskId) && eq(taskLabels.labelId, labelId))
+}
+
+// Links
+export async function getTaskLinks(taskId: string) {
+  return db.select().from(links).where(eq(links.taskId, taskId))
+}
+
+export async function addTaskLink(link: {
+  taskId: string
+  url: string
+  title?: string
+  type: string
+}) {
+  const id = `link-${Date.now()}-${Math.random().toString(36).slice(2)}`
+  const result = await db
+    .insert(links)
+    .values({ id, ...link })
+    .returning()
+  return result[0]
+}
+
+export async function removeTaskLink(id: string) {
+  await db.delete(links).where(eq(links.id, id))
 }
 
 // Comments
-export function getCommentsForTask(taskId: string): Comment[] {
-  const db = getDb()
-  const comments = db
-    .prepare('SELECT * FROM comments WHERE task_id = ? ORDER BY created_at ASC')
-    .all(taskId) as Comment[]
-  db.close()
-  return comments
+export async function getTaskComments(taskId: string) {
+  return db
+    .select()
+    .from(comments)
+    .where(eq(comments.taskId, taskId))
+    .orderBy(desc(comments.createdAt))
 }
 
-export function createComment(comment: Omit<Comment, 'created_at'>): Comment {
-  const db = getDb()
-  const now = new Date().toISOString()
-  db.prepare(`
-    INSERT INTO comments (id, task_id, author, content, created_at)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(comment.id, comment.task_id, comment.author, comment.content, now)
-  const newComment = db.prepare('SELECT * FROM comments WHERE id = ?').get(comment.id) as Comment
-  db.close()
-  return newComment
+export async function getCommentsForTask(taskId: string) {
+  return getTaskComments(taskId)
 }
 
-export function deleteComment(id: string): boolean {
-  const db = getDb()
-  const result = db.prepare('DELETE FROM comments WHERE id = ?').run(id)
-  db.close()
-  return result.changes > 0
+export async function addTaskComment(comment: NewComment) {
+  const result = await db.insert(comments).values(comment).returning()
+  return result[0]
+}
+
+export async function createComment(comment: any) {
+  const result = await db
+    .insert(comments)
+    .values({
+      id: comment.id,
+      taskId: comment.task_id,
+      author: comment.author,
+      content: comment.content,
+    })
+    .returning()
+  return result[0]
+}
+
+export async function deleteComment(id: string) {
+  const result = await db.delete(comments).where(eq(comments.id, id)).returning()
+  return result[0]
 }

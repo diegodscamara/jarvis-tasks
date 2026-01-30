@@ -18,7 +18,8 @@ export class TelegramNotifier {
     this.channelId = process.env.TELEGRAM_CHANNEL_ID || ''
     this.botToken = process.env.TELEGRAM_BOT_TOKEN || ''
     // Only enable if both environment variables are set
-    this.enabled = !!this.channelId && !!this.botToken && process.env.TELEGRAM_NOTIFICATIONS_ENABLED === 'true'
+    this.enabled =
+      !!this.channelId && !!this.botToken && process.env.TELEGRAM_NOTIFICATIONS_ENABLED === 'true'
   }
 
   async send(notification: TelegramNotification): Promise<boolean> {
@@ -29,7 +30,7 @@ export class TelegramNotifier {
 
     try {
       let messageText = ''
-      
+
       switch (notification.type) {
         case 'task_created':
           messageText = this.formatTaskCreated(notification)
@@ -92,12 +93,17 @@ ${notification.dueDate ? `⏰ Was due: ${new Date(notification.dueDate).toLocale
   }
 
   private formatDueReminder(notification: TelegramNotification): string {
-    const daysUntilDue = notification.dueDate 
+    const daysUntilDue = notification.dueDate
       ? Math.ceil((new Date(notification.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
       : 0
-    
-    const urgency = daysUntilDue === 0 ? '🚨 DUE TODAY' : daysUntilDue === 1 ? '⚠️ DUE TOMORROW' : `📅 Due in ${daysUntilDue} days`
-    
+
+    const urgency =
+      daysUntilDue === 0
+        ? '🚨 DUE TODAY'
+        : daysUntilDue === 1
+          ? '⚠️ DUE TOMORROW'
+          : `📅 Due in ${daysUntilDue} days`
+
     return `⏰ Due Date Reminder!
 
 ${urgency}
@@ -119,7 +125,7 @@ ${notification.taskTitle}
     const priority = notification.assignee // Using assignee as a proxy - actual priority check would need more context
       ? notification.assignee
       : 'medium'
-    
+
     switch (priority) {
       case 'high':
         return '🔴'

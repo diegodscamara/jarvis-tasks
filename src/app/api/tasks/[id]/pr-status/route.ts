@@ -1,5 +1,5 @@
-import { type NextRequest, NextResponse } from 'next/server'
 import { exec } from 'child_process'
+import { type NextRequest, NextResponse } from 'next/server'
 import { promisify } from 'util'
 
 const execAsync = promisify(exec)
@@ -19,54 +19,49 @@ interface PRData {
 }
 
 // GET /api/tasks/[id]/pr-status - Get PR status for task links
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: taskId } = await params
-  
+
   try {
     // First, get all GitHub PR links for this task
-    const linksResponse = await fetch(
-      `${request.nextUrl.origin}/api/tasks/${taskId}/links`
-    )
-    
+    const linksResponse = await fetch(`${request.nextUrl.origin}/api/tasks/${taskId}/links`)
+
     if (!linksResponse.ok) {
       return NextResponse.json({ error: 'Failed to fetch task links' }, { status: 500 })
     }
-    
+
     const { links } = await linksResponse.json()
     const prLinks = links.filter((link: any) => link.type === 'github-pr')
-    
+
     if (prLinks.length === 0) {
       return NextResponse.json({ prs: [] })
     }
-    
+
     // Get status for each PR using GitHub CLI
     const prStatuses = await Promise.all(
       prLinks.map(async (link: any) => {
         try {
           // Extract owner/repo/number from URL
-          const match = link.url.match(/github\.com\/([^\/]+)\/([^\/]+)\/pull\/(\d+)/)
+          const match = link.url.match(/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/)
           if (!match) {
             throw new Error('Invalid GitHub PR URL')
           }
-          
+
           const [, owner, repo, number] = match
           const repoSlug = `${owner}/${repo}`
-          
+
           // Use GitHub CLI to get PR details
           const { stdout } = await execAsync(
             `gh pr view ${number} --repo ${repoSlug} --json number,title,state,isDraft,statusCheckRollup,headRefName,baseRefName,url,createdAt,updatedAt,mergedAt`
           )
-          
+
           const prData: PRData = JSON.parse(stdout)
-          
+
           // Determine status and styling
           let status: string
           let statusIcon: string
           let statusColor: string
-          
+
           if (prData.mergedAt) {
             status = 'merged'
             statusIcon = '🟣'
@@ -84,11 +79,11 @@ export async function GET(
             statusIcon = '🟢'
             statusColor = '#10b981'
           }
-          
+
           // Determine checks status
           let checksStatus = 'unknown'
           let checksIcon = '⚪'
-          
+
           if (prData.statusCheckRollup) {
             switch (prData.statusCheckRollup.toUpperCase()) {
               case 'SUCCESS':
@@ -108,7 +103,7 @@ export async function GET(
                 break
             }
           }
-          
+
           return {
             linkId: link.id,
             number: prData.number,
@@ -124,25 +119,28 @@ export async function GET(
             url: prData.url,
             createdAt: prData.createdAt,
             updatedAt: prData.updatedAt,
-            mergedAt: prData.mergedAt
+            mergedAt: prData.mergedAt,
           }
         } catch (error) {
           console.error(`Error fetching PR status for ${link.url}:`, error)
           return {
             linkId: link.id,
             url: link.url,
-            error: error instanceof Error ? error.message : 'Unknown error'
+            error: error instanceof Error ? error.message : 'Unknown error',
           }
         }
       })
     )
-    
+
     return NextResponse.json({ prs: prStatuses })
   } catch (error) {
     console.error('Error fetching PR statuses:', error)
-    return NextResponse.json({ 
-      error: 'Failed to fetch PR statuses',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: 'Failed to fetch PR statuses',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    )
   }
 }

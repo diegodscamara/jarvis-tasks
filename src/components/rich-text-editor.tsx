@@ -1,24 +1,24 @@
-"use client"
+'use client'
 
-import React, { useCallback, useState, useEffect } from 'react'
-import { useEditor, EditorContent, ReactRenderer } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
+import HorizontalRule from '@tiptap/extension-horizontal-rule'
+import Link from '@tiptap/extension-link'
+import Mention from '@tiptap/extension-mention'
 import Placeholder from '@tiptap/extension-placeholder'
 import TaskItem from '@tiptap/extension-task-item'
 import TaskList from '@tiptap/extension-task-list'
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
-import Link from '@tiptap/extension-link'
-import Mention from '@tiptap/extension-mention'
-import HorizontalRule from '@tiptap/extension-horizontal-rule'
-import { common, createLowlight } from 'lowlight'
+import { EditorContent, ReactRenderer, useEditor } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
 import suggestion from '@tiptap/suggestion'
-import { cn } from '@/lib/utils'
-import { AGENTS } from '@/lib/constants'
-import type { Task } from '@/types'
+import { common, createLowlight } from 'lowlight'
+import React, { useCallback, useEffect, useState } from 'react'
 import tippy from 'tippy.js'
-import { SlashCommands, SlashCommandItem } from './rich-text-editor/slash-commands'
-import { Mentions, MentionItem } from './rich-text-editor/mentions'
-import { TaskLinks, TaskLinkItem } from './rich-text-editor/task-links'
+import { AGENTS } from '@/lib/constants'
+import { cn } from '@/lib/utils'
+import type { Task } from '@/types'
+import { MentionItem, Mentions } from './rich-text-editor/mentions'
+import { type SlashCommandItem, SlashCommands } from './rich-text-editor/slash-commands'
+import { TaskLinkItem, TaskLinks } from './rich-text-editor/task-links'
 
 const lowlight = createLowlight(common)
 
@@ -109,10 +109,10 @@ const SlashCommand = StarterKit.configure({
         char: '/',
         command: ({ editor, range, props }: any) => {
           const item = props as SlashCommandItem
-          
+
           // Delete the slash
           editor.chain().focus().deleteRange(range).run()
-          
+
           // Execute the command
           switch (item.command) {
             case '/h1':
@@ -145,9 +145,10 @@ const SlashCommand = StarterKit.configure({
           }
         },
         items: ({ query }: { query: string }) => {
-          return SLASH_COMMANDS.filter(item =>
-            item.title.toLowerCase().includes(query.toLowerCase()) ||
-            item.command.toLowerCase().includes(query.toLowerCase())
+          return SLASH_COMMANDS.filter(
+            (item) =>
+              item.title.toLowerCase().includes(query.toLowerCase()) ||
+              item.command.toLowerCase().includes(query.toLowerCase())
           )
         },
         render: () => {
@@ -184,7 +185,12 @@ const SlashCommand = StarterKit.configure({
                 return true
               }
 
-              if (component.ref && typeof component.ref === 'object' && component.ref !== null && 'onKeyDown' in component.ref) {
+              if (
+                component.ref &&
+                typeof component.ref === 'object' &&
+                component.ref !== null &&
+                'onKeyDown' in component.ref
+              ) {
                 return (component.ref as any).onKeyDown(props)
               }
               return false
@@ -200,19 +206,19 @@ const SlashCommand = StarterKit.configure({
   },
 })
 
-export function RichTextEditor({ 
-  content, 
-  onChange, 
-  placeholder = "Write a description...",
+export function RichTextEditor({
+  content,
+  onChange,
+  placeholder = 'Write a description...',
   className,
-  tasks = []
+  tasks = [],
 }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
       SlashCommand,
       StarterKit.configure({
         heading: {
-          levels: [1, 2, 3]
+          levels: [1, 2, 3],
         },
         codeBlock: false,
       }),
@@ -243,9 +249,9 @@ export function RichTextEditor({
         suggestion: {
           char: '@',
           items: ({ query }: { query: string }) => {
-            return AGENTS.filter(agent =>
+            return AGENTS.filter((agent) =>
               agent.name.toLowerCase().includes(query.toLowerCase())
-            ).map(agent => ({
+            ).map((agent) => ({
               id: agent.id,
               name: agent.name,
             }))
@@ -284,7 +290,12 @@ export function RichTextEditor({
                   return true
                 }
 
-                if (component.ref && typeof component.ref === 'object' && component.ref !== null && 'onKeyDown' in component.ref) {
+                if (
+                  component.ref &&
+                  typeof component.ref === 'object' &&
+                  component.ref !== null &&
+                  'onKeyDown' in component.ref
+                ) {
                   return (component.ref as any).onKeyDown(props)
                 }
                 return false
@@ -327,13 +338,13 @@ export function RichTextEditor({
         suggestion: {
           char: '#',
           items: ({ query }: { query: string }) => {
-            return tasks.filter(task =>
-              task.title.toLowerCase().includes(query.toLowerCase())
-            ).map(task => ({
-              id: task.id,
-              title: task.title,
-              status: task.status,
-            }))
+            return tasks
+              .filter((task) => task.title.toLowerCase().includes(query.toLowerCase()))
+              .map((task) => ({
+                id: task.id,
+                title: task.title,
+                status: task.status,
+              }))
           },
           render: () => {
             let component: ReactRenderer
@@ -369,7 +380,12 @@ export function RichTextEditor({
                   return true
                 }
 
-                if (component.ref && typeof component.ref === 'object' && component.ref !== null && 'onKeyDown' in component.ref) {
+                if (
+                  component.ref &&
+                  typeof component.ref === 'object' &&
+                  component.ref !== null &&
+                  'onKeyDown' in component.ref
+                ) {
                   return (component.ref as any).onKeyDown(props)
                 }
                 return false
@@ -417,14 +433,14 @@ export function RichTextEditor({
   // Handle slash command execution
   useEffect(() => {
     if (!editor) return
-    
+
     const handleSlashCommand = () => {
       const item = (window as any).__slashCommand
       if (item) {
         ;(window as any).__slashCommand = null
       }
     }
-    
+
     window.addEventListener('slashCommand', handleSlashCommand)
     return () => window.removeEventListener('slashCommand', handleSlashCommand)
   }, [editor])
@@ -436,9 +452,9 @@ export function RichTextEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}
           className={cn(
-            "px-2 py-1 rounded text-xs font-medium transition-colors",
-            editor.isActive('bold') 
-              ? 'bg-primary/10 text-primary' 
+            'px-2 py-1 rounded text-xs font-medium transition-colors',
+            editor.isActive('bold')
+              ? 'bg-primary/10 text-primary'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           )}
         >
@@ -448,9 +464,9 @@ export function RichTextEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleItalic().run()}
           className={cn(
-            "px-2 py-1 rounded text-xs font-medium transition-colors",
-            editor.isActive('italic') 
-              ? 'bg-primary/10 text-primary' 
+            'px-2 py-1 rounded text-xs font-medium transition-colors',
+            editor.isActive('italic')
+              ? 'bg-primary/10 text-primary'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           )}
         >
@@ -460,9 +476,9 @@ export function RichTextEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleCode().run()}
           className={cn(
-            "px-2 py-1 rounded text-xs font-medium transition-colors",
-            editor.isActive('code') 
-              ? 'bg-primary/10 text-primary' 
+            'px-2 py-1 rounded text-xs font-medium transition-colors',
+            editor.isActive('code')
+              ? 'bg-primary/10 text-primary'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           )}
         >
@@ -473,9 +489,9 @@ export function RichTextEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
           className={cn(
-            "px-2 py-1 rounded text-xs font-medium transition-colors",
-            editor.isActive('heading', { level: 2 }) 
-              ? 'bg-primary/10 text-primary' 
+            'px-2 py-1 rounded text-xs font-medium transition-colors',
+            editor.isActive('heading', { level: 2 })
+              ? 'bg-primary/10 text-primary'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           )}
         >
@@ -485,9 +501,9 @@ export function RichTextEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
           className={cn(
-            "px-2 py-1 rounded text-xs font-medium transition-colors",
-            editor.isActive('heading', { level: 3 }) 
-              ? 'bg-primary/10 text-primary' 
+            'px-2 py-1 rounded text-xs font-medium transition-colors',
+            editor.isActive('heading', { level: 3 })
+              ? 'bg-primary/10 text-primary'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           )}
         >
@@ -498,9 +514,9 @@ export function RichTextEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           className={cn(
-            "px-2 py-1 rounded text-xs font-medium transition-colors",
-            editor.isActive('bulletList') 
-              ? 'bg-primary/10 text-primary' 
+            'px-2 py-1 rounded text-xs font-medium transition-colors',
+            editor.isActive('bulletList')
+              ? 'bg-primary/10 text-primary'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           )}
         >
@@ -510,9 +526,9 @@ export function RichTextEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           className={cn(
-            "px-2 py-1 rounded text-xs font-medium transition-colors",
-            editor.isActive('orderedList') 
-              ? 'bg-primary/10 text-primary' 
+            'px-2 py-1 rounded text-xs font-medium transition-colors',
+            editor.isActive('orderedList')
+              ? 'bg-primary/10 text-primary'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           )}
         >
@@ -522,9 +538,9 @@ export function RichTextEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleTaskList().run()}
           className={cn(
-            "px-2 py-1 rounded text-xs font-medium transition-colors",
-            editor.isActive('taskList') 
-              ? 'bg-primary/10 text-primary' 
+            'px-2 py-1 rounded text-xs font-medium transition-colors',
+            editor.isActive('taskList')
+              ? 'bg-primary/10 text-primary'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           )}
         >
@@ -535,9 +551,9 @@ export function RichTextEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleCodeBlock().run()}
           className={cn(
-            "px-2 py-1 rounded text-xs font-medium transition-colors",
-            editor.isActive('codeBlock') 
-              ? 'bg-primary/10 text-primary' 
+            'px-2 py-1 rounded text-xs font-medium transition-colors',
+            editor.isActive('codeBlock')
+              ? 'bg-primary/10 text-primary'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           )}
         >
@@ -547,9 +563,9 @@ export function RichTextEditor({
           type="button"
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           className={cn(
-            "px-2 py-1 rounded text-xs font-medium transition-colors",
-            editor.isActive('blockquote') 
-              ? 'bg-primary/10 text-primary' 
+            'px-2 py-1 rounded text-xs font-medium transition-colors',
+            editor.isActive('blockquote')
+              ? 'bg-primary/10 text-primary'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           )}
         >
@@ -560,47 +576,47 @@ export function RichTextEditor({
           type="button"
           onClick={() => editor.chain().focus().setHorizontalRule().run()}
           className={cn(
-            "px-2 py-1 rounded text-xs font-medium transition-colors",
+            'px-2 py-1 rounded text-xs font-medium transition-colors',
             'text-muted-foreground hover:text-foreground hover:bg-muted'
           )}
         >
           —
         </button>
       </div>
-      <div 
+      <div
         className={cn(
-          "min-h-[120px] p-3 text-sm",
-          "[&_.ProseMirror]:min-h-[100px] [&_.ProseMirror]:outline-none",
-          "[&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]",
-          "[&_.ProseMirror_p.is-editor-empty:first-child::before]:text-muted-foreground",
-          "[&_.ProseMirror_p.is-editor-empty:first-child::before]:float-left",
-          "[&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none",
-          "[&_.ProseMirror_p.is-editor-empty:first-child::before]:h-0",
-          "[&_.ProseMirror_h1]:text-2xl [&_.ProseMirror_h1]:font-bold [&_.ProseMirror_h1]:mt-5 [&_.ProseMirror_h1]:mb-3",
-          "[&_.ProseMirror_h2]:text-lg [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h2]:mt-4 [&_.ProseMirror_h2]:mb-2",
-          "[&_.ProseMirror_h3]:text-base [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_h3]:mt-3 [&_.ProseMirror_h3]:mb-1",
-          "[&_.ProseMirror_p]:mb-2",
-          "[&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:pl-6 [&_.ProseMirror_ul]:mb-2",
-          "[&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:pl-6 [&_.ProseMirror_ol]:mb-2",
-          "[&_.ProseMirror_li]:mb-1",
-          "[&_.ProseMirror_code]:bg-muted [&_.ProseMirror_code]:px-1 [&_.ProseMirror_code]:py-0.5 [&_.ProseMirror_code]:rounded [&_.ProseMirror_code]:font-mono [&_.ProseMirror_code]:text-xs",
-          "[&_.ProseMirror_pre]:bg-muted [&_.ProseMirror_pre]:p-3 [&_.ProseMirror_pre]:rounded [&_.ProseMirror_pre]:mb-2 [&_.ProseMirror_pre]:font-mono [&_.ProseMirror_pre]:text-xs",
-          "[&_.ProseMirror_pre_code]:bg-transparent [&_.ProseMirror_pre_code]:p-0",
-          "[&_.ProseMirror_blockquote]:border-l-2 [&_.ProseMirror_blockquote]:border-muted-foreground/20 [&_.ProseMirror_blockquote]:pl-4 [&_.ProseMirror_blockquote]:text-muted-foreground [&_.ProseMirror_blockquote]:mb-2",
-          "[&_.ProseMirror_hr]:border-border [&_.ProseMirror_hr]:my-4",
+          'min-h-[120px] p-3 text-sm',
+          '[&_.ProseMirror]:min-h-[100px] [&_.ProseMirror]:outline-none',
+          '[&_.ProseMirror_p.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]',
+          '[&_.ProseMirror_p.is-editor-empty:first-child::before]:text-muted-foreground',
+          '[&_.ProseMirror_p.is-editor-empty:first-child::before]:float-left',
+          '[&_.ProseMirror_p.is-editor-empty:first-child::before]:pointer-events-none',
+          '[&_.ProseMirror_p.is-editor-empty:first-child::before]:h-0',
+          '[&_.ProseMirror_h1]:text-2xl [&_.ProseMirror_h1]:font-bold [&_.ProseMirror_h1]:mt-5 [&_.ProseMirror_h1]:mb-3',
+          '[&_.ProseMirror_h2]:text-lg [&_.ProseMirror_h2]:font-semibold [&_.ProseMirror_h2]:mt-4 [&_.ProseMirror_h2]:mb-2',
+          '[&_.ProseMirror_h3]:text-base [&_.ProseMirror_h3]:font-semibold [&_.ProseMirror_h3]:mt-3 [&_.ProseMirror_h3]:mb-1',
+          '[&_.ProseMirror_p]:mb-2',
+          '[&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:pl-6 [&_.ProseMirror_ul]:mb-2',
+          '[&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:pl-6 [&_.ProseMirror_ol]:mb-2',
+          '[&_.ProseMirror_li]:mb-1',
+          '[&_.ProseMirror_code]:bg-muted [&_.ProseMirror_code]:px-1 [&_.ProseMirror_code]:py-0.5 [&_.ProseMirror_code]:rounded [&_.ProseMirror_code]:font-mono [&_.ProseMirror_code]:text-xs',
+          '[&_.ProseMirror_pre]:bg-muted [&_.ProseMirror_pre]:p-3 [&_.ProseMirror_pre]:rounded [&_.ProseMirror_pre]:mb-2 [&_.ProseMirror_pre]:font-mono [&_.ProseMirror_pre]:text-xs',
+          '[&_.ProseMirror_pre_code]:bg-transparent [&_.ProseMirror_pre_code]:p-0',
+          '[&_.ProseMirror_blockquote]:border-l-2 [&_.ProseMirror_blockquote]:border-muted-foreground/20 [&_.ProseMirror_blockquote]:pl-4 [&_.ProseMirror_blockquote]:text-muted-foreground [&_.ProseMirror_blockquote]:mb-2',
+          '[&_.ProseMirror_hr]:border-border [&_.ProseMirror_hr]:my-4',
           "[&_.ProseMirror_ul[data-type='taskList']]:list-none [&_.ProseMirror_ul[data-type='taskList']]:pl-0",
           "[&_.ProseMirror_li[data-type='taskItem']]:flex [&_.ProseMirror_li[data-type='taskItem']]:items-start",
           "[&_.ProseMirror_li[data-type='taskItem']_>_label]:mr-2",
           "[&_.ProseMirror_li[data-type='taskItem']_>_label_>_input]:mt-1",
-          "[&_.mention]:bg-primary/10 [&_.mention]:text-primary [&_.mention]:px-1 [&_.mention]:py-0.5 [&_.mention]:rounded [&_.mention]:font-medium",
-          "[&_.task-link]:bg-blue-500/10 [&_.task-link]:text-blue-600 [&_.task-link]:px-1 [&_.task-link]:py-0.5 [&_.task-link]:rounded [&_.task-link]:font-medium",
+          '[&_.mention]:bg-primary/10 [&_.mention]:text-primary [&_.mention]:px-1 [&_.mention]:py-0.5 [&_.mention]:rounded [&_.mention]:font-medium',
+          '[&_.task-link]:bg-blue-500/10 [&_.task-link]:text-blue-600 [&_.task-link]:px-1 [&_.task-link]:py-0.5 [&_.task-link]:rounded [&_.task-link]:font-medium',
           className
         )}
       >
         <EditorContent editor={editor} />
         <div className="text-xs text-muted-foreground mt-2">
-          Type <span className="font-mono bg-muted px-1 py-0.5 rounded">/</span> for commands, 
-          <span className="font-mono bg-muted px-1 py-0.5 rounded mx-1">@</span> to mention someone, 
+          Type <span className="font-mono bg-muted px-1 py-0.5 rounded">/</span> for commands,
+          <span className="font-mono bg-muted px-1 py-0.5 rounded mx-1">@</span> to mention someone,
           <span className="font-mono bg-muted px-1 py-0.5 rounded mx-1">#</span> to link a task
         </div>
       </div>

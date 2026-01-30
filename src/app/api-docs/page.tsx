@@ -3,9 +3,11 @@
 import dynamic from 'next/dynamic'
 import 'swagger-ui-react/swagger-ui.css'
 
-const SwaggerUI = dynamic(() => import('swagger-ui-react'), { 
+const SwaggerUI = dynamic(() => import('swagger-ui-react'), {
   ssr: false,
-  loading: () => <div className="flex items-center justify-center h-screen">Loading API documentation...</div>
+  loading: () => (
+    <div className="flex items-center justify-center h-screen">Loading API documentation...</div>
+  ),
 })
 
 export default function ApiDocsPage() {

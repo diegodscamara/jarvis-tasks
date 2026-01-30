@@ -14,7 +14,8 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:migrate": "npx tsx scripts/migrate.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "migrate:supabase": "npx tsx scripts/migrate-to-supabase.ts"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^8.4.0",
@@ -105,6 +106,7 @@
     "@types/jest-cli": "^24.3.0",
     "@types/node": "20.19.30",
     "@types/react": "19.2.10",
+    "dotenv": "^17.2.3",
     "drizzle-kit": "^0.28.1",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "jest": "^30.2.0",

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { Clock, Pause, Play, Square, TrendingUp } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Play, Pause, Square, Clock, TrendingUp } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 import { formatDuration } from '@/lib/time-tracking'
 import type { Task } from '@/types'
 
@@ -47,11 +47,11 @@ export function TimeTracker({ task, onUpdate }: TimeTrackerProps) {
 
   const pauseTracking = () => {
     if (!sessionStart) return
-    
+
     const now = new Date()
     const sessionMinutes = Math.floor((now.getTime() - sessionStart.getTime()) / (1000 * 60))
     const newTotal = (task.timeSpent || 0) + sessionMinutes / 60
-    
+
     setIsTracking(false)
     setSessionStart(null)
     setCurrentTime(newTotal)
@@ -71,7 +71,7 @@ export function TimeTracker({ task, onUpdate }: TimeTrackerProps) {
     const hours = parseFloat(manualHours) || 0
     const minutes = parseFloat(manualMinutes) || 0
     const totalHours = hours + minutes / 60
-    
+
     setCurrentTime(totalHours)
     onUpdate(totalHours)
     setShowManualEntry(false)
@@ -96,48 +96,29 @@ export function TimeTracker({ task, onUpdate }: TimeTrackerProps) {
         </div>
         <div className="text-sm font-mono">{formatDuration(Math.round(totalMinutes))}</div>
       </div>
-      
+
       <div className="flex items-center gap-2">
         {!isTracking ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={startTracking}
-            className="flex-1"
-          >
+          <Button variant="outline" size="sm" onClick={startTracking} className="flex-1">
             <Play size={14} className="mr-1" />
             Start
           </Button>
         ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={pauseTracking}
-            className="flex-1"
-          >
+          <Button variant="outline" size="sm" onClick={pauseTracking} className="flex-1">
             <Pause size={14} className="mr-1" />
             Pause
           </Button>
         )}
-        
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowManualEntry(true)}
-        >
+
+        <Button variant="outline" size="sm" onClick={() => setShowManualEntry(true)}>
           Manual
         </Button>
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={resetTracking}
-          title="Reset timer"
-        >
+
+        <Button variant="ghost" size="sm" onClick={resetTracking} title="Reset timer">
           <Square size={14} />
         </Button>
       </div>
-      
+
       {task.estimate && (
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs">
@@ -161,17 +142,15 @@ export function TimeTracker({ task, onUpdate }: TimeTrackerProps) {
           )}
         </div>
       )}
-      
+
       {/* Manual Entry Dialog */}
       <Dialog open={showManualEntry} onOpenChange={setShowManualEntry}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Manual Time Entry</DialogTitle>
-            <DialogDescription>
-              Enter the time you've spent on this task
-            </DialogDescription>
+            <DialogDescription>Enter the time you've spent on this task</DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="flex items-center gap-4">
               <div className="flex-1">
@@ -196,19 +175,12 @@ export function TimeTracker({ task, onUpdate }: TimeTrackerProps) {
                 />
               </div>
             </div>
-            
+
             <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowManualEntry(false)}
-              >
+              <Button variant="outline" size="sm" onClick={() => setShowManualEntry(false)}>
                 Cancel
               </Button>
-              <Button
-                size="sm"
-                onClick={handleManualEntry}
-              >
+              <Button size="sm" onClick={handleManualEntry}>
                 Save
               </Button>
             </div>
@@ -219,27 +191,27 @@ export function TimeTracker({ task, onUpdate }: TimeTrackerProps) {
   )
 }
 
-export function TimeEstimate({ 
-  estimate, 
-  onChange 
-}: { 
+export function TimeEstimate({
+  estimate,
+  onChange,
+}: {
   estimate?: number
-  onChange: (estimate: number | undefined) => void 
+  onChange: (estimate: number | undefined) => void
 }) {
   const [hours, setHours] = useState(estimate ? Math.floor(estimate) : '')
   const [minutes, setMinutes] = useState(estimate ? Math.round((estimate % 1) * 60) : '')
-  
+
   const handleChange = (newHours: string, newMinutes: string) => {
     const h = parseFloat(newHours) || 0
     const m = parseFloat(newMinutes) || 0
-    
+
     if (h === 0 && m === 0) {
       onChange(undefined)
     } else {
       onChange(h + m / 60)
     }
   }
-  
+
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium flex items-center gap-1">

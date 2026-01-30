@@ -1,38 +1,44 @@
-export type ThemeVariant = 'default' | 'dark' | 'light' | 'midnight' | 'linear-purple' | 'linear-blue';
+export type ThemeVariant =
+  | 'default'
+  | 'dark'
+  | 'light'
+  | 'midnight'
+  | 'linear-purple'
+  | 'linear-blue'
 
 export interface Theme {
-  name: string;
-  variant: ThemeVariant;
-  cssClass: string;
+  name: string
+  variant: ThemeVariant
+  cssClass: string
   colors: {
     // Linear-style color system
-    background: string;
-    foreground: string;
-    card: string;
-    cardForeground: string;
-    popover: string;
-    popoverForeground: string;
-    primary: string;
-    primaryForeground: string;
-    secondary: string;
-    secondaryForeground: string;
-    muted: string;
-    mutedForeground: string;
-    accent: string;
-    accentForeground: string;
-    destructive: string;
-    destructiveForeground: string;
-    border: string;
-    input: string;
-    ring: string;
+    background: string
+    foreground: string
+    card: string
+    cardForeground: string
+    popover: string
+    popoverForeground: string
+    primary: string
+    primaryForeground: string
+    secondary: string
+    secondaryForeground: string
+    muted: string
+    mutedForeground: string
+    accent: string
+    accentForeground: string
+    destructive: string
+    destructiveForeground: string
+    border: string
+    input: string
+    ring: string
     // Linear-specific
-    highlight: string;
-    highlightForeground: string;
-    selection: string;
-    selectionForeground: string;
-    brand: string;
-    brandForeground: string;
-  };
+    highlight: string
+    highlightForeground: string
+    selection: string
+    selectionForeground: string
+    brand: string
+    brandForeground: string
+  }
 }
 
 // Linear-style purple theme
@@ -67,9 +73,9 @@ export const linearPurpleTheme: Theme = {
     brand: '252 87% 57%',
     brandForeground: '0 0% 100%',
   },
-};
+}
 
-// Linear-style blue theme  
+// Linear-style blue theme
 export const linearBlueTheme: Theme = {
   name: 'Linear Blue',
   variant: 'linear-blue',
@@ -101,7 +107,7 @@ export const linearBlueTheme: Theme = {
     brand: '206 100% 50%',
     brandForeground: '0 0% 100%',
   },
-};
+}
 
 // Midnight theme (ultra dark)
 export const midnightTheme: Theme = {
@@ -135,14 +141,10 @@ export const midnightTheme: Theme = {
     brand: '0 0% 95%',
     brandForeground: '240 10% 3%',
   },
-};
+}
 
-export const themes: Theme[] = [
-  linearPurpleTheme,
-  linearBlueTheme,
-  midnightTheme,
-];
+export const themes: Theme[] = [linearPurpleTheme, linearBlueTheme, midnightTheme]
 
 export function getThemeByVariant(variant: ThemeVariant): Theme | undefined {
-  return themes.find(theme => theme.variant === variant);
+  return themes.find((theme) => theme.variant === variant)
 }

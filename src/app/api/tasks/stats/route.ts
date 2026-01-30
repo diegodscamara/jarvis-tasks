@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server"
-import * as db from "@/db/queries"
-import { startOfWeek, endOfWeek, startOfDay, subDays } from "date-fns"
+import { endOfWeek, startOfDay, startOfWeek, subDays } from 'date-fns'
+import { NextResponse } from 'next/server'
+import * as db from '@/db/queries'
 
 export async function GET() {
   try {
@@ -9,32 +9,29 @@ export async function GET() {
     const weekEnd = endOfWeek(now, { weekStartsOn: 1 })
     const today = startOfDay(now)
 
-    const allTasks = db.getAllTasks()
+    const allTasks = await db.getAllTasks()
 
     // Completed this week
     const completedThisWeek = allTasks.filter(
       (t) =>
-        t.status === "done" &&
-        t.updated_at &&
-        new Date(t.updated_at) >= weekStart &&
-        new Date(t.updated_at) <= weekEnd
+        t.status === 'done' &&
+        t.updatedAt &&
+        new Date(t.updatedAt) >= weekStart &&
+        new Date(t.updatedAt) <= weekEnd
     ).length
 
     // Overdue tasks
     const overdueCount = allTasks.filter(
-      (t) =>
-        t.status !== "done" &&
-        t.due_date &&
-        new Date(t.due_date) < today
+      (t) => t.status !== 'done' && t.dueDate && new Date(t.dueDate) < today
     ).length
 
     // Due this week (upcoming)
     const upcomingCount = allTasks.filter(
       (t) =>
-        t.status !== "done" &&
-        t.due_date &&
-        new Date(t.due_date) >= today &&
-        new Date(t.due_date) <= weekEnd
+        t.status !== 'done' &&
+        t.dueDate &&
+        new Date(t.dueDate) >= today &&
+        new Date(t.dueDate) <= weekEnd
     ).length
 
     // Calculate streak (days with at least one completed task)
@@ -47,10 +44,10 @@ export async function GET() {
 
       const completedOnDay = allTasks.filter(
         (t) =>
-          t.status === "done" &&
-          t.updated_at &&
-          new Date(t.updated_at) >= dayStart &&
-          new Date(t.updated_at) <= dayEnd
+          t.status === 'done' &&
+          t.updatedAt &&
+          new Date(t.updatedAt) >= dayStart &&
+          new Date(t.updatedAt) <= dayEnd
       ).length
 
       if (completedOnDay > 0) {
@@ -67,10 +64,7 @@ export async function GET() {
       streak,
     })
   } catch (error) {
-    console.error("Stats error:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch stats" },
-      { status: 500 }
-    )
+    console.error('Stats error:', error)
+    return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 })
   }
 }

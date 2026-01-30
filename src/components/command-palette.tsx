@@ -1,8 +1,8 @@
 'use client'
 
 import { Command } from 'cmdk'
-import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useState } from 'react'
 
 interface Task {
   id: string
@@ -68,15 +68,15 @@ export function CommandPalette({
   return (
     <div className="fixed inset-0 z-50">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={() => setOpen(false)}
       />
-      
+
       {/* Command Dialog */}
       <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-full max-w-xl">
         <Command className="rounded-lg border border-border bg-popover shadow-2xl overflow-hidden">
-          <Command.Input 
+          <Command.Input
             placeholder="Search tasks, projects, or type a command..."
             className="w-full px-4 py-3 text-sm bg-transparent border-b border-border outline-none placeholder:text-muted-foreground"
           />
@@ -86,7 +86,10 @@ export function CommandPalette({
             </Command.Empty>
 
             {/* Quick Actions */}
-            <Command.Group heading="Actions" className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+            <Command.Group
+              heading="Actions"
+              className="px-2 py-1.5 text-xs font-medium text-muted-foreground"
+            >
               <Command.Item
                 onSelect={() => handleSelect(onCreateTask)}
                 className="flex items-center gap-2 px-2 py-2 text-sm rounded cursor-pointer aria-selected:bg-accent"
@@ -106,7 +109,10 @@ export function CommandPalette({
 
             {/* Tasks */}
             {tasks.length > 0 && (
-              <Command.Group heading="Tasks" className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+              <Command.Group
+                heading="Tasks"
+                className="px-2 py-1.5 text-xs font-medium text-muted-foreground"
+              >
                 {tasks.slice(0, 10).map((task) => (
                   <Command.Item
                     key={task.id}
@@ -125,7 +131,10 @@ export function CommandPalette({
 
             {/* Projects */}
             {projects.length > 0 && (
-              <Command.Group heading="Projects" className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+              <Command.Group
+                heading="Projects"
+                className="px-2 py-1.5 text-xs font-medium text-muted-foreground"
+              >
                 {projects.map((project) => (
                   <Command.Item
                     key={project.id}
@@ -142,7 +151,10 @@ export function CommandPalette({
 
             {/* Labels */}
             {labels.length > 0 && (
-              <Command.Group heading="Labels" className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+              <Command.Group
+                heading="Labels"
+                className="px-2 py-1.5 text-xs font-medium text-muted-foreground"
+              >
                 {labels.slice(0, 5).map((label) => (
                   <Command.Item
                     key={label.id}
@@ -150,8 +162,8 @@ export function CommandPalette({
                     onSelect={() => handleSelect(() => onFilterByLabel(label.id))}
                     className="flex items-center gap-2 px-2 py-2 text-sm rounded cursor-pointer aria-selected:bg-accent"
                   >
-                    <span 
-                      className="w-3 h-3 rounded-full" 
+                    <span
+                      className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: label.color }}
                     />
                     <span>{label.name}</span>

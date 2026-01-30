@@ -33,9 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className={inter.className}>
         <SessionProvider>
-          <ThemeProvider defaultTheme="linear-purple">
-            {children}
-          </ThemeProvider>
+          <ThemeProvider defaultTheme="linear-purple">{children}</ThemeProvider>
         </SessionProvider>
       </body>
     </html>

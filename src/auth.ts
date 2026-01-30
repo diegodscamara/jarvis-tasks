@@ -17,7 +17,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials) {
         const user = users.find(
-          u => u.email === credentials?.email && u.password === credentials?.password
+          (u) => u.email === credentials?.email && u.password === credentials?.password
         )
         if (user) {
           return { id: user.id, name: user.name, email: user.email }

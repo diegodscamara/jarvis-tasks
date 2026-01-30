@@ -1,0 +1,17 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔍 Running pre-push checks..."
+echo "This ensures no broken code reaches GitHub"
+
+pnpm check
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Pre-push checks failed!"
+  echo "Please fix all issues before pushing."
+  echo "Run 'pnpm check' to see all problems."
+  exit 1
+fi
+
+echo "✅ All checks passed! Pushing..."

@@ -1,13 +1,25 @@
 'use client'
 
-import { useState, useEffect, useCallback, KeyboardEvent } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
+import { ArrowRight, Clock, Plus, Tag, Zap } from 'lucide-react'
+import { KeyboardEvent, useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Clock, Zap, ArrowRight, Tag } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { AGENTS, COLUMNS } from '@/lib/constants'
-import type { Priority, Status, Agent } from '@/types'
+import type { Agent, Priority, Status } from '@/types'
 
 interface QuickCaptureProps {
   isOpen: boolean
@@ -34,7 +46,7 @@ export function QuickCapture({ isOpen, onClose, onTaskCreated }: QuickCapturePro
     }
 
     document.addEventListener('keydown', handleGlobalShortcut)
-    
+
     return () => {
       document.removeEventListener('keydown', handleGlobalShortcut)
     }
@@ -77,7 +89,7 @@ export function QuickCapture({ isOpen, onClose, onTaskCreated }: QuickCapturePro
             Quick Capture
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4 pt-4">
           {/* Title input - always focused */}
           <Input
@@ -147,11 +159,12 @@ export function QuickCapture({ isOpen, onClose, onTaskCreated }: QuickCapturePro
           {title && (
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <div className="flex gap-2">
-                <span>Press <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">Enter</kbd> to save</span>
+                <span>
+                  Press <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">Enter</kbd> to
+                  save
+                </span>
               </div>
-              <div className="font-medium">
-                {title.length}/50
-              </div>
+              <div className="font-medium">{title.length}/50</div>
             </div>
           )}
 
@@ -159,17 +172,21 @@ export function QuickCapture({ isOpen, onClose, onTaskCreated }: QuickCapturePro
           <div className="flex justify-between pt-4">
             <div className="flex gap-2">
               {shortcuts.map((shortcut) => (
-                <div key={shortcut.key} className="flex items-center gap-1 text-xs text-muted-foreground">
+                <div
+                  key={shortcut.key}
+                  className="flex items-center gap-1 text-xs text-muted-foreground"
+                >
                   <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">{shortcut.key}</kbd>
                   <span>{shortcut.label}</span>
-                  {shortcut.icon && typeof shortcut.icon === 'string' 
-                    ? shortcut.icon
-                    : <shortcut.icon className="h-3 w-3" />
-                  }
+                  {shortcut.icon && typeof shortcut.icon === 'string' ? (
+                    shortcut.icon
+                  ) : (
+                    <shortcut.icon className="h-3 w-3" />
+                  )}
                 </div>
               ))}
             </div>
-            
+
             <Button onClick={handleSubmit} disabled={!title.trim()}>
               <ArrowRight className="mr-1 h-4 w-4" />
               Add

@@ -1,8 +1,8 @@
-"use client"
+'use client'
 
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { CheckCircle2, AlertTriangle, Calendar, Flame } from "lucide-react"
+import { AlertTriangle, Calendar, CheckCircle2, Flame } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface Stats {
   completedThisWeek: number
@@ -22,13 +22,13 @@ export function StatsWidget() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const res = await fetch("/api/tasks/stats")
+        const res = await fetch('/api/tasks/stats')
         if (res.ok) {
           const data = await res.json()
           setStats(data)
         }
       } catch (error) {
-        console.error("Failed to fetch stats:", error)
+        console.error('Failed to fetch stats:', error)
       }
     }
     fetchStats()
@@ -48,7 +48,7 @@ export function StatsWidget() {
           <p className="text-xs text-muted-foreground">tasks completed</p>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Overdue</CardTitle>
@@ -59,7 +59,7 @@ export function StatsWidget() {
           <p className="text-xs text-muted-foreground">need attention</p>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Due This Week</CardTitle>
@@ -70,7 +70,7 @@ export function StatsWidget() {
           <p className="text-xs text-muted-foreground">upcoming tasks</p>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Streak</CardTitle>

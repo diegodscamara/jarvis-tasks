@@ -1,8 +1,8 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -46,9 +46,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="p-3 text-sm text-red-500 bg-red-500/10 rounded-md">
-              {error}
-            </div>
+            <div className="p-3 text-sm text-red-500 bg-red-500/10 rounded-md">{error}</div>
           )}
 
           <div className="space-y-2">

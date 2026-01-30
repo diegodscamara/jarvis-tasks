@@ -1,88 +1,42 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import * as db from '@/db/queries'
 
-interface CommentNotification {
-  id: string
-  type: string
-  taskId: string
-  taskTitle: string
-  message: string
-  author: string
-  createdAt: string
-  isRead: boolean
+interface RouteParams {
+  params: Promise<{ id: string }>
 }
 
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_request: NextRequest, props: RouteParams) {
+  const params = await props.params
+  const { id } = params
   try {
-    const { id } = await params
-    const comments = db.getCommentsForTask(id)
-
-    // Transform to match expected frontend format
-    const formattedComments = comments.map((comment) => ({
-      id: comment.id,
-      author: comment.author,
-      content: comment.content,
-      createdAt: comment.created_at,
-    }))
-
-    return NextResponse.json({ comments: formattedComments })
+    const comments = await db.getCommentsForTask(id)
+    return NextResponse.json({ comments })
   } catch (error) {
     console.error('Error fetching comments:', error)
     return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 })
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: NextRequest, props: RouteParams) {
+  const params = await props.params
+  const { id: taskId } = params
   try {
-    const { id: taskId } = await params
     const body = await request.json()
     const id = body.id || `comment-${Date.now()}-${Math.random().toString(36).slice(2)}`
-    const author = body.author || 'jarvis'
 
-    const comment = db.createComment({
+    const comment = await db.createComment({
       id,
       task_id: taskId,
-      author,
-      content: body.content,
+      author: body.author || 'Anonymous',
+      content: body.text, // Frontend sends 'text', we save as 'content'
     })
 
-    // Create notification for new comments (unless it's from Jarvis checking in)
-    // Jarvis will pick up notifications addressed to him
-    if (author !== 'jarvis') {
-      // Get task info for notification
-      const task = db.getTaskById(taskId)
-      if (task) {
-        const fs = await import('node:fs')
-        const path = await import('node:path')
-        const notificationsPath = path.join(process.cwd(), 'data', 'notifications.json')
-
-        let notifications: CommentNotification[] = []
-        try {
-          if (fs.existsSync(notificationsPath)) {
-            notifications = JSON.parse(fs.readFileSync(notificationsPath, 'utf-8') || '[]')
-          }
-        } catch (_e) {}
-
-        notifications.push({
-          id: `notif-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-          type: 'comment',
-          taskId,
-          taskTitle: task.title,
-          message: body.content,
-          author,
-          createdAt: new Date().toISOString(),
-          isRead: false,
-        })
-
-        fs.writeFileSync(notificationsPath, JSON.stringify(notifications, null, 2))
-      }
-    }
-
+    // Return in frontend expected format
     return NextResponse.json({
       id: comment.id,
       author: comment.author,
-      content: comment.content,
-      createdAt: comment.created_at,
+      text: comment.content,
+      createdAt: comment.createdAt,
     })
   } catch (error) {
     console.error('Error creating comment:', error)
@@ -90,16 +44,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 }
 
-export async function DELETE(request: NextRequest, _context: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const commentId = searchParams.get('commentId')
+    const id = searchParams.get('id')
 
-    if (!commentId) {
+    if (!id) {
       return NextResponse.json({ error: 'Comment ID required' }, { status: 400 })
     }
 
-    const deleted = db.deleteComment(commentId)
+    const deleted = await db.deleteComment(id)
 
     if (!deleted) {
       return NextResponse.json({ error: 'Comment not found' }, { status: 404 })

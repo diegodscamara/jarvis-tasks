@@ -6,10 +6,10 @@ describe('Task Dependencies - TDD', () => {
       // Arrange
       const createTaskWithDependencies = (task, allTasks) => {
         const blockedBy = task.dependsOn || []
-        
+
         // Also update the tasks that this task depends on
-        blockedBy.forEach(depId => {
-          const depTask = allTasks.find(t => t.id === depId)
+        blockedBy.forEach((depId) => {
+          const depTask = allTasks.find((t) => t.id === depId)
           if (depTask) {
             if (!depTask.blockedBy) {
               depTask.blockedBy = []
@@ -19,7 +19,7 @@ describe('Task Dependencies - TDD', () => {
             }
           }
         })
-        
+
         return { ...task, blockedBy }
       }
 
@@ -53,7 +53,7 @@ describe('Task Dependencies - TDD', () => {
       ]
 
       const canChangeStatus = (taskId, newStatus, allTasks) => {
-        const task = allTasks.find(t => t.id === taskId)
+        const task = allTasks.find((t) => t.id === taskId)
         if (!task) return { allowed: false, reason: 'Task not found' }
 
         // Can always move backwards
@@ -63,8 +63,8 @@ describe('Task Dependencies - TDD', () => {
 
         // Check dependencies for forward movement
         if (task.dependsOn && task.dependsOn.length > 0) {
-          const incompleteDeps = task.dependsOn.filter(depId => {
-            const dep = allTasks.find(t => t.id === depId)
+          const incompleteDeps = task.dependsOn.filter((depId) => {
+            const dep = allTasks.find((t) => t.id === depId)
             return dep && dep.status !== 'done'
           })
 
@@ -96,12 +96,12 @@ describe('Task Dependencies - TDD', () => {
       ]
 
       const canChangeStatus = (taskId, newStatus, allTasks) => {
-        const task = allTasks.find(t => t.id === taskId)
+        const task = allTasks.find((t) => t.id === taskId)
         if (!task) return { allowed: false }
 
         if (task.dependsOn && task.dependsOn.length > 0) {
-          const allDepsComplete = task.dependsOn.every(depId => {
-            const dep = allTasks.find(t => t.id === depId)
+          const allDepsComplete = task.dependsOn.every((depId) => {
+            const dep = allTasks.find((t) => t.id === depId)
             return dep && dep.status === 'done'
           })
 
@@ -124,36 +124,37 @@ describe('Task Dependencies - TDD', () => {
         // Build dependency graph
         const visited = new Set()
         const recursionStack = new Set()
-        
+
         const hasCycle = (id, path = []) => {
           if (recursionStack.has(id)) {
             const cycleStart = path.indexOf(id)
             return path.slice(cycleStart).concat(id)
           }
-          
+
           if (visited.has(id)) return null
-          
+
           visited.add(id)
           recursionStack.add(id)
           path.push(id)
-          
-          const task = id === taskId 
-            ? { id: taskId, dependsOn: newDependencies }
-            : allTasks.find(t => t.id === id)
-            
+
+          const task =
+            id === taskId
+              ? { id: taskId, dependsOn: newDependencies }
+              : allTasks.find((t) => t.id === id)
+
           if (task?.dependsOn) {
             for (const depId of task.dependsOn) {
               const cycle = hasCycle(depId, [...path])
               if (cycle) return cycle
             }
           }
-          
+
           recursionStack.delete(id)
           return null
         }
-        
+
         const cycle = hasCycle(taskId)
-        
+
         if (cycle) {
           return {
             valid: false,
@@ -161,7 +162,7 @@ describe('Task Dependencies - TDD', () => {
             cycle,
           }
         }
-        
+
         return { valid: true }
       }
 
@@ -193,17 +194,17 @@ describe('Task Dependencies - TDD', () => {
 
       const calculateDepth = (taskId, allTasks, memo = new Map()) => {
         if (memo.has(taskId)) return memo.get(taskId)
-        
-        const task = allTasks.find(t => t.id === taskId)
+
+        const task = allTasks.find((t) => t.id === taskId)
         if (!task || !task.dependsOn || task.dependsOn.length === 0) {
           memo.set(taskId, 0)
           return 0
         }
-        
+
         const maxDepth = Math.max(
-          ...task.dependsOn.map(depId => calculateDepth(depId, allTasks, memo))
+          ...task.dependsOn.map((depId) => calculateDepth(depId, allTasks, memo))
         )
-        
+
         const depth = maxDepth + 1
         memo.set(taskId, depth)
         return depth

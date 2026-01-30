@@ -35,7 +35,7 @@ export const tasks = sqliteTable('tasks', {
   priority: text('priority', { enum: ['low', 'medium', 'high'] })
     .notNull()
     .default('medium'),
-  status: text('status', { enum: ['backlog', 'todo', 'in_progress', 'done'] })
+  status: text('status', { enum: ['backlog', 'planning', 'todo', 'in_progress', 'review', 'done'] })
     .notNull()
     .default('todo'),
   assignee: text('assignee').notNull().default('jarvis'),
@@ -68,6 +68,36 @@ export const comments = sqliteTable('comments', {
     .references(() => tasks.id, { onDelete: 'cascade' }),
   author: text('author').notNull(),
   content: text('content').notNull(),
+  createdAt: text('created_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+})
+
+// Links table
+export const links = sqliteTable('links', {
+  id: text('id').primaryKey(),
+  taskId: text('task_id')
+    .notNull()
+    .references(() => tasks.id, { onDelete: 'cascade' }),
+  url: text('url').notNull(),
+  title: text('title'),
+  type: text('type').notNull(),
+  icon: text('icon'),
+  metadata: text('metadata'), // JSON string
+  createdAt: text('created_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+})
+
+// Task Dependencies table (many-to-many self-referential)
+export const taskDependencies = sqliteTable('task_dependencies', {
+  id: text('id').primaryKey(),
+  taskId: text('task_id')
+    .notNull()
+    .references(() => tasks.id, { onDelete: 'cascade' }),
+  dependsOnId: text('depends_on_id')
+    .notNull()
+    .references(() => tasks.id, { onDelete: 'cascade' }),
   createdAt: text('created_at')
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
