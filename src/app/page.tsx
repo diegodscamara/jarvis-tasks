@@ -801,6 +801,12 @@ export default function Home() {
               } as Task)
               setShowModal(true)
             }}
+            onTaskReschedule={async (task, newDate) => {
+              await saveTask({
+                ...task,
+                dueDate: newDate.toISOString().split('T')[0],
+              })
+            }}
           />
         ) : viewMode === 'board' && !activeProject && !activeLabel && activeView === 'all' ? (
           <div className="flex flex-col md:flex-row gap-4 p-4 overflow-x-auto flex-1">

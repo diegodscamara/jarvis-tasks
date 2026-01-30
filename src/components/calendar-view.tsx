@@ -15,7 +15,6 @@ import {
   subMonths,
 } from 'date-fns'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   Select,
@@ -33,6 +32,7 @@ interface CalendarViewProps {
   projects: Project[]
   onTaskClick: (task: Task) => void
   onDateClick?: (date: Date) => void
+  onTaskReschedule?: (task: Task, newDate: Date) => void
 }
 
 type ViewMode = 'month' | 'week'
@@ -42,9 +42,12 @@ export function CalendarView({
   projects,
   onTaskClick,
   onDateClick,
+  onTaskReschedule,
 }: CalendarViewProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [viewMode, setViewMode] = useState<ViewMode>('month')
+  const [draggedTask, setDraggedTask] = useState<Task | null>(null)
+  const [dragOverDate, setDragOverDate] = useState<Date | null>(null)
 
   const goToPrevious = useCallback(() => {
     setCurrentDate((prev) =>
@@ -99,6 +102,39 @@ export function CalendarView({
     [projects]
   )
 
+  // Drag handlers
+  const handleDragStart = useCallback((task: Task) => {
+    setDraggedTask(task)
+  }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent, date: Date) => {
+    e.preventDefault()
+    setDragOverDate(date)
+  }, [])
+
+  const handleDragLeave = useCallback(() => {
+    setDragOverDate(null)
+  }, [])
+
+  const handleDrop = useCallback(
+    (date: Date) => {
+      if (draggedTask && onTaskReschedule) {
+        const currentDueDate = draggedTask.dueDate ? new Date(draggedTask.dueDate) : null
+        if (!currentDueDate || !isSameDay(currentDueDate, date)) {
+          onTaskReschedule(draggedTask, date)
+        }
+      }
+      setDraggedTask(null)
+      setDragOverDate(null)
+    },
+    [draggedTask, onTaskReschedule]
+  )
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedTask(null)
+    setDragOverDate(null)
+  }, [])
+
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
   return (
@@ -121,15 +157,22 @@ export function CalendarView({
             </Button>
           </div>
         </div>
-        <Select value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
-          <SelectTrigger className="w-[120px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="month">Month</SelectItem>
-            <SelectItem value="week">Week</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          {onTaskReschedule && (
+            <span className="text-xs text-muted-foreground">
+              Drag tasks to reschedule
+            </span>
+          )}
+          <Select value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="month">Month</SelectItem>
+              <SelectItem value="week">Week</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Calendar Grid */}
@@ -157,17 +200,22 @@ export function CalendarView({
             const dayTasks = getTasksForDate(day)
             const isToday = isSameDay(day, new Date())
             const isCurrentMonth = isSameMonth(day, currentDate)
+            const isDragOver = dragOverDate && isSameDay(dragOverDate, day)
 
             return (
               <Card
                 key={day.toISOString()}
                 className={cn(
-                  'min-h-[100px] cursor-pointer transition-colors hover:bg-accent/50',
+                  'min-h-[100px] cursor-pointer transition-all hover:bg-accent/50',
                   viewMode === 'week' && 'min-h-[300px]',
                   !isCurrentMonth && 'opacity-40',
-                  isToday && 'ring-2 ring-primary'
+                  isToday && 'ring-2 ring-primary',
+                  isDragOver && 'ring-2 ring-blue-500 bg-blue-500/10'
                 )}
                 onClick={() => onDateClick?.(day)}
+                onDragOver={(e) => handleDragOver(e, day)}
+                onDragLeave={handleDragLeave}
+                onDrop={() => handleDrop(day)}
               >
                 <CardContent className="p-2">
                   <div
@@ -181,10 +229,18 @@ export function CalendarView({
                   <div className="space-y-1 overflow-y-auto max-h-[80px]">
                     {dayTasks.slice(0, viewMode === 'week' ? 10 : 3).map((task) => {
                       const project = getProject(task.projectId)
+                      const isDragging = draggedTask?.id === task.id
                       return (
                         <div
                           key={task.id}
-                          className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs cursor-pointer hover:bg-accent truncate"
+                          draggable={!!onTaskReschedule}
+                          onDragStart={() => handleDragStart(task)}
+                          onDragEnd={handleDragEnd}
+                          className={cn(
+                            'flex items-center gap-1 px-1.5 py-0.5 rounded text-xs cursor-pointer hover:bg-accent truncate transition-opacity',
+                            isDragging && 'opacity-50',
+                            onTaskReschedule && 'cursor-grab active:cursor-grabbing'
+                          )}
                           style={{
                             borderLeft: `3px solid ${PRIORITY_COLORS[task.priority]}`,
                           }}
