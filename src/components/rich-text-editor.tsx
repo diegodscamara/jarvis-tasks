@@ -184,7 +184,10 @@ const SlashCommand = StarterKit.configure({
                 return true
               }
 
-              return component.ref?.onKeyDown(props)
+              if (component.ref && typeof component.ref === 'object' && component.ref !== null && 'onKeyDown' in component.ref) {
+                return (component.ref as any).onKeyDown(props)
+              }
+              return false
             },
             onExit() {
               popup[0].destroy()
@@ -281,7 +284,10 @@ export function RichTextEditor({
                   return true
                 }
 
-                return component.ref?.onKeyDown(props)
+                if (component.ref && typeof component.ref === 'object' && component.ref !== null && 'onKeyDown' in component.ref) {
+                  return (component.ref as any).onKeyDown(props)
+                }
+                return false
               },
               onExit() {
                 popup[0].destroy()
@@ -363,7 +369,10 @@ export function RichTextEditor({
                   return true
                 }
 
-                return component.ref?.onKeyDown(props)
+                if (component.ref && typeof component.ref === 'object' && component.ref !== null && 'onKeyDown' in component.ref) {
+                  return (component.ref as any).onKeyDown(props)
+                }
+                return false
               },
               onExit() {
                 popup[0].destroy()
